@@ -9,7 +9,7 @@ readme = "README.md"
 authors = [ { name = "Sagi Kimhi", email = "sagi.kim5@gmail.com" } ]
 maintainers = [ { name = "Sagi Kimhi", email = "sagi.kim5@gmail.com" } ]
 description = "Convert .lst files to SystemVerilog covergroups and coverpoints."
-requires-python = ">=3.6"
+requires-python = ">=3.7"
 dependencies = [
 ]
 
@@ -42,7 +42,7 @@ package = true
 
 [tool.mypy]
 files = [ "src" ]
-python_version = "3.6"
+python_version = "3.7"
 pretty = true
 strict = true
 color_output = true

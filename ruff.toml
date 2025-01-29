@@ -11,10 +11,10 @@ exclude = [
     "src/static",
 ]
 fix = true
-line-length = 80
+line-length = 79
 cache-dir = "~/.cache/ruff"
 indent-width = 4
-target-version = "py313"
+target-version = "py37"
 respect-gitignore = true
 
 [format]
