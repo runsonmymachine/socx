@@ -1,10 +1,51 @@
+# ------------------------------------------------------------------------------
+# Project Configurations
+# ------------------------------------------------------------------------------
+
 [project]
 name = "lst-to-cov"
 version = "0.1.0"
-description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.13"
-dependencies = []
+authors = [ { name = "Sagi Kimhi", email = "sagi.kim5@gmail.com" } ]
+maintainers = [ { name = "Sagi Kimhi", email = "sagi.kim5@gmail.com" } ]
+description = "Convert .lst files to SystemVerilog covergroups and coverpoints."
+requires-python = ">=3.6"
+dependencies = [
+]
+
+[dependency-groups]
+dev = [
+    "mypy",
+    "ruff",
+    "pytest",
+    "pyupgrade",
+    "pydocstyle",
+    "pycodestyle",
+    "flake8-simplify",
+    "flake8-bugbear",
+]
+
+# ------------------------------------------------------------------------------
+# Build System Configurations
+# ------------------------------------------------------------------------------
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# ------------------------------------------------------------------------------
+# Developer Configurations
+# ------------------------------------------------------------------------------
 
 [tool.uv]
-script = true
+package = true
+
+[tool.mypy]
+files = [ "src" ]
+python_version = "3.6"
+pretty = true
+strict = true
+color_output = true
+show_error_codes = true
+warn_unreachable = true
+
