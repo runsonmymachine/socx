@@ -1,0 +1,1305 @@
+PixieParser version: 1.4
+Build configuration: WaferSortDebug
+Arguments:
+/project/pixie/users/davidd/vw_dev_env_e4/pixieparser/PixieParser/src/PixieParserMain.py 
+-r /project/pixie/users/davidd/vw_dev_env_e4/Pixie_ROM_FW/PixieROMApp/SpuHwsSrc 
+-n /project/pixie/users/davidd/vw_dev_env_e4/Pixie_NVM_FW/PixieNVMApp/SpuHwsSrc 
+-o /project/pixie/users/davidd/vw_dev_env_e4/Pixie_NVM_FW/PixieNVMApp/WaferSortDebug/PxieParserOut 
+-rm /project/pixie/users/davidd/vw_dev_env_e4/Pixie_ROM_FW/PixieROMApp/WaferSortDebug 
+-nm /project/pixie/users/davidd/vw_dev_env_e4/Pixie_NVM_FW/PixieNVMApp/WaferSortDebug 
+-rld /project/pixie/users/davidd/vw_dev_env_e4/Pixie_ROM_FW/PixieROMApp/ldscripts/mem.ld 
+-nld /project/pixie/users/davidd/vw_dev_env_e4/Pixie_NVM_FW/PixieNVMApp/ldscripts/mem.ld 
+-res /project/pixie/users/davidd/vw_dev_env_e4/Pixie_ROM_FW/PixieROMApp/SpuHwsSrc/resources 
+-svd /project/pixie/users/davidd/vw_dev_env_e4/Pixie_ROM_FW/PixieROMApp/svd 
+-sim /project/pixie/users/davidd/vw_dev_env_e4/Pixie_NVM_FW/PixieNVMApp/WaferSortDebug/PxieParserOut 
+-log debug 
+-gld True
+Pixie E3 Detected
+CPU Compiler: ('riscv32-embecosm-centos7-gcc11.3.0') 11.3.0
+Message: ld files in ROM and NVM are identical!
+Warning: ld files are not the same as the physical memory file
+Start GNVM
+/project/pixie/users/davidd/vw_dev_env_e4/Pixie_NVM_FW/PixieNVMApp/WaferSortDebug/PxieParserOut/HWSList.lst created
+/project/pixie/users/davidd/vw_dev_env_e4/Pixie_NVM_FW/PixieNVMApp/WaferSortDebug/PxieParserOut/hwsROM.hex created
+/project/pixie/users/davidd/vw_dev_env_e4/Pixie_NVM_FW/PixieNVMApp/WaferSortDebug/PxieParserOut/hwsNVM.hex created
+/project/pixie/users/davidd/vw_dev_env_e4/Pixie_NVM_FW/PixieNVMApp/WaferSortDebug/PxieParserOut/hwsDRAM.hex created
+RDR Value: 6cdc
+SPU
+RDR Value: 6fdc
+SPU
+RDR Value: 70dc
+SPU
+RDR Value: 73dc
+SPU
+RDR Value: 76dc
+SPU
+RDR Value: 96dc
+SPU
+RDR Value: 97dc
+SPU
+RDR Value: 9adc
+SPU
+RDR Value: 0080
+HWS
+RDR Value: 4cde
+SPU
+RDR Value: 51aa
+CPU
+RDR Value: 9bb1
+CPU
+RDR Value: 0080
+HWS
+RDR Value: 4cde
+SPU
+RDR Value: 54de
+SPU
+RDR Value: 0080
+HWS
+RDR Value: 52de
+SPU
+RDR Value: 53de
+SPU
+RDR Value: 0080
+HWS
+RDR Value: 54de
+SPU
+RDR Value: 4ade
+SPU
+RDR Value: 0080
+HWS
+RDR Value: e9db
+SPU
+RDR Value: ecdb
+SPU
+RDR Value: acdc
+SPU
+RDR Value: f2da
+SPU
+RDR Value: 19db
+SPU
+RDR Value: f1da
+SPU
+RDR Value: 0080
+HWS
+RDR Value: 1cdb
+SPU
+RDR Value: e3db
+SPU
+RDR Value: b9aa
+CPU
+RDR Value: 0080
+HWS
+RDR Value: f2db
+SPU
+RDR Value: 0080
+HWS
+RDR Value: f4db
+SPU
+RDR Value: fadb
+SPU
+RDR Value: acdc
+SPU
+RDR Value: 25dc
+SPU
+RDR Value: ffdb
+SPU
+RDR Value: 0080
+HWS
+RDR Value: 1cdb
+SPU
+RDR Value: 02dc
+SPU
+RDR Value: 0080
+HWS
+RDR Value: f3db
+SPU
+RDR Value: 0080
+HWS
+RDR Value: 0bdd
+SPU
+RDR Value: 08dc
+SPU
+RDR Value: 0ddd
+SPU
+RDR Value: 1cdb
+SPU
+RDR Value: 0194
+PGX
+RDR Value: 0cdd
+SPU
+RDR Value: 0080
+HWS
+RDR Value: 12dd
+SPU
+RDR Value: 0bdd
+SPU
+RDR Value: 69dc
+SPU
+RDR Value: 0194
+PGX
+RDR Value: 0cdd
+SPU
+RDR Value: 66dc
+SPU
+RDR Value: 0080
+HWS
+RDR Value: 07dc
+SPU
+RDR Value: 1cdb
+SPU
+RDR Value: 0890
+FLL
+RDR Value: 8aae
+CPU
+RDR Value: 0890
+FLL
+RDR Value: 08dc
+SPU
+RDR Value: fbdc
+SPU
+RDR Value: 0080
+HWS
+RDR Value: 66dc
+SPU
+RDR Value: 04dd
+SPU
+RDR Value: acdc
+SPU
+RDR Value: cbdc
+SPU
+RDR Value: 2cdc
+SPU
+RDR Value: 08dc
+SPU
+RDR Value: 0080
+HWS
+RDR Value: 1cdb
+SPU
+RDR Value: 709a
+FMU
+RDR Value: 03dd
+SPU
+RDR Value: 0080
+HWS
+RDR Value: 555d
+SPU
+RDR Value: 13b2
+CPU
+RDR Value: 08dd
+SPU
+RDR Value: aab1
+CPU
+RDR Value: 56dd
+SPU
+RDR Value: 0080
+HWS
+RDR Value: 55dd
+SPU
+RDR Value: 450a
+HWS
+RDR Value: 66dc
+SPU
+RDR Value: 56dd
+SPU
+RDR Value: 0080
+HWS
+RDR Value: 5cdd
+SPU
+RDR Value: 55dd
+SPU
+RDR Value: 61dd
+SPU
+RDR Value: 56dd
+SPU
+RDR Value: 0080
+HWS
+RDR Value: b4b1
+CPU
+RDR Value: 5cdd
+SPU
+RDR Value: 20b4
+CPU
+RDR Value: 0080
+HWS
+RDR Value: 66dc
+SPU
+RDR Value: 9bb1
+CPU
+RDR Value: 2cb4
+CPU
+RDR Value: 61dd
+SPU
+RDR Value: 0080
+HWS
+RDR Value: f2dc
+SPU
+RDR Value: f5dc
+SPU
+RDR Value: e7dc
+SPU
+RDR Value: e8dc
+SPU
+RDR Value: 0080
+HWS
+RDR Value: f2dc
+SPU
+RDR Value: f5dc
+SPU
+RDR Value: eadc
+SPU
+RDR Value: 0080
+HWS
+RDR Value: 66dc
+SPU
+RDR Value: 36dd
+SPU
+RDR Value: acdc
+SPU
+RDR Value: 1edc
+SPU
+RDR Value: 0080
+HWS
+RDR Value: 59dd
+SPU
+RDR Value: 36dd
+SPU
+RDR Value: acdc
+SPU
+RDR Value: 1edc
+SPU
+RDR Value: 0080
+HWS
+RDR Value: 66dc
+SPU
+RDR Value: 36dd
+SPU
+RDR Value: acdc
+SPU
+RDR Value: 17dc
+SPU
+RDR Value: 0080
+HWS
+RDR Value: 66dc
+SPU
+RDR Value: 36dd
+SPU
+RDR Value: acdc
+SPU
+RDR Value: 10dc
+SPU
+RDR Value: 0080
+HWS
+RDR Value: 66dc
+SPU
+RDR Value: 36dd
+SPU
+RDR Value: acdc
+SPU
+RDR Value: eeda
+SPU
+RDR Value: 19db
+SPU
+RDR Value: edda
+SPU
+RDR Value: 0080
+HWS
+RDR Value: 66dc
+SPU
+RDR Value: 36dd
+SPU
+RDR Value: acdc
+SPU
+RDR Value: 33dc
+SPU
+RDR Value: 0080
+HWS
+RDR Value: 66dc
+SPU
+RDR Value: 36dd
+SPU
+RDR Value: acdc
+SPU
+RDR Value: 37dc
+SPU
+RDR Value: 0080
+HWS
+RDR Value: 66dc
+SPU
+RDR Value: 36dd
+SPU
+RDR Value: acdc
+SPU
+RDR Value: 3edc
+SPU
+RDR Value: 0080
+HWS
+RDR Value: 1cdb
+SPU
+RDR Value: 0090
+FLL
+RDR Value: fbdc
+SPU
+RDR Value: 0080
+HWS
+RDR Value: 1cdb
+SPU
+RDR Value: 0090
+FLL
+RDR Value: fbdc
+SPU
+RDR Value: 5bdd
+SPU
+RDR Value: 0080
+HWS
+RDR Value: f2dc
+SPU
+RDR Value: f7dc
+SPU
+RDR Value: eedc
+SPU
+RDR Value: 0080
+HWS
+RDR Value: 66dc
+SPU
+RDR Value: 3add
+SPU
+RDR Value: acdc
+SPU
+RDR Value: 17dc
+SPU
+RDR Value: 0080
+HWS
+RDR Value: 1cdb
+SPU
+RDR Value: 0290
+FLL
+RDR Value: fcdc
+SPU
+RDR Value: 0080
+HWS
+RDR Value: 46dc
+SPU
+RDR Value: 66dc
+SPU
+RDR Value: 3add
+SPU
+RDR Value: acdc
+SPU
+RDR Value: 17dc
+SPU
+RDR Value: 1cdb
+SPU
+RDR Value: 0290
+FLL
+RDR Value: fcdc
+SPU
+RDR Value: f2dc
+SPU
+RDR Value: f9dc
+SPU
+RDR Value: 0080
+HWS
+RDR Value: 66dc
+SPU
+RDR Value: 41dd
+SPU
+RDR Value: acdc
+SPU
+RDR Value: 10dc
+SPU
+RDR Value: 0080
+HWS
+RDR Value: 1cdb
+SPU
+RDR Value: 0190
+FLL
+RDR Value: fcdc
+SPU
+RDR Value: 0080
+HWS
+RDR Value: 55db
+SPU
+RDR Value: 58db
+SPU
+RDR Value: 5adb
+SPU
+RDR Value: 5ddb
+SPU
+RDR Value: 0080
+HWS
+RDR Value: 66dc
+SPU
+RDR Value: acdc
+SPU
+RDR Value: aedc
+SPU
+RDR Value: ccdc
+SPU
+RDR Value: 09dc
+SPU
+RDR Value: 0080
+HWS
+RDR Value: 66dc
+SPU
+RDR Value: acdc
+SPU
+RDR Value: aedc
+SPU
+RDR Value: c9dc
+SPU
+RDR Value: ccdc
+SPU
+RDR Value: 2cdc
+SPU
+RDR Value: 0080
+HWS
+RDR Value: 59dd
+SPU
+RDR Value: 05b2
+CPU
+RDR Value: bbb0
+CPU
+RDR Value: acdc
+SPU
+RDR Value: aedc
+SPU
+RDR Value: 8ab0
+CPU
+RDR Value: c9dc
+SPU
+RDR Value: ccdc
+SPU
+RDR Value: 2cdc
+SPU
+RDR Value: 0080
+HWS
+RDR Value: 46dc
+SPU
+RDR Value: 1cdb
+SPU
+RDR Value: 6a16
+PGX
+RDR Value: 0080
+HWS
+RDR Value: 46dc
+SPU
+RDR Value: 1cdb
+SPU
+RDR Value: 6c16
+PGX
+RDR Value: 0080
+HWS
+RDR Value: 46dc
+SPU
+RDR Value: 1cdb
+SPU
+RDR Value: 6016
+PGX
+RDR Value: 0080
+HWS
+RDR Value: 46dc
+SPU
+RDR Value: d2dc
+SPU
+RDR Value: 1cdb
+SPU
+RDR Value: 1016
+PGX
+RDR Value: 0080
+HWS
+RDR Value: d2dc
+SPU
+RDR Value: 1cdb
+SPU
+RDR Value: 1094
+PGX
+RDR Value: 0080
+HWS
+RDR Value: 46dc
+SPU
+RDR Value: d6dc
+SPU
+RDR Value: d4dc
+SPU
+RDR Value: 1cdb
+SPU
+RDR Value: 0e16
+PGX
+RDR Value: e4b0
+CPU
+RDR Value: 5bdd
+SPU
+RDR Value: 0080
+HWS
+RDR Value: 46dc
+SPU
+RDR Value: d6dc
+SPU
+RDR Value: c4dc
+SPU
+RDR Value: d4dc
+SPU
+RDR Value: 1cdb
+SPU
+RDR Value: 0216
+PGX
+RDR Value: e4b0
+CPU
+RDR Value: 5bdd
+SPU
+RDR Value: 0080
+HWS
+RDR Value: 46dc
+SPU
+RDR Value: 66dc
+SPU
+RDR Value: acdc
+SPU
+RDR Value: aedc
+SPU
+RDR Value: 09dc
+SPU
+RDR Value: 47dc
+SPU
+RDR Value: 1cdb
+SPU
+RDR Value: 6a16
+PGX
+RDR Value: 0080
+HWS
+RDR Value: 46dc
+SPU
+RDR Value: 66dc
+SPU
+RDR Value: acdc
+SPU
+RDR Value: aedc
+SPU
+RDR Value: 09dc
+SPU
+RDR Value: 47dc
+SPU
+RDR Value: 1cdb
+SPU
+RDR Value: 6c16
+PGX
+RDR Value: 0080
+HWS
+RDR Value: 67dd
+SPU
+RDR Value: 68dd
+SPU
+RDR Value: 69dd
+SPU
+RDR Value: 0080
+HWS
+RDR Value: 36dd
+SPU
+RDR Value: acdc
+SPU
+RDR Value: eeda
+SPU
+RDR Value: 19db
+SPU
+RDR Value: edda
+SPU
+RDR Value: 6cdd
+SPU
+RDR Value: 6fdd
+SPU
+RDR Value: 1cdb
+SPU
+RDR Value: b698
+TRNG
+RDR Value: 0080
+HWS
+RDR Value: 68b1
+CPU
+RDR Value: 450a
+HWS
+RDR Value: 82b1
+CPU
+RDR Value: 0080
+HWS
+RDR Value: 68b1
+CPU
+RDR Value: 460a
+HWS
+RDR Value: 82b1
+CPU
+RDR Value: 0080
+HWS
+RDR Value: 68b1
+CPU
+RDR Value: 350a
+HWS
+RDR Value: 82b1
+CPU
+RDR Value: 0080
+HWS
+RDR Value: 68b1
+CPU
+RDR Value: 360a
+HWS
+RDR Value: 82b1
+CPU
+RDR Value: 0080
+HWS
+RDR Value: 52de
+SPU
+RDR Value: f2dc
+SPU
+RDR Value: f5dc
+SPU
+RDR Value: e7dc
+SPU
+RDR Value: e8dc
+SPU
+RDR Value: 1ab1
+CPU
+RDR Value: 0080
+HWS
+RDR Value: 350a
+HWS
+RDR Value: 66dc
+SPU
+RDR Value: 36dd
+SPU
+RDR Value: acdc
+SPU
+RDR Value: 17dc
+SPU
+RDR Value: 1cdb
+SPU
+RDR Value: 0090
+FLL
+RDR Value: fbdc
+SPU
+RDR Value: 2db1
+CPU
+RDR Value: 0080
+HWS
+RDR Value: 4ade
+SPU
+RDR Value: f2dc
+SPU
+RDR Value: f9dc
+SPU
+RDR Value: 450a
+HWS
+RDR Value: 66dc
+SPU
+RDR Value: 41dd
+SPU
+RDR Value: acdc
+SPU
+RDR Value: 10dc
+SPU
+RDR Value: 1cdb
+SPU
+RDR Value: 0190
+FLL
+RDR Value: fcdc
+SPU
+RDR Value: 6cdb
+SPU
+RDR Value: 0080
+HWS
+RDR Value: 4dde
+SPU
+RDR Value: b5dd
+SPU
+RDR Value: 775d
+SPU
+RDR Value: 9fdd
+SPU
+HWS
+RDR Value: 835d
+SPU
+RDR Value: 9fdd
+SPU
+HWS
+RDR Value: a4dd
+SPU
+RDR Value: 69db
+SPU
+RDR Value: addd
+SPU
+RDR Value: 0080
+HWS
+RDR Value: 4ede
+SPU
+RDR Value: f2dc
+SPU
+RDR Value: f5dc
+SPU
+RDR Value: eadc
+SPU
+RDR Value: 88ad
+CPU
+RDR Value: 0080
+HWS
+RDR Value: 450a
+HWS
+RDR Value: 66dc
+SPU
+RDR Value: 36dd
+SPU
+RDR Value: acdc
+SPU
+RDR Value: eeda
+SPU
+RDR Value: 19db
+SPU
+RDR Value: edda
+SPU
+RDR Value: 11dd
+SPU
+RDR Value: 0bdd
+SPU
+RDR Value: 08dc
+SPU
+RDR Value: 0ddd
+SPU
+RDR Value: 1cdb
+SPU
+RDR Value: 0194
+PGX
+RDR Value: 0cdd
+SPU
+RDR Value: 88ad
+CPU
+RDR Value: 0080
+HWS
+HWS
+RDR Value: 725d
+SPU
+RDR Value: 1c34
+CPU
+RDR Value: 465d
+SPU
+RDR Value: 67dd
+SPU
+RDR Value: 68dd
+SPU
+RDR Value: 69dd
+SPU
+RDR Value: b9af
+CPU
+RDR Value: 55db
+SPU
+RDR Value: 58db
+SPU
+RDR Value: 5adb
+SPU
+RDR Value: 5ddb
+SPU
+RDR Value: 14b6
+CPU
+HWS
+RDR Value: acdc
+SPU
+RDR Value: aedc
+SPU
+RDR Value: 9bb4
+CPU
+RDR Value: 09dc
+SPU
+HWS
+RDR Value: cbdc
+SPU
+RDR Value: 2cdc
+SPU
+RDR Value: 69db
+SPU
+RDR Value: 1cdb
+SPU
+RDR Value: 6c16
+PGX
+HWS
+RDR Value: 0080
+HWS
+RDR Value: a85c
+SPU
+0000
+0086
+RPD
+0000
+0986
+RPD
+RDR Value: 9fdc
+SPU
+0000
+1f87
+RPD
+RDR Value: 735d
+SPU
+0000
+0d86
+RPD
+RDR Value: 64b5
+CPU
+RDR Value: 34b3
+CPU
+RDR Value: 1e80
+HWS
+RDR Value: 2680
+HWS
+RDR Value: 2980
+HWS
+RDR Value: 3280
+HWS
+RDR Value: 3580
+HWS
+RDR Value: 0680
+HWS
+RDR Value: 0680
+HWS
+RDR Value: 8d80
+HWS
+RDR Value: 9080
+HWS
+RDR Value: 9280
+HWS
+RDR Value: 9580
+HWS
+RDR Value: 9d80
+HWS
+RDR Value: a780
+HWS
+RDR Value: 0680
+HWS
+RDR Value: 0680
+HWS
+RDR Value: 5e80
+HWS
+RDR Value: 4880
+HWS
+RDR Value: 5e80
+HWS
+RDR Value: 6780
+HWS
+RDR Value: b080
+HWS
+RDR Value: 6980
+HWS
+0000
+1086
+RPD
+0000
+2186
+RPD
+RDR Value: e1aa
+CPU
+0000
+1686
+RPD
+0000
+1d86
+RPD
+RDR Value: e1aa
+CPU
+RDR Value: 0600
+HWS
+RDR Value: 2100
+HWS
+0000
+3987
+RPD
+0000
+4087
+RPD
+RDR Value: 0600
+HWS
+RDR Value: 52de
+SPU
+0000
+2c86
+RPD
+RDR Value: 7eab
+CPU
+RDR Value: 42ab
+CPU
+0000
+2386
+RPD
+0000
+2986
+RPD
+RDR Value: 42ab
+CPU
+RDR Value: 0600
+HWS
+RDR Value: 2d00
+HWS
+RDR Value: 52de
+SPU
+RDR Value: 89ab
+CPU
+RDR Value: 0600
+HWS
+RDR Value: 52de
+SPU
+RDR Value: 01dd
+SPU
+RDR Value: c4b1
+CPU
+RDR Value: 0600
+HWS
+RDR Value: 3f80
+HWS
+RDR Value: 4380
+HWS
+RDR Value: 350a
+HWS
+0000
+4486
+RPD
+0000
+4b86
+RPD
+RDR Value: 3780
+HWS
+RDR Value: 555d
+SPU
+RDR Value: 08dd
+SPU
+RDR Value: 56dd
+SPU
+RDR Value: 3780
+HWS
+RDR Value: 55dd
+SPU
+RDR Value: 450a
+HWS
+RDR Value: 66dc
+SPU
+RDR Value: 56dd
+SPU
+RDR Value: 3780
+HWS
+0000
+1386
+RPD
+0000
+6986
+RPD
+0000
+6086
+RPD
+RDR Value: ffa4
+CPU
+RDR Value: 5280
+HWS
+RDR Value: 53a5
+CPU
+RDR Value: 5280
+HWS
+RDR Value: 350a
+HWS
+RDR Value: 7ca5
+CPU
+RDR Value: 5c80
+HWS
+RDR Value: 34b4
+CPU
+RDR Value: 5b80
+HWS
+0000
+3187
+RPD
+RDR Value: 5780
+HWS
+0000
+3587
+RPD
+0000
+7786
+RPD
+RDR Value: 31dd
+SPU
+0000
+a086
+RPD
+RDR Value: 5280
+HWS
+RDR Value: 22a6
+CPU
+0000
+6486
+RPD
+RDR Value: 0600
+HWS
+RDR Value: 4ade
+SPU
+0000
+a586
+RPD
+RDR Value: cfae
+CPU
+RDR Value: 450a
+HWS
+0000
+a986
+RPD
+0000
+ae86
+RPD
+RDR Value: cfae
+CPU
+RDR Value: 0600
+HWS
+RDR Value: 6180
+HWS
+0000
+4a87
+RPD
+RDR Value: 0600
+HWS
+RDR Value: 4bde
+SPU
+0000
+1f87
+RPD
+RDR Value: 72dd
+SPU
+RDR Value: 1c34
+CPU
+RDR Value: 8fb1
+CPU
+RDR Value: 2ab0
+CPU
+RDR Value: 0600
+HWS
+RDR Value: 7a80
+HWS
+RDR Value: 8180
+HWS
+0000
+1b87
+RPD
+RDR Value: b9af
+CPU
+RDR Value: b1af
+CPU
+0000
+c786
+RPD
+RDR Value: 8eaf
+CPU
+RDR Value: 6e00
+HWS
+RDR Value: 7200
+HWS
+RDR Value: 8180
+HWS
+RDR Value: 450a
+HWS
+RDR Value: 55dd
+SPU
+0000
+d286
+RPD
+RDR Value: 47dc
+SPU
+0000
+e786
+RPD
+RDR Value: 56dd
+SPU
+RDR Value: 6e80
+HWS
+RDR Value: 450a
+HWS
+RDR Value: 368a
+HWS
+RDR Value: 55dd
+SPU
+0000
+d986
+RPD
+RDR Value: 47dc
+SPU
+0000
+ef86
+RPD
+RDR Value: d6b0
+CPU
+0000
+d286
+RPD
+RDR Value: 47dc
+SPU
+0000
+0087
+RPD
+RDR Value: 56dd
+SPU
+RDR Value: 6e80
+HWS
+RDR Value: 26ab
+CPU
+RDR Value: 13ab
+CPU
+RDR Value: 0600
+HWS
+0000
+5787
+RPD
+RDR Value: 0600
+HWS
+0000
+6387
+RPD
+0000
+6987
+RPD
+RDR Value: 0600
+HWS
+RDR Value: 4fde
+SPU
+RDR Value: b4b1
+CPU
+RDR Value: 23b2
+CPU
+0000
+3586
+RPD
+RDR Value: 23b2
+CPU
+RDR Value: 9bb1
+CPU
+RDR Value: 0600
+HWS
+RDR Value: 9800
+HWS
+RDR Value: 50de
+SPU
+0000
+6e86
+RPD
+RDR Value: c6ab
+CPU
+RDR Value: 350a
+HWS
+0000
+9286
+RPD
+RDR Value: 22dd
+SPU
+0000
+2e86
+RPD
+RDR Value: c6ab
+CPU
+RDR Value: 0600
+HWS
+RDR Value: a080
+HWS
+RDR Value: 51de
+SPU
+0000
+6986
+RPD
+RDR Value: 17ae
+CPU
+RDR Value: 350a
+HWS
+0000
+9786
+RPD
+0000
+3c86
+RPD
+RDR Value: 17ae
+CPU
+RDR Value: 0600
+HWS
+RDR Value: aa80
+HWS
+RDR Value: 55de
+SPU
+0000
+6986
+RPD
+0000
+6086
+RPD
+RDR Value: dab4
+CPU
+RDR Value: 450a
+HWS
+RDR Value: b780
+HWS
+RDR Value: 460a
+HWS
+RDR Value: dfb4
+CPU
+RDR Value: bf80
+HWS
+0000
+7786
+RPD
+RDR Value: 31dd
+SPU
+0000
+a086
+RPD
+RDR Value: dfb4
+CPU
+RDR Value: bf80
+HWS
+RDR Value: b680
+HWS
+RDR Value: 33b5
+CPU
+0000
+6486
+RPD
+RDR Value: 40b5
+CPU
+RDR Value: 0600
+HWS
+RDR Value: c400
+HWS
+RDR Value: 465d
+SPU
+0000
+7f87
+RPD
+RDR Value: 69db
+SPU
+RDR Value: 780a
+HWS
+RDR Value: 43de
+SPU
+RDR Value: c400
+HWS
+Bulk with start address 0x40073000 from PixieNVMAppVerilog.hex is in Debug RAM and ommitted from FullSectorsPixieNVM.hex.
+Bulk with start address 0x40073a30 from PixieNVMAppVerilog.hex is in Debug RAM and ommitted from FullSectorsPixieNVM.hex.
+Bulk with start address 0x40074460 from PixieNVMAppVerilog.hex is in Debug RAM and ommitted from FullSectorsPixieNVM.hex.
+Bulk with start address 0x40074e90 from PixieNVMAppVerilog.hex is in Debug RAM and ommitted from FullSectorsPixieNVM.hex.
+Bulk with start address 0x400758c0 from PixieNVMAppVerilog.hex is in Debug RAM and ommitted from FullSectorsPixieNVM.hex.
+Bulk with start address 0x400762f0 from PixieNVMAppVerilog.hex is in Debug RAM and ommitted from FullSectorsPixieNVM.hex.
+Bulk with start address 0x40076d20 from PixieNVMAppVerilog.hex is in Debug RAM and ommitted from FullSectorsPixieNVM.hex.
+PixieNVM.Hex Compilation Succeeded.
+rom_image	                 40000000
+new_nvm_image_file	        40010000
+gnvm	                      40010a30
+spu_nvm	                   40010c00
+hws_nvm	                   40010e00
+nvm_loader_mcu	            40010000
+nvm_loader_gnvm	           40010aa0
+nvm_loader_hws_spu	        40010c00
+nvm_rdn_ram	               4001e000
+mcu_debugram_0_image	      40071000
+mcu_ws_default	            40073000
+mcu_ws_clocks_calib	       40073A30
+mcu_ws_vstart_calib	       40074460
+mcu_ws_sensing	            40074E90
+mcu_ws_wkup_calib	         400758C0
+mcu_ws_clocks_char	        400762f0
+mcu_ws_volts_calib	        40076d20
+Simulation output folder was successfully generated.
+memLd.json file gnerated successfully.
+PixieParser Compilation Succeeded.

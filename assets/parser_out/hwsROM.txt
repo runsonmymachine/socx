@@ -1,0 +1,971 @@
+
+
+
+// ==================================
+//         F       S       M
+// ==================================
+
+// ====
+// INIT
+// ====
+
+start HwsRomNetInit
+/*0*/   SpuRomInitSwspad0To31					B2BM=1	// 0xdc6c
+/*1*/   SpuRomInitSwspadGnvm					B2BM=1	// 0xdc6f
+/*2*/   SpuRomInitSrr							B2BM=1	// 0xdc70
+/*3*/   SpuRomInitHrr							B2BM=1	// 0xdc73
+/*4*/   SpuRomCopyFrequentHrrGnvmToSrrOvl		B2BM=1	// 0xdc76
+/*5*/   SpuRomCopyFrequentSwGnvmToSrrOvl		B2BM=1	// 0xdc96
+/*6*/   SpuRomInitAuxMeas						B2BM=1	// 0xdc97
+/*7*/   SpuRomInitClbSkipN						B2BM=1	// 0xdc9a
+/*8*/   eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomNetInit
+
+start HwsRomFlowFSMPowerupB2B
+/*9*/   SpuRomFlowManagerAndPowerupOverlayInitFromGnvm 	B2BM=1	// 0xde4c
+/*10*/  McuRomFlowFSMPowerup 							B2BM=1	// 0xaa51
+/*11*/  McuRomSetParamsForCcaSequence 					B2BM=1	// 0xb19b
+/*12*/  eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomFlowFSMPowerupB2B
+
+// ==============
+// INIT FROM GNVM
+// ==============
+
+start HwsRomFlowManagerOverlayInitFromGnvm
+/*13*/  SpuRomFlowManagerAndPowerupOverlayInitFromGnvm	B2BM=1	// 0xde4c
+/*14*/  SpuRomAuxMeasVsTempCoeffOverlayInitFromGnvm 	B2BM=1	// 0xde54
+/*15*/  eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomFlowManagerOverlayInitFromGnvm
+
+start HwsRomTempSensingOverlayInitFromGnvm
+/*16*/  SpuRomSensingOverlayInitFromGnvm 				B2BM=1	// 0xde52
+/*17*/  SpuRomTempPolyCoeffOverlayInitFromGnvm 			B2BM=1	// 0xde53
+/*18*/  eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomTempSensingOverlayInitFromGnvm
+
+start HwsRomRxSweepAndAuxMeasOverlayInitFromGnvm
+/*19*/  SpuRomAuxMeasVsTempCoeffOverlayInitFromGnvm 	B2BM=1	// 0xde54
+/*20*/  SpuRomAuxMeasAndCalibOverlayInitFromGnvm 		B2BM=1	// 0xde4a
+/*21*/  eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomRxSweepAndAuxMeasOverlayInitFromGnvm
+
+
+//===============================================================
+// 						TEMPERATURE SENSOR
+//===============================================================
+
+start HwsRomTempSenseLvRadioInit
+// 	Spu_TempSensorInit 							B2BM=1
+/*22*/  Spu_TempSensorInit_ctl						B2BM=1	// 0xdbe9
+/*23*/  SpuRomConfigClbForTempSense	 				B2BM=1	// 0xdbec
+/*24*/  SpuRomRadioSrrToHws 						B2BM=1	// 0xdcac
+/*25*/  SpuRomRadioInitForTempSensLv				B2BM=1	// 0xdaf2
+/*26*/  SpuRomMemCopyRadioInit						B2BM=1	// 0xdb19
+/*27*/  SpuRomRadioModeForTempSensLv				B2BM=1	// 0xdaf1
+/*28*/  eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomTempSenseLvRadioInit
+
+start HwsRomTempSenseLvActivation
+/*29*/  SpuRomRadioInit                    			B2BM=1	// 0xdb1c
+/*30*/  Spu_TempSensor_ctl 							B2BM=1	// 0xdbe3
+/*31*/  McuRomAccTempSenseMeasInOvl					B2BM=1	// 0xaab9
+/*32*/  eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomTempSenseLvActivation
+
+start HwsRomTempSensePopulateOvlB2B
+/*33*/  SpuRomTempSensorCfgOtpToOvl					B2BM=1	// 0xdbf2
+/*34*/  eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomTempSensePopulateOvlB2B
+
+//===============================================================
+// 							RC SENSOR
+//===============================================================
+
+
+start HwsRomRcSensConfigHwsAndRadio
+/*35*/  SpuRomConfigHwsForRcSensing 			    B2BM=1	// 0xdbf4
+/*36*/  SpuRomRcSensSetParams						B2BM=1	// 0xdbfa
+/*37*/  SpuRomRadioSrrToHws							B2BM=1	// 0xdcac
+/*38*/  SpuRomSetRadioForRcSens						B2BM=1	// 0xdc25
+/*39*/  SpuRomRcMaskLc								B2BM=1	// 0xdbff
+/*40*/  eol NETindex=0 B2BM=1	// 0x8000
+end HwsRomRcSensConfigHwsAndRadio
+
+start HwsRomRcSensActivation
+/*41*/  SpuRomRadioInit                    			B2BM=1	// 0xdb1c
+/*42*/  SpuRomRcSensFunc 							B2BM=1	// 0xdc02
+/*43*/  eol NETindex=0 B2BM=1	// 0x8000
+end HwsRomRcSensActivation
+
+start HwsRomRcSensPopulateOvlB2B
+/*44*/  SpuRomRcSensCfgOtpToOvl					B2BM=1	// 0xdbf3
+/*45*/  eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomRcSensPopulateOvlB2B
+
+
+//===============================================================
+// 							CLE
+//===============================================================
+
+start HwsRomCleActivationForFllOperation
+/*46*/  SpuRomCleOvlToHws 							B2BM=1	// 0xdd0b
+/*47*/  SpuRomEnableRadioTurnOff 					B2BM=1	// 0xdc08
+/*48*/  SpuRomCleFllParams							B2BM=1	// 0xdd0d
+/*49*/  SpuRomRadioInit 							B2BM=1	// 0xdb1c
+/*50*/  PGX CLE_EN=CLE_GO 							B2BM=1	// 0x9401
+/*51*/  SpuRomCleHwsToOvl 							B2BM=1	// 0xdd0c
+/*52*/  eol NETindex=0 B2BM=1	// 0x8000
+end HwsRomCleActivationForFllOperation
+
+start HwsRomCleActivationForWkupOperation
+/*53*/  SpuRomCopyCleAnalogctlForWkupThresholdCalib B2BM=1	// 0xdd12
+/*54*/  SpuRomCleOvlToHws 							B2BM=1	// 0xdd0b
+/*55*/  SpuRomSetWkupMode3							B2BM=1	// 0xdc69
+/*56*/  PGX CLE_EN=CLE_GO 							B2BM=1	// 0x9401
+/*57*/  SpuRomCleHwsToOvl 							B2BM=1	// 0xdd0c
+/*58*/  SpuRomCloseWkup 							B2BM=1	// 0xdc66
+/*59*/  eol NETindex=0 B2BM=1	// 0x8000
+end HwsRomCleActivationForWkupOperation
+
+//===============================================================
+// 							DF CALIBRATION
+//===============================================================
+
+start HwsRomFsmDfMeasActivateB2B
+/*60*/  SpuRomDisableRadioTurnOff 					B2BM=1	// 0xdc07
+/*61*/  SpuRomRadioInit   				  			B2BM=1	// 0xdb1c
+/*62*/  FLL  OPCODE=meas MOD_EN=MOD 	  			B2BM=1	// 0x9008
+/*63*/  McuRomDfConfigBetweenConsecMeas				B2BM=1	// 0xae8a
+/*64*/  FLL  OPCODE=meas MOD_EN=MOD 	  			B2BM=1	// 0x9008
+/*65*/  SpuRomEnableRadioTurnOff 					B2BM=1	// 0xdc08
+/*66*/  SpuRomAuxMeasResClbToOvl					B2BM=1	// 0xdcfb
+/*67*/  eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomFsmDfMeasActivateB2B
+
+//===============================================================
+// 								FMU
+//===============================================================
+
+// BLE5
+// ====
+start HwsRomFsmFmuLoDivSymConfigHwsAndRadio
+/*68*/  SpuRomCloseWkup								B2BM=1	// 0xdc66
+/*69*/  SpuRomConfigFmuForLoDivSymVsSoc				B2BM=1	// 0xdd04
+/*70*/  SpuRomRadioSrrToHws 						B2BM=1	// 0xdcac
+/*71*/  SpuRomSetLoDivSymFromCh37InClb				B2BM=1	// 0xdccb
+/*72*/  SpuRomSetRadioForLoDivSym					B2BM=1	// 0xdc2c
+/*73*/  SpuRomEnableRadioTurnOff 					B2BM=1	// 0xdc08
+/*74*/  eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomFsmFmuLoDivSymConfigHwsAndRadio
+
+start HwsRomFsmFmuLoDivSymVsSocActivateB2B
+/*75*/  SpuRomRadioInit    							B2BM=1	// 0xdb1c
+/*76*/  fmu EXT_SENS_MODE=OFF LAST_ITER=0 FIRST_ITER=1 MEAS_CLK=SYM_1MHZ CTL_CLK=SOC BPDO=1 B2BM=1	// 0x9a70
+/*77*/  SpuRomFmuResHwsToOvl 						B2BM=1	// 0xdd03
+/*78*/  eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomFsmFmuLoDivSymVsSocActivateB2B
+
+//===============================================================
+// 						SYSTEM CLOCKS MEAS
+//===============================================================
+
+start HwsRomEnvdetClkMeas
+/*79*/  SpuRomVddDig2VddAdbDisable 					B2BM=0	// 0x5d55
+/*80*/  McuRomEnvdetClkConfigPreMeas				B2BM=1	// 0xb213
+/*81*/  SpuRomEnvdetMeasWithSoc 					B2BM=1	// 0xdd08
+/*82*/  McuRomEnvdetClkConfigPostMeas				B2BM=1	// 0xb1aa
+/*83*/  SpuRomVddDig2VddAdbEnable 					B2BM=1	// 0xdd56
+/*84*/  eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomEnvdetClkMeas
+
+start HwsRomRtcClkMeas
+/*85*/  SpuRomVddDig2VddAdbDisable 					B2BM=1	// 0xdd55
+/*86*/  rtcc WAKE_UP_MODE=HW_RET_WKUP TIMER_SET_INDEX=Thrs1 TIMER_MODE=VSTART_COUNT	// 0x0a45
+/*87*/  SpuRomCloseWkup								B2BM=1	// 0xdc66
+/*88*/  SpuRomVddDig2VddAdbEnable 					B2BM=1	// 0xdd56
+/*89*/  eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomRtcClkMeas
+
+// ==========
+// Wkup & ADB
+// ==========
+
+start HwsRomSetAdbConfigForContWkup
+/*90*/  SpuRomSetSlimLdoTrimForContWkup				B2BM=1	// 0xdd5c
+/*91*/  SpuRomVddDig2VddAdbDisable					B2BM=1	// 0xdd55
+// B2B=0 in the end to update the DRR and for enough time for Endet clk to stabilize
+end HwsRomSetAdbConfigForContWkup
+
+start HwsRomRestoreAdbConfigAfterContWkup
+/*93*/  SpuRomRestoreSlimLdoTrimAfterContWkup		B2BM=1	// 0xdd61
+/*94*/  SpuRomVddDig2VddAdbEnable					B2BM=1	// 0xdd56
+/*95*/  eol NETIndex=0 B2BM=1 // Assuming B2B=0 after in NET	// 0x8000
+end HwsRomRestoreAdbConfigAfterContWkup
+
+
+// ===============
+// Aux Measurement
+// ===============
+
+start HwsRomPreAuxMeasSequence
+/*96*/  McuRomSetParamsForWkupSequence 				B2BM=1	// 0xb1b4
+/*97*/  SpuRomSetSlimLdoTrimForContWkup 			B2BM=1	// 0xdd5c
+/*98*/  McuRomSetTxRxParamsForAuxMeas 				B2BM=1	// 0xb420
+/*99*/  eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomPreAuxMeasSequence
+
+start HwsRomPostAuxMeasSequence
+/*100*/ SpuRomCloseWkup								B2BM=1	// 0xdc66
+/*101*/ McuRomSetParamsForCcaSequence 				B2BM=1	// 0xb19b
+/*102*/ McuRomRestoreTxRxParamsAfterAuxMeas 		B2BM=1	// 0xb42c
+/*103*/ SpuRomRestoreSlimLdoTrimAfterContWkup 		B2BM=1	// 0xdd61
+/*104*/ eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomPostAuxMeasSequence
+
+
+
+
+// ============
+// MEASUREMENTS
+// ============
+
+// Ovl populate
+// ============
+// start HwsRomAuxMeasPopulateOvl
+// 	SpuRomClbContextSrrToOvl					B2BM=1
+// 	SpuRomAuxMeasCfgOtpToOvl					B2BM=1
+// 	SpuRomAuxMeasIspToOvl						B2BM=1
+// 	SpuRomAuxMeasMsrCtl12ToOvl					B2BM=1
+// end HwsRomAuxMeasPopulateOvl
+
+start HwsRomAuxMeasPopulateOvlB2B
+/*105*/ SpuRomClbContextSrrToOvl					B2BM=1	// 0xdcf2
+/*106*/ SpuRomAuxMeasCfgOtpToOvl					B2BM=1	// 0xdcf5
+/*107*/ SpuRomAuxMeasIspToOvl						B2BM=1	// 0xdce7
+/*108*/ SpuRomAuxMeasMsrCtl12ToOvl					B2BM=1	// 0xdce8
+/*109*/ eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomAuxMeasPopulateOvlB2B
+
+// start HwsRomSymMeasPopulateOvl
+// 	SpuRomClbContextSrrToOvl					B2BM=1
+// 	SpuRomAuxMeasCfgOtpToOvl					B2BM=1
+// 	SpuRomSymMeasMsrCtl12ToOvl					B2BM=1
+// end HwsRomSymMeasPopulateOvl
+
+start HwsRomSymMeasPopulateOvlB2B
+/*110*/ SpuRomClbContextSrrToOvl					B2BM=1	// 0xdcf2
+/*111*/ SpuRomAuxMeasCfgOtpToOvl					B2BM=1	// 0xdcf5
+/*112*/ SpuRomSymMeasMsrCtl12ToOvl					B2BM=1	// 0xdcea
+/*113*/ eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomSymMeasPopulateOvlB2B
+
+// AuxMeasRx
+// =========
+start HwsRomFsmAuxMeasRxConfigClbAndRadio
+/*114*/ SpuRomCloseWkup                             B2BM=1	// 0xdc66
+/*115*/ SpuRomConfigFllForAuxMeas 					B2BM=1	// 0xdd36
+/*116*/ SpuRomRadioSrrToHws							B2BM=1	// 0xdcac
+/*117*/ SpuRomSetRadioForMeasure					B2BM=1	// 0xdc1e
+/*118*/ eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomFsmAuxMeasRxConfigClbAndRadio
+
+start HwsRomFsmAuxMeasRxConfigClbAndRadioForContWkup
+/*119*/ SpuRomSetMaxAttenuation 					B2BM=1	// 0xdd59
+/*120*/ SpuRomConfigFllForAuxMeas 					B2BM=1	// 0xdd36
+/*121*/ SpuRomRadioSrrToHws							B2BM=1	// 0xdcac
+/*122*/ SpuRomSetRadioForMeasure					B2BM=1	// 0xdc1e
+/*123*/ eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomFsmAuxMeasRxConfigClbAndRadioForContWkup
+
+// AuxMeasLo
+// =========
+start HwsRomFsmAuxMeasLoConfigClbAndRadio
+/*124*/ SpuRomCloseWkup                             B2BM=1	// 0xdc66
+/*125*/ SpuRomConfigFllForAuxMeas 					B2BM=1	// 0xdd36
+/*126*/ SpuRomRadioSrrToHws							B2BM=1	// 0xdcac
+/*127*/ SpuRomSetRadioForLoCalib					B2BM=1	// 0xdc17
+/*128*/ eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomFsmAuxMeasLoConfigClbAndRadio
+
+// SymMeasLo
+// =========
+start HwsRomFsmSymMeasLoConfigClbAndRadio
+/*129*/ SpuRomCloseWkup                             B2BM=1	// 0xdc66
+/*130*/ SpuRomConfigFllForAuxMeas 					B2BM=1	// 0xdd36
+/*131*/ SpuRomRadioSrrToHws							B2BM=1	// 0xdcac
+/*132*/ SpuRomSetRadioForSymCalib					B2BM=1	// 0xdc10
+/*133*/ eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomFsmSymMeasLoConfigClbAndRadio
+
+// SymMeasLc
+// =========
+start HwsRomFsmSymMeasLcConfigClbAndRadio
+/*134*/ SpuRomCloseWkup                             B2BM=1	// 0xdc66
+/*135*/ SpuRomConfigFllForAuxMeas 					B2BM=1	// 0xdd36
+/*136*/ SpuRomRadioSrrToHws							B2BM=1	// 0xdcac
+/*137*/ SpuRomRadioInitForMeasureLC					B2BM=1	// 0xdaee
+/*138*/ SpuRomMemCopyRadioInit				B2BM=1	// 0xdb19
+/*139*/ SpuRomRadioModeForMeasureLC					B2BM=1	// 0xdaed
+/*140*/ eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomFsmSymMeasLcConfigClbAndRadio
+
+// LoVrefVbpCalib
+// ==============
+start HwsRomFsmMeasLoVrefVbpCalibConfigClbAndRadio
+/*141*/ SpuRomCloseWkup                             B2BM=1	// 0xdc66
+/*142*/ SpuRomConfigFllForAuxMeas 					B2BM=1	// 0xdd36
+/*143*/ SpuRomRadioSrrToHws							B2BM=1	// 0xdcac
+/*144*/ SpuRomSetRadioForMeasLoVrefVbpCalib			B2BM=1	// 0xdc33
+/*145*/ eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomFsmMeasLoVrefVbpCalibConfigClbAndRadio
+
+start HwsRomFsmMeasLoVrefVbpCalibConfigClbAndRadioNoSampling
+/*146*/ SpuRomCloseWkup                             	B2BM=1	// 0xdc66
+/*147*/ SpuRomConfigFllForAuxMeas 						B2BM=1	// 0xdd36
+/*148*/ SpuRomRadioSrrToHws								B2BM=1	// 0xdcac
+/*149*/ SpuRomSetRadioForMeasLoVrefVbpCalibNoSampling 	B2BM=1	// 0xdc37
+/*150*/ eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomFsmMeasLoVrefVbpCalibConfigClbAndRadioNoSampling
+
+// DfMeas
+// ======
+start HwsRomFsmDfMeasConfigClbAndRadio
+/*151*/ SpuRomCloseWkup                             B2BM=1	// 0xdc66
+/*152*/ SpuRomConfigFllForAuxMeas 					B2BM=1	// 0xdd36
+/*153*/ SpuRomRadioSrrToHws							B2BM=1	// 0xdcac
+/*154*/ SpuRomSetRadioForDFmeas						B2BM=1	// 0xdc3e
+/*155*/ eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomFsmDfMeasConfigClbAndRadio
+
+
+
+// FllMeasActivate
+// ===============
+// start HwsRomFsmFllMeasActivate
+// 	SpuRomRadioInit   				  			B2BM=1
+// 	FLL  OPCODE=meas MOD_EN=no_mod 	  			B2BM=1
+// 	SpuRomAuxMeasResClbToOvl					B2BM=1
+// end HwsRomFsmFllMeasActivate
+
+start HwsRomFsmFllMeasActivateB2B
+/*156*/ SpuRomRadioInit   				  			B2BM=1	// 0xdb1c
+/*157*/ FLL  OPCODE=meas MOD_EN=no_mod 	  			B2BM=1	// 0x9000
+/*158*/ SpuRomAuxMeasResClbToOvl					B2BM=1	// 0xdcfb
+/*159*/ eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomFsmFllMeasActivateB2B
+
+start HwsRomFsmFllMeasActivateForContWkupB2B
+/*160*/ SpuRomRadioInit   				  			B2BM=1	// 0xdb1c
+/*161*/ FLL  OPCODE=meas MOD_EN=no_mod 	  			B2BM=1	// 0x9000
+/*162*/ SpuRomAuxMeasResClbToOvl					B2BM=1	// 0xdcfb
+/*163*/ SpuRomSetMinAttenuation 					B2BM=1	// 0xdd5b
+/*164*/ eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomFsmFllMeasActivateForContWkupB2B
+
+// // AuxMeasRxNoOtp
+// // ==============
+// start HwsRomFsmAuxMeasRxNoOtp
+// 	SpuRomTurnOtpPowerOff 						B2BM=1
+// 	SpuRomCloseWkup                             B2BM=1
+// 	SpuRomConfigFllForAuxMeas 					B2BM=1
+// 	SpuRomRadioSrrToHws							B2BM=1
+// 	SpuRomSetRadioForMeasure					B2BM=1
+// 	SpuRomRadioInit   				  			B2BM=1
+// 	FLL  OPCODE=meas MOD_EN=no_mod 	  			B2BM=1
+// 	SpuRomAuxMeasResClbToOvl					B2BM=1
+// end HwsRomFsmAuxMeasRxNoOtp
+//
+// // AuxMeasLoNoOtp
+// // ==============
+// start HwsRomFsmAuxMeasLoLvNoOtp
+// 	SpuRomTurnOtpPowerOff 						B2BM=1
+// 	SpuRomCloseWkup                             B2BM=1
+// 	SpuRomConfigFllForAuxMeas 					B2BM=1
+// 	SpuRomRadioSrrToHws							B2BM=1
+// 	SpuRomSetRadioForLoCalib					B2BM=1
+// 	SpuRomRadioInit   				  			B2BM=1
+// 	FLL  OPCODE=meas MOD_EN=no_mod 	  			B2BM=1
+// 	SpuRomAuxMeasResClbToOvl					B2BM=1
+// end HwsRomFsmAuxMeasLoLvNoOtp
+//
+// // SymMeasLoLvNoOtp
+// // ================
+// start HwsRomFsmSymMeasLoLvNoOtp
+// 	SpuRomTurnOtpPowerOff 						B2BM=1
+// 	SpuRomCloseWkup                             B2BM=1
+// 	SpuRomConfigFllForAuxMeas 					B2BM=1
+// 	SpuRomRadioSrrToHws							B2BM=1
+// 	SpuRomSetRadioForSymCalib					B2BM=1
+// 	SpuRomRadioInit   				  			B2BM=1
+// 	FLL  OPCODE=meas MOD_EN=no_mod 	  			B2BM=1
+// 	SpuRomAuxMeasResClbToOvl					B2BM=1
+// end HwsRomFsmSymMeasLoLvNoOtp
+
+
+// ===============
+// LO CALIBRATIONS
+// ===============
+
+// Ovl populate
+// ============
+// start HwsRomLoCalibPopulateOvl
+// 	SpuRomClbContextSrrToOvl					B2BM=1
+// 	SpuRomLoCalibOtpToOvl						B2BM=1
+// 	SpuRomAuxMeasResIspToOvl					B2BM=1
+// end HwsRomLoCalibPopulateOvl
+
+start HwsRomLoCalibPopulateOvlB2B
+/*165*/ SpuRomClbContextSrrToOvl					B2BM=1	// 0xdcf2
+/*166*/ SpuRomLoCalibOtpToOvl						B2BM=1	// 0xdcf7
+/*167*/ SpuRomAuxMeasResIspToOvl					B2BM=1	// 0xdcee
+/*168*/ eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomLoCalibPopulateOvlB2B
+
+// LoCalib
+// =======
+start HwsRomFsmLoCalibConfigClbAndRadio
+/*169*/ SpuRomCloseWkup                             B2BM=1	// 0xdc66
+/*170*/ SpuRomConfigFllForLoCalib					B2BM=1	// 0xdd3a
+/*171*/ SpuRomRadioSrrToHws							B2BM=1	// 0xdcac
+/*172*/ SpuRomSetRadioForLoCalib					B2BM=1	// 0xdc17
+/*173*/ eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomFsmLoCalibConfigClbAndRadio
+
+// FllLoCalibActivate
+// ==================
+// start HwsRomFsmFllLoCalibActivate
+// 	SpuRomRadioInit   				  			B2BM=1
+// 	FLL  OPCODE=fast_clock_calib MOD_EN=no_mod 	B2BM=1
+// 	SpuRomCalibResClbToOvl						B2BM=1
+// end HwsRomFsmFllLoCalibActivate
+
+start HwsRomFsmFllLoCalibActivateB2B
+/*174*/ SpuRomRadioInit   				  			B2BM=1	// 0xdb1c
+/*175*/ FLL  OPCODE=fast_clock_calib MOD_EN=no_mod 	B2BM=1	// 0x9002
+/*176*/ SpuRomCalibResClbToOvl						B2BM=1	// 0xdcfc
+/*177*/ eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomFsmFllLoCalibActivateB2B
+
+// LoCalibNoOtp
+// ============
+start HwsRomFsmLoCalibLvNoOtp
+/*178*/ SpuRomTurnOtpPowerOff 						B2BM=1	// 0xdc46
+/*179*/ SpuRomCloseWkup                             B2BM=1	// 0xdc66
+/*180*/ SpuRomConfigFllForLoCalib					B2BM=1	// 0xdd3a
+/*181*/ SpuRomRadioSrrToHws							B2BM=1	// 0xdcac
+/*182*/ SpuRomSetRadioForLoCalib					B2BM=1	// 0xdc17
+/*183*/ SpuRomRadioInit   				  			B2BM=1	// 0xdb1c
+/*184*/ FLL  OPCODE=fast_clock_calib MOD_EN=no_mod 	B2BM=1	// 0x9002
+/*185*/ SpuRomCalibResClbToOvl					 	B2BM=1	// 0xdcfc
+end HwsRomFsmLoCalibLvNoOtp
+
+// ================
+// SYM CALIBRATIONS
+// ================
+
+// Ovl populate
+// ============
+
+start HwsRomSymCalibPopulateOvlB2B
+/*187*/ SpuRomClbContextSrrToOvl					B2BM=1	// 0xdcf2
+/*188*/ SpuRomSymCalibOtpToOvl						B2BM=1	// 0xdcf9
+/*189*/ eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomSymCalibPopulateOvlB2B
+
+// SymCalib
+// ========
+start HwsRomFsmSymCalibConfigClbAndRadio
+/*190*/ SpuRomCloseWkup                             B2BM=1	// 0xdc66
+/*191*/ SpuRomConfigFllForSymCalib					B2BM=1	// 0xdd41
+/*192*/ SpuRomRadioSrrToHws							B2BM=1	// 0xdcac
+/*193*/ SpuRomSetRadioForSymCalib					B2BM=1	// 0xdc10
+/*194*/ eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomFsmSymCalibConfigClbAndRadio
+
+// FllSymCalibActivate
+// ==================
+// start HwsRomFsmFllSymCalibActivate
+// 	SpuRomRadioInit   				  			B2BM=1
+// 	FLL  OPCODE=slow_clock_calib MOD_EN=no_mod 	B2BM=1
+// 	SpuRomCalibResClbToOvl						B2BM=1
+// end HwsRomFsmFllSymCalibActivate
+
+start HwsRomFsmFllSymCalibActivateB2B
+/*195*/ SpuRomRadioInit   				  			B2BM=1	// 0xdb1c
+/*196*/ FLL  OPCODE=slow_clock_calib MOD_EN=no_mod 	B2BM=1	// 0x9001
+/*197*/ SpuRomCalibResClbToOvl						B2BM=1	// 0xdcfc
+/*198*/ eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomFsmFllSymCalibActivateB2B
+
+
+// ===
+// SEC
+// ===
+
+start HwsRomEncryptDataB2B
+/*199*/ SpuRomSecCopyKeysFromOtp					B2BM=1	// 0xdb55
+/*200*/ SpuRomSecPreFetch   						B2BM=1	// 0xdb58
+/*201*/ SPU_SecProcess      						B2BM=1	// 0xdb5a
+/*202*/ SpuRomSecPush       						B2BM=1	// 0xdb5d
+/*203*/ eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomEncryptDataB2B
+
+// ===
+// PGX
+// ===
+
+// Activation
+// ==========
+// - Populate data and radio for LV or HV
+start HwsRomFsmPgxConfigHwsAndRadio
+/*204*/ SpuRomCloseWkup 							B2BM=1	// 0xdc66
+/*205*/ SpuRomRadioSrrToHws 						B2BM=1	// 0xdcac
+/*206*/ SpuRomPgxSrrToHws 							B2BM=1	// 0xdcae
+/*207*/ SpuRomSetAwdtSoftRguMaxTh					B2BM=1	// 0xdccc
+/*208*/ SpuRomSetRadioForTx							B2BM=1	// 0xdc09
+/*209*/ eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomFsmPgxConfigHwsAndRadio
+
+start HwsRomFsmPgxLoDivSymConfigHwsAndRadio
+/*210*/ SpuRomCloseWkup 							B2BM=1	// 0xdc66
+/*211*/ SpuRomRadioSrrToHws 						B2BM=1	// 0xdcac
+/*212*/ SpuRomPgxSrrToHws 							B2BM=1	// 0xdcae
+/*213*/ SpuRomCopyLoDivSymFromOvlToHws				B2BM=1	// 0xdcc9
+/*214*/ SpuRomSetAwdtSoftRguMaxTh					B2BM=1	// 0xdccc
+/*215*/ SpuRomSetRadioForLoDivSym					B2BM=1	// 0xdc2c
+/*216*/ eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomFsmPgxLoDivSymConfigHwsAndRadio
+
+start HwsRomFsmPgxLoDivSymForBle5ConfigHwsAndRadio
+/*217*/ SpuRomSetMaxAttenuation 					B2BM=1	// 0xdd59
+/*218*/ McuRomSetFastEnvdetClk 						B2BM=1	// 0xb205
+/*219*/ McuRomTxBle5SetWkupParams					B2BM=1	// 0xb0bb
+/*220*/ SpuRomRadioSrrToHws 						B2BM=1	// 0xdcac
+/*221*/ SpuRomPgxSrrToHws 							B2BM=1	// 0xdcae
+/*222*/ McuRomSetRegsForExtendedPacket				B2BM=1	// 0xb08a
+/*223*/ SpuRomCopyLoDivSymFromOvlToHws				B2BM=1	// 0xdcc9
+/*224*/ SpuRomSetAwdtSoftRguMaxTh					B2BM=1	// 0xdccc
+/*225*/ SpuRomSetRadioForLoDivSym					B2BM=1	// 0xdc2c
+/*226*/ eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomFsmPgxLoDivSymForBle5ConfigHwsAndRadio
+
+// - Activate WLT SENSOR (MFG ID)
+start HwsRomFsmPgxActivateMfgId
+/*227*/ SpuRomTurnOtpPowerOff 						B2BM=1	// 0xdc46
+/*228*/ SpuRomRadioInit                    			B2BM=1	// 0xdb1c
+/*229*/ PGX BEACON_TYPE=WLT_SENSOR LENGTH=37 BPDO=1	B2BM=0	// 0x166a
+/*230*/ eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomFsmPgxActivateMfgId
+
+// - Activate WLT SRVC UUID
+start HwsRomFsmPgxActivateSrvcId
+/*231*/ SpuRomTurnOtpPowerOff 						B2BM=1	// 0xdc46
+/*232*/ SpuRomRadioInit                    			B2BM=1	// 0xdb1c
+/*233*/ PGX BEACON_TYPE=WLT_SRVC_UUID LENGTH=37 BPDO=1 B2BM=0	// 0x166c
+/*234*/ eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomFsmPgxActivateSrvcId
+
+
+// - Activate RAW NON-WHITE (HW do the whitening)
+start HwsRomFsmPgxActivateRawNonWhiteLegacy
+/*235*/ SpuRomTurnOtpPowerOff 						B2BM=1	// 0xdc46
+/*236*/ SpuRomRadioInit                    			B2BM=1	// 0xdb1c
+/*237*/ PGX BEACON_TYPE=RAW_HW_NON_WHITE LENGTH=37 BPDO=1 B2BM=0	// 0x1660
+/*238*/ eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomFsmPgxActivateRawNonWhiteLegacy
+
+// - Activate ADV_EXT_IND
+start HwsRomFsmPgxActivateAdvExtInd
+/*239*/ SpuRomTurnOtpPowerOff 						B2BM=1	// 0xdc46
+/*240*/ SpuRomSyncEnvDetWithSoc 					B2BM=1	// 0xdcd2
+/*241*/ SpuRomRadioInit                    			B2BM=1	// 0xdb1c
+/*242*/ PGX BEACON_TYPE=ADV_EXT_IND 		BPDO=1	B2BM=0	// 0x1610
+/*243*/ eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomFsmPgxActivateAdvExtInd
+
+// - Activate ADV_EXT_IND
+start HwsRomFsmPgxActivateAdvExtIndB2B
+/*244*/ SpuRomSyncEnvDetWithSoc 					B2BM=1	// 0xdcd2
+/*245*/ SpuRomRadioInit                    			B2BM=1	// 0xdb1c
+/*246*/ PGX BEACON_TYPE=ADV_EXT_IND 		BPDO=0	B2BM=1	// 0x9410
+/*247*/ eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomFsmPgxActivateAdvExtIndB2B
+
+// - Activate AUX_ADV_IND
+start HwsRomFsmPgxActivateAuxAdvInd
+/*248*/ SpuRomTurnOtpPowerOff 							B2BM=1	// 0xdc46
+/*249*/ SpuRomSetPreambleAndDfSizeForBle5				B2BM=1	// 0xdcd6
+/*250*/ SpuRomSetWhtnForBle5							B2BM=1	// 0xdcd4
+/*251*/ SpuRomRadioInit                    				B2BM=1	// 0xdb1c
+/*252*/ PGX BEACON_TYPE=AUX_ADV_IND BPDO=1				B2BM=0	// 0x160e
+/*253*/ McuRomTxBle5RestoreParams 						B2BM=1	// 0xb0e4
+/*254*/ SpuRomSetMinAttenuation 						B2BM=1	// 0xdd5b
+/*255*/ eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomFsmPgxActivateAuxAdvInd
+
+
+// - Activate AUX_ADV_IND
+start HwsRomFsmPgxActivateAuxAdvIndRaw
+/*256*/ SpuRomTurnOtpPowerOff 								B2BM=1	// 0xdc46
+/*257*/ SpuRomSetPreambleAndDfSizeForBle5					B2BM=1	// 0xdcd6
+/*258*/ SpuRomSetRawPacketSize                              B2BM=1	// 0xdcc4
+/*259*/ SpuRomSetWhtnForBle5								B2BM=1	// 0xdcd4
+/*260*/ SpuRomRadioInit                    					B2BM=1	// 0xdb1c
+/*261*/ PGX BEACON_TYPE=RAW LENGTH=0 BPDO=1 				B2BM=0	// 0x1602
+/*262*/ McuRomTxBle5RestoreParams 							B2BM=1	// 0xb0e4
+/*263*/ SpuRomSetMinAttenuation 							B2BM=1	// 0xdd5b
+/*264*/ eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomFsmPgxActivateAuxAdvIndRaw
+
+
+// -  Populate data, radio and activate WLT SENSOR (no otp)
+start HwsRomFsmPgxActivateMfgIdNoOtp
+/*265*/ SpuRomTurnOtpPowerOff 						B2BM=1	// 0xdc46
+/*266*/ SpuRomCloseWkup 							B2BM=1	// 0xdc66
+/*267*/ SpuRomRadioSrrToHws 						B2BM=1	// 0xdcac
+/*268*/ SpuRomPgxSrrToHws 							B2BM=1	// 0xdcae
+/*269*/ SpuRomSetRadioForTx							B2BM=1	// 0xdc09
+/*270*/ SpuRomReduceSramAndRomDcdcFreq				B2BM=1	// 0xdc47
+/*271*/ SpuRomRadioInit                    			B2BM=1	// 0xdb1c
+/*272*/ PGX BEACON_TYPE=WLT_SENSOR LENGTH=37 BPDO=1 B2BM=0	// 0x166a
+/*273*/ eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomFsmPgxActivateMfgIdNoOtp
+
+// -  Populate data, radio and activate WLT SRVC UUID (no otp)
+start HwsRomFsmPgxActivateSrvcIdNoOtp
+/*274*/ SpuRomTurnOtpPowerOff 						B2BM=1	// 0xdc46
+/*275*/ SpuRomCloseWkup 							B2BM=1	// 0xdc66
+/*276*/ SpuRomRadioSrrToHws 						B2BM=1	// 0xdcac
+/*277*/ SpuRomPgxSrrToHws 							B2BM=1	// 0xdcae
+/*278*/ SpuRomSetRadioForTx							B2BM=1	// 0xdc09
+/*279*/ SpuRomReduceSramAndRomDcdcFreq				B2BM=1	// 0xdc47
+/*280*/ SpuRomRadioInit                    			B2BM=1	// 0xdb1c
+/*281*/ PGX BEACON_TYPE=WLT_SRVC_UUID LENGTH=37 BPDO=1 B2BM=0	// 0x166c
+/*282*/ eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomFsmPgxActivateSrvcIdNoOtp
+
+
+// // - Encrypted Data, GroupID, UID, version and packet structure type
+// start HwsRomPreparePacketWithConstsAndDataB2B
+// 	SpuCopyGroupID								B2BM=1
+// 	SpuRomInitializeUID							B2BM=1
+// 	SpuRomCopyFlowVersionToPacketFromGnvm		B2BM=1
+// 	McuRomUpdatePacketData						B2BM=1
+// 	eol NETIndex=0 B2BM=1
+// end HwsRomPreparePacketWithConstsAndDataB2B
+
+
+
+// - GroupID, UID and version
+start HwsRomPreparePacketWithConstsB2B
+/*283*/ SpuCopyGroupID								B2BM=1	// 0xdd67
+/*284*/ SpuRomInitializeUID							B2BM=1	// 0xdd68
+/*285*/ SpuRomCopyFlowVersionToPacketFromGnvm		B2BM=1	// 0xdd69
+/*286*/ eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomPreparePacketWithConstsB2B
+
+
+start HwsRomRadioTrngB2B
+/*287*/ SpuRomConfigFllForAuxMeas 					B2BM=1	// 0xdd36
+/*288*/ SpuRomRadioSrrToHws 						B2BM=1	// 0xdcac
+/*289*/ SpuRomRadioInitForMeasureLC					B2BM=1	// 0xdaee
+/*290*/ SpuRomMemCopyRadioInit						B2BM=1	// 0xdb19
+/*291*/ SpuRomRadioModeForMeasureLC					B2BM=1	// 0xdaed
+/*292*/ SpuRomSetLcAuxFreqForTrng					B2BM=1	// 0xdd6c
+/*293*/ SpuRomSetSymFreqForTrng						B2BM=1	// 0xdd6f
+/*294*/ SpuRomRadioInit                     		B2BM=1	// 0xdb1c
+/*295*/ trng clk_sel=dcdc_sym_aux first_iter=0 last_iter=1 	B2BM=1	// 0x98b6
+/*296*/ eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomRadioTrngB2B
+
+// start HwsRomRadioTrngAndUpdateNonceB2B
+// 	SpuRomConfigFllForAuxMeas 					B2BM=1
+// 	SpuRomRadioSrrToHws 						B2BM=1
+// 	SpuRomRadioInitForMeasureLC					B2BM=1
+// 	SpuRomMemCopyRadioInit				B2BM=1
+// 	SpuRomRadioModeForMeasureLC					B2BM=1
+// 	SpuRomUseMaxLcAuxFreq						B2BM=1
+// 	SpuRomRadioInit                     			B2BM=1
+// 	trng clk_sel=dcdc_sym_aux first_iter=0 last_iter=1 	B2BM=1
+// 	SpuRomCopyTrngToNonceSrr 					B2BM=1
+// 	eol NETIndex=0 B2BM=1
+// end HwsRomRadioTrngAndUpdateNonceB2B
+
+
+// // - Radio, Trng and set Adva
+// start HwsRomRadioTrngAndUpdateAdva
+// 	SpuRomConfigFllForAuxMeas 					B2BM=1
+// 	SpuRomRadioSrrToHws							B2BM=1
+// 	SpuRomRadioInitForMeasureLC					B2BM=1
+// 	SpuRomMemCopyRadioInit				B2BM=1
+// 	SpuRomRadioModeForMeasureLC					B2BM=1
+// 	SpuRomUseMaxLcAuxFreq						B2BM=1
+// 	SpuRomRadioInit                     			B2BM=1
+// 	trng clk_sel=dcdc_sym_aux first_iter=0 last_iter=1 	B2BM=1
+// 	SpuRomCopyTrngToAdvaSrr 					B2BM=1
+// end HwsRomRadioTrngAndUpdateAdva
+
+
+// =========
+// Temp Comp
+// =========
+
+// start hwsRomTempCompB2B
+// 	TempCompAnalogRguWsContext0ParamsSetOffsets					B2BM=1
+// 	TempCompAnalogRguWsContext0ParamsExecute					B2BM=1
+// 	TempCompAnalogRguWsContext1ParamsSetOffsets					B2BM=1
+// 	TempCompAnalogRguWsContext1ParamsExecute					B2BM=1
+// 	TempCompAnalogRguDynClbAndTempLoopContextParamsSetOffsets	B2BM=1
+// 	TempCompAnalogRguDynClbAndTempLoopContextParamsExecute		B2BM=1
+// 	TempCompAnalogHrrAndDrrShadowParamsSetOffsets				B2BM=1
+// 	TempCompAnalogHrrAndDrrShadowParamsExecute					B2BM=1
+// 	eol NETIndex=0 B2BM=1
+// end hwsRomTempCompB2B
+
+// ========
+// Wkup/CCA
+// ========
+
+start HwsRomRetWkupWithFreqOffset
+/*297*/ McuRomSetLoDcoCoarseForWkup					B2BM=1	// 0xb168
+/*298*/ rtcc WAKE_UP_MODE=HW_RET_WKUP TIMER_SET_INDEX=Thrs1 TIMER_MODE=VSTART_COUNT	// 0x0a45
+/*299*/ McuRomRestoreLoDcoCoarseAfterWkup			B2BM=1	// 0xb182
+/*300*/ eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomRetWkupWithFreqOffset
+
+start HwsRomContWkupWithFreqOffset
+/*301*/ McuRomSetLoDcoCoarseForWkup					B2BM=1	// 0xb168
+/*302*/ rtcc WAKE_UP_MODE=CONT_WKUP TIMER_SET_INDEX=Thrs1 TIMER_MODE=VSTART_COUNT	// 0x0a46
+/*303*/ McuRomRestoreLoDcoCoarseAfterWkup			B2BM=1	// 0xb182
+/*304*/ eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomContWkupWithFreqOffset
+
+start HwsRomRetWkupWithFreqOffsetWithException
+/*305*/ McuRomSetLoDcoCoarseForWkup					B2BM=1	// 0xb168
+/*306*/ rtcc WAKE_UP_MODE=HW_RET_WKUP TIMER_SET_INDEX=Thrs1 TIMER_MODE=VSTART_COUNT_EXC	// 0x0a35
+/*307*/ McuRomRestoreLoDcoCoarseAfterWkup			B2BM=1	// 0xb182
+/*308*/ eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomRetWkupWithFreqOffsetWithException
+
+start HwsRomContWkupWithFreqOffsetWithException
+/*309*/ McuRomSetLoDcoCoarseForWkup					B2BM=1	// 0xb168
+/*310*/ rtcc WAKE_UP_MODE=CONT_WKUP TIMER_SET_INDEX=Thrs1 TIMER_MODE=VSTART_COUNT_EXC	// 0x0a36
+/*311*/ McuRomRestoreLoDcoCoarseAfterWkup			B2BM=1	// 0xb182
+/*312*/ eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomContWkupWithFreqOffsetWithException
+
+
+// =================
+// Full FSM Sections
+// =================
+
+// -------
+// Sensing
+// -------
+
+// LO Proximity Sensing
+// ====================
+start HwsRomLoProxSensingInit
+/*313*/ SpuRomSensingOverlayInitFromGnvm 			B2BM=1	// 0xde52
+
+// 	HwsRomAuxMeasPopulateOvlB2B B2BM=1
+/*314*/ SpuRomClbContextSrrToOvl					B2BM=1	// 0xdcf2
+/*315*/ SpuRomAuxMeasCfgOtpToOvl					B2BM=1	// 0xdcf5
+/*316*/ SpuRomAuxMeasIspToOvl						B2BM=1	// 0xdce7
+/*317*/ SpuRomAuxMeasMsrCtl12ToOvl					B2BM=1	// 0xdce8
+
+/*318*/ McuRomPreLoProximityMeas 					B2BM=1	// 0xb11a
+/*319*/ eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomLoProxSensingInit
+
+start HwsRomLoProxSensingExecute
+/*320*/ rtcc WAKE_UP_MODE=HW_RET_WKUP TIMER_SET_INDEX=Thrs1 TIMER_MODE=VSTART_COUNT_EXC	// 0x0a35
+
+// 	HwsRomFsmAuxMeasLoConfigClbAndRadio B2BM=1
+/*321*/ SpuRomCloseWkup                             B2BM=1	// 0xdc66
+/*322*/ SpuRomConfigFllForAuxMeas 					B2BM=1	// 0xdd36
+/*323*/ SpuRomRadioSrrToHws							B2BM=1	// 0xdcac
+/*324*/ SpuRomSetRadioForLoCalib					B2BM=1	// 0xdc17
+
+// 	HwsRomFsmFllMeasActivateB2B B2BM=1
+/*325*/ SpuRomRadioInit   				  			B2BM=1	// 0xdb1c
+/*326*/ FLL  OPCODE=meas MOD_EN=no_mod 	  			B2BM=1	// 0x9000
+/*327*/ SpuRomAuxMeasResClbToOvl					B2BM=1	// 0xdcfb
+
+/*328*/ McuRomPostLoProximityMeas 					B2BM=1	// 0xb12d
+/*329*/ eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomLoProxSensingExecute
+
+// ----------
+// Calib & Tx
+// ----------
+
+// (Legacy) Symbol Calibration
+// ===========================
+start HwsRomSymCalib
+/*330*/ SpuRomAuxMeasAndCalibOverlayInitFromGnvm 	B2BM=1	// 0xde4a
+
+// 	HwsRomSymCalibPopulateOvlB2B B2BM=1
+/*331*/ SpuRomClbContextSrrToOvl					B2BM=1	// 0xdcf2
+/*332*/ SpuRomSymCalibOtpToOvl						B2BM=1	// 0xdcf9
+
+/*333*/ rtcc WAKE_UP_MODE=HW_RET_WKUP TIMER_SET_INDEX=Thrs1 TIMER_MODE=VSTART_COUNT	// 0x0a45
+
+// 	HwsRomFsmSymCalibConfigClbAndRadio B2BM=1
+/*334*/ SpuRomCloseWkup                             B2BM=1	// 0xdc66
+/*335*/ SpuRomConfigFllForSymCalib					B2BM=1	// 0xdd41
+/*336*/ SpuRomRadioSrrToHws							B2BM=1	// 0xdcac
+/*337*/ SpuRomSetRadioForSymCalib					B2BM=1	// 0xdc10
+
+// 	HwsRomFsmFllSymCalibActivateB2B B2BM=1
+/*338*/ SpuRomRadioInit   				  			B2BM=1	// 0xdb1c
+/*339*/ FLL  OPCODE=slow_clock_calib MOD_EN=no_mod 	B2BM=1	// 0x9001
+/*340*/ SpuRomCalibResClbToOvl						B2BM=1	// 0xdcfc
+
+/*341*/ SpuRomSetStateOperationDoneInd 				B2BM=1	// 0xdb6c
+/*342*/ eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomSymCalib
+
+// -----------------------------
+// Static & Dynamic Calibrations
+// -----------------------------
+
+// PowerGearing
+// ============
+start HwsRomPowerGearing
+/*343*/ SpuRomPowerGearingOverlayInitFromGnvm 		B2BM=1	// 0xde4d
+/*344*/ SpuRomPowerGearSetPowerGearingInd 			B2BM=1	// 0xddb5
+/*345*/ SpuRomElevatorGearConfig 					B2BM=0	// 0x5d77
+/*346*/ SpuRomPowerGearCheckGearReached 			B2BM=1	// 0xdd9f
+/*347*/ rpdi PowerGearingExit 						B2BM=1	// 0x8761
+/*348*/ SpuRomHighGearConfig 						B2BM=0	// 0x5d83
+/*349*/ SpuRomPowerGearCheckGearReached 			B2BM=1	// 0xdd9f
+/*350*/ rpdi PowerGearingExit 						B2BM=1	// 0x8761
+/*351*/ SpuRomPowerGearConfigHighGearSteadyState 	B2BM=1	// 0xdda4
+/*352*/ SpuRomDummy 								B2BM=1 // (Loop label inside HWS ROM must be aligned to 32bits)	// 0xdb69
+Loop PowerGearingExit
+/*353*/ SpuRomPowerGearingExit 						B2BM=1	// 0xddad
+/*354*/ eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomPowerGearing
+
+// LcAuxIdacCalib
+// ==============
+start HwsRomLcAuxIdacCalibInit
+/*355*/ SpuRomLcAuxIdacCalibOverlayInitFromGnvm 	B2BM=1	// 0xde4e
+
+// 	HwsRomSymMeasPopulateOvlB2B B2BM=1
+/*356*/ SpuRomClbContextSrrToOvl					B2BM=1	// 0xdcf2
+/*357*/ SpuRomAuxMeasCfgOtpToOvl					B2BM=1	// 0xdcf5
+/*358*/ SpuRomSymMeasMsrCtl12ToOvl					B2BM=1	// 0xdcea
+
+/*359*/ McuRomLcAuxCalibCleFsm 						B2BM=1 // Init	// 0xad88
+/*360*/ eol NETIndex=0 B2BM=1	// 0x8000
+end HwsRomLcAuxIdacCalibInit
+
+start HwsRomLcAuxIdacCalibExecute
+Loop LcAuxIdacCalibExecute
+/*361*/ rtcc WAKE_UP_MODE=HW_RET_WKUP TIMER_SET_INDEX=Thrs1 TIMER_MODE=VSTART_COUNT	// 0x0a45
+
+// 	HwsRomFsmSymMeasLcConfigClbAndRadio B2BM=1
+/*362*/ SpuRomCloseWkup                             B2BM=1	// 0xdc66
+/*363*/ SpuRomConfigFllForAuxMeas 					B2BM=1	// 0xdd36
+/*364*/ SpuRomRadioSrrToHws							B2BM=1	// 0xdcac
+/*365*/ SpuRomRadioInitForMeasureLC					B2BM=1	// 0xdaee
+/*366*/ SpuRomMemCopyRadioInit						B2BM=1	// 0xdb19
+/*367*/ SpuRomRadioModeForMeasureLC					B2BM=1	// 0xdaed
+
+/*368*/ SpuRomCopyCleAnalogctlForLcAuxIdacCalib 	B2BM=1	// 0xdd11
+
+// 	HwsRomCleActivationForFllOperation B2BM=1
+/*369*/ SpuRomCleOvlToHws 							B2BM=1	// 0xdd0b
+/*370*/ SpuRomEnableRadioTurnOff 					B2BM=1	// 0xdc08
+/*371*/ SpuRomCleFllParams							B2BM=1	// 0xdd0d
+/*372*/ SpuRomRadioInit 							B2BM=1	// 0xdb1c
+/*373*/ PGX CLE_EN=CLE_GO 							B2BM=1	// 0x9401
+/*374*/ SpuRomCleHwsToOvl 							B2BM=1	// 0xdd0c
+
+/*375*/ McuRomLcAuxCalibCleFsm 						B2BM=1	// 0xad88
+/*376*/ eol NETIndex=0 B2BM=1	// 0x8000
+/*377*/ rpdi LcAuxIdacCalibExecute 					B2BM=1	// 0x8769
+end HwsRomLcAuxIdacCalibExecute
+
+// ModIdxCalib
+// ===========
+// start HwsRomModIdxCalibInit
+// 	SpuRomDfCalibOverlayInitFromGnvm 			B2BM=1
+//
+// // 	HwsRomAuxMeasPopulateOvlB2B	B2BM=1
+// 	SpuRomClbContextSrrToOvl					B2BM=1
+// 	SpuRomAuxMeasCfgOtpToOvl					B2BM=1
+// 	SpuRomAuxMeasIspToOvl						B2BM=1
+// 	SpuRomAuxMeasMsrCtl12ToOvl					B2BM=1
+//
+// 	McuRomDfAndSprinklerStepCalibFsm 			B2BM=1 // init
+// end HwsRomModIdxCalibInit
+//
+// start HwsRomModIdxCalibExecute
+// 	Loop ModIdxCalibExecute
+// 	rtcc WAKE_UP_MODE=HW_RET_WKUP TIMER_SET_INDEX=Thrs1 TIMER_MODE=VSTART_COUNT_EXC
+//
+// // 	HwsRomFsmAuxMeasLoConfigClbAndRadio B2BM=1
+// 	SpuRomCloseWkup                             B2BM=1
+// 	SpuRomConfigFllForAuxMeas 					B2BM=1
+// 	SpuRomRadioSrrToHws							B2BM=1
+// 	SpuRomSetRadioForLoCalib					B2BM=1
+//
+// // 	HwsRomFsmFllMeasActivateB2B B2BM=1
+// 	SpuRomRadioInit   				  			B2BM=1
+// 	FLL  OPCODE=meas MOD_EN=no_mod 	  			B2BM=1
+// 	SpuRomAuxMeasResClbToOvl					B2BM=1
+//
+// 	McuRomDfAndSprinklerStepCalibFsm 			B2BM=1
+//
+// 	eol NETIndex=0 B2BM=1
+// 	rpdi ModIdxCalibExecute 					B2BM=1
+// end HwsRomModIdxCalibExecute
+
+
+// ==============
+// Harvester Test
+// ==============
+
+start HwsRomPreHarvesterFlow
+// Note: must be after HwsRomRadioTrngB2B
+/*379*/ SpuRomCopyTrngToNonceSrr B2BM=0	// 0x5d72
+/*380*/ McuRomUpdateAdvaFromNonce B2BM=0	// 0x341c
+/*381*/ SpuRomSetFlowManagerFsmCycleBeginInd0 B2BM=0	// 0x5d46
+end HwsRomPreHarvesterFlow
+
+start RAW_TX_LOOP
+// 	HwsRomPreparePacketWithConstsB2B B2BM=1
+/*383*/ SpuCopyGroupID								B2BM=1	// 0xdd67
+/*384*/ SpuRomInitializeUID							B2BM=1	// 0xdd68
+/*385*/ SpuRomCopyFlowVersionToPacketFromGnvm		B2BM=1	// 0xdd69
+
+/*386*/ McuRomUpdatePacketData B2BM=1	// 0xafb9
+
+// 	HwsRomEncryptDataB2B B2BM=1
+/*387*/ SpuRomSecCopyKeysFromOtp					B2BM=1	// 0xdb55
+/*388*/ SpuRomSecPreFetch   						B2BM=1	// 0xdb58
+/*389*/ SPU_SecProcess      						B2BM=1	// 0xdb5a
+/*390*/ SpuRomSecPush       						B2BM=1	// 0xdb5d
+
+Loop repeat_tx_loop
+/*391*/ McuRomHarvFlowCounter						B2BM=1	// 0xb614
+/*392*/ RPDI EndHarvFlow							B2BM=1	// 0x8794
+/*393*/ SpuRomRadioSrrToHws 						B2BM=1	// 0xdcac
+/*394*/ SpuRomPgxSrrToHws 							B2BM=1	// 0xdcae
+/*395*/ McuBasicFlowChoseSymForPgx 					B2BM=1	// 0xb49b
+/*396*/ SpuRomSetRadioForTx							B2BM=1	// 0xdc09
+/*397*/ RPDI HarvesterTxStart						B2BM=1	// 0x8791
+/*398*/ SpuRomSetLoDivSymFromCh37InClb				B2BM=1	// 0xdccb
+/*399*/ SpuRomSetRadioForLoDivSym					B2BM=1	// 0xdc2c
+/*400*/ SpuRomDummy                                 B2BM=1	// 0xdb69
+Loop HarvesterTxStart
+/*401*/ SpuRomRadioInit                    				B2BM=1	// 0xdb1c
+/*402*/ PGX BEACON_TYPE=WLT_SRVC_UUID LENGTH=37 BPDO=1 	B2BM=0	// 0x166c
+/*403*/ RPDI repeat_tx_loop                                 B2BM=1	// 0x8787
+Loop EndHarvFlow
+/*404*/ eol NETIndex=0 B2BM=1	// 0x8000
+end RAW_TX_LOOP

@@ -1,0 +1,21 @@
+# Exclude All
+
+*
+
+# Unexclude relevant files/directories
+
+!*/
+!/bin/*
+!/src/**/*.py
+!/tests/**/*.py
+!/assets/**/*
+!.github/workflows/**/*.yml
+
+# Unexclude common files
+
+!.gitignore
+!LICENSE
+!README.md
+!Dockerfile
+!ruff.toml
+!pyproject.toml

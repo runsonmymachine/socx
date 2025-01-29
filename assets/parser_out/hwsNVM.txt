@@ -1,0 +1,516 @@
+
+
+// ==============================================================================
+// ==============================================================================
+//				            	G E N 3   F L O W
+// ==============================================================================
+// ==============================================================================
+//
+//	FSM:
+//  ====
+//                        ---------------------------------------------------------------------------
+//                        |                         ^                ^                              ^
+//                        V                         |                |                              |
+//  Boot&Init ----> FlowManagerFsm -----------> Sensing    StaticAndDynamicCalib 	 CalibAndTx (+CheckTestModeAndPace)
+//			     	      			     |						     ^								^
+//                                       |					    	 |							    |
+//					        		     -----------------------------							    |
+//						    	         |															|
+//							             |															|
+//							             ------------------------------------------------------------
+//
+//
+// Flow parameters:
+// ================
+// Thrs0 - Wkup calib
+// Thrs1 - Wkup/CCA timeout
+// Thrs2 - Pacing
+// Thrs3 - Pacing
+//
+//
+
+start NET
+
+// ==============================================================================
+//				               F L O W    I N I T
+// ==============================================================================
+
+// 1st wave - must be B2B=0!
+/*0*/   SpuRomFirstBootInitUntilFirstTempComp B2BM=0	// 0x5ca8
+
+// Flow init and powerup
+/*1*/   HwsRomNetInit B2BM=1	// 0x8600
+/*2*/   HwsRomFlowFSMPowerupB2B B2BM=1	// 0x8609
+/*3*/   SpuRomSetInitialParamsUntilFirstTempCompPart2 B2BM=1	// 0xdc9f
+
+// Generate and Initialize ADVA (ISP register)
+/*4*/   HwsRomRadioTrngB2B B2BM=1	// 0x871f
+/*5*/   SpuRomCopyTrngToAdvaSrr B2BM=0	// 0x5d73
+
+// ==============================================================================
+//				               F L O W    M A N A G E R
+// ==============================================================================
+
+// Flow Manager
+// ============
+Loop FlowManagerFsm
+/*6*/   HwsRomFlowManagerOverlayInitFromGnvm	B2BM=1	// 0x860d
+/*7*/   McuRomMiniRxDebugPowerGearConfig		B2BM=1	// 0xb564
+/*8*/   McuRomFlowManagerFsm	 				B2BM=1	// 0xb334
+
+// Sensing
+// -------
+/*9*/   eol TempSensingLoop				        B2BM=1	// 0x801e
+/*10*/  eol LoProxSensingLoop		    	    B2BM=1	// 0x8026
+/*11*/  eol RcSensorLoop	 			        B2BM=1	// 0x8029
+/*12*/  eol TamperSensingLoop  			        B2BM=1	// 0x8032
+/*13*/  eol SystemClksMeasLoop  			    B2BM=1	// 0x8035
+// Place holders
+/*14*/  eol FlowManagerFsm  			        B2BM=1	// 0x8006
+/*15*/  eol FlowManagerFsm  			        B2BM=1	// 0x8006
+
+// StaticAndDynamicCalib
+// ---------------------
+/*16*/  eol TempStaticCompLoop			  	    B2BM=1	// 0x808d
+/*17*/  eol PowerGearingLoop  			        B2BM=1	// 0x8090
+/*18*/  eol LcAuxIdacCalibLoop  			    B2BM=1	// 0x8092
+/*19*/  eol WkupThresholdCalibLoop  		    B2BM=1	// 0x8095
+/*20*/  eol LoVrefVbpCalibLoop  			    B2BM=1	// 0x809d
+/*21*/  eol ModIdxCalibLoop  			        B2BM=1	// 0x80a7
+// Place holders
+/*22*/  eol FlowManagerFsm  			        B2BM=1	// 0x8006
+/*23*/  eol FlowManagerFsm  			        B2BM=1	// 0x8006
+
+// CalibAndTx
+// ----------
+/*24*/  eol LoTxRxCalibLoop  	    		    B2BM=1	// 0x805e
+/*25*/  eol RxSweepAndAuxMeasLoop 			    B2BM=1	// 0x8048
+/*26*/  eol LoTxRxCalibLoop  	    		    B2BM=1	// 0x805e
+/*27*/  eol SymCalibLoop					    B2BM=1	// 0x8067
+/*28*/  eol MiniRxLoop						    B2BM=1	// 0x80b0
+/*29*/  eol SecAndTxLoop   				        B2BM=1	// 0x8069
+
+
+// ==============================================================================
+//						          S E N S I N G
+// ==============================================================================
+
+// Temperature Sensing
+// ===================
+Loop TempSensingLoop
+/*30*/  HwsRomTempSensingOverlayInitFromGnvm B2BM=1	// 0x8610
+/*31*/  HwsRomTempSensePopulateOvlB2B B2BM=1	// 0x8621
+/*32*/  McuRomCalcTempFromSensorFsm B2BM=1 // init	// 0xaae1
+Loop TempSensingLoopExecute
+/*33*/  HwsRomTempSenseLvRadioInit B2BM=1	// 0x8616
+/*34*/  HwsRomTempSenseLvActivation B2BM=1	// 0x861d
+/*35*/  McuRomCalcTempFromSensorFsm B2BM=1	// 0xaae1
+/*36*/  eol FlowManagerFsm B2BM=0	// 0x0006
+/*37*/  eol TempSensingLoopExecute B2BM=0	// 0x0021
+
+// LO Proximity Sensing
+// ====================
+Loop LoProxSensingLoop
+/*38*/  HwsRomLoProxSensingInit B2BM=1	// 0x8739
+/*39*/  HwsRomLoProxSensingExecute B2BM=1	// 0x8740
+/*40*/  eol FlowManagerFsm B2BM=0	// 0x0006
+
+// Loop LoProxSensingLoop
+// SpuRomSensingOverlayInitFromGnvm B2BM=1
+// HwsRomAuxMeasPopulateOvlB2B B2BM=1
+// McuRomPreLoProximityMeas B2BM=1
+// rtcc WAKE_UP_MODE=HW_RET_WKUP TIMER_SET_INDEX=Thrs1 TIMER_MODE=VSTART_COUNT_EXC
+// HwsRomFsmAuxMeasLoConfigClbAndRadio B2BM=1
+// HwsRomFsmFllMeasActivateB2B B2BM=1
+// McuRomPostLoProximityMeas B2BM=1
+// eol FlowManagerFsm B2BM=0
+
+// RC Sensing
+// ==========
+Loop RcSensorLoop
+/*41*/  SpuRomSensingOverlayInitFromGnvm B2BM=1	// 0xde52
+/*42*/  HwsRomRcSensPopulateOvlB2B B2BM=1	// 0x862c
+/*43*/  McuRomRoundRobinRCSensorConfig B2BM=1	// 0xab7e
+/*44*/  McuRomRcSensingFsm B2BM=1 // init	// 0xab42
+Loop RcSensorLoopExecute
+/*45*/  HwsRomRcSensConfigHwsAndRadio B2BM=1	// 0x8623
+/*46*/  HwsRomRcSensActivation B2BM=1	// 0x8629
+/*47*/  McuRomRcSensingFsm B2BM=1	// 0xab42
+/*48*/  eol FlowManagerFsm B2BM=0	// 0x0006
+/*49*/  eol RcSensorLoopExecute B2BM=0	// 0x002d
+
+// Tamper Sensing
+// ==============
+Loop TamperSensingLoop
+/*50*/  SpuRomSensingOverlayInitFromGnvm B2BM=1	// 0xde52
+/*51*/  McuRomTamperSensing B2BM=1	// 0xab89
+/*52*/  eol FlowManagerFsm B2BM=0	// 0x0006
+
+// System Clks Measure (BLE5)
+// ==========================
+Loop SystemClksMeasLoop
+/*53*/  SpuRomSensingOverlayInitFromGnvm B2BM=1	// 0xde52
+/*54*/  SpuRomFmuOtpToOvl B2BM=1	// 0xdd01
+
+Loop SystemClksMeasExecute
+/*55*/  McuRomSystemClksMeasFsm B2BM=1	// 0xb1c4
+/*56*/  eol FlowManagerFsm B2BM=0	// 0x0006
+/*57*/  eol EnvdetMeasLoop B2BM=1	// 0x803f
+/*58*/  eol RtcMeasLoop B2BM=1	// 0x8043
+
+Loop SocMeasLoop
+/*59*/  rtcc WAKE_UP_MODE=HW_RET_WKUP TIMER_SET_INDEX=Thrs1 TIMER_MODE=VSTART_COUNT_EXC	// 0x0a35
+/*60*/  HwsRomFsmFmuLoDivSymConfigHwsAndRadio B2BM=1	// 0x8644
+/*61*/  HwsRomFsmFmuLoDivSymVsSocActivateB2B B2BM=1	// 0x864b
+/*62*/  eol SystemClksMeasExecute B2BM=1	// 0x8037
+
+Loop EnvdetMeasLoop
+/*63*/  SpuRomVddDig2VddAdbDisable B2BM=0	// 0x5d55
+/*64*/  SpuRomEnvdetMeasWithSoc B2BM=1	// 0xdd08
+/*65*/  SpuRomVddDig2VddAdbEnable B2BM=1	// 0xdd56
+/*66*/  eol SystemClksMeasExecute B2BM=1	// 0x8037
+
+Loop RtcMeasLoop
+/*67*/  SpuRomVddDig2VddAdbDisable B2BM=1	// 0xdd55
+/*68*/  rtcc WAKE_UP_MODE=HW_RET_WKUP TIMER_SET_INDEX=Thrs1 TIMER_MODE=VSTART_COUNT	// 0x0a45
+/*69*/  SpuRomCloseWkup	B2BM=1	// 0xdc66
+/*70*/  SpuRomVddDig2VddAdbEnable B2BM=1	// 0xdd56
+/*71*/  eol SystemClksMeasExecute B2BM=1	// 0x8037
+
+// ==============================================================================
+//                           C A L I B   A N D   T X
+// ==============================================================================
+
+
+// RxSweep & AuxMeas
+// =================
+Loop RxSweepAndAuxMeasLoop
+// =======================
+
+// RX Sweep & AuxMeas preprocessing
+// --------------------------------
+/*72*/  HwsRomRxSweepAndAuxMeasOverlayInitFromGnvm B2BM=1	// 0x8613
+/*73*/  HwsRomAuxMeasPopulateOvlB2B	B2BM=1	// 0x8669
+/*74*/  HwsRomPreAuxMeasSequence B2BM=1	// 0x8660
+/*75*/  McuRomAuxMeasPrepare B2BM=1	// 0xa4ff
+/*76*/  eol AuxMeas B2BM=1	// 0x8052
+
+// RxSweep
+// =======
+Loop RxSweep
+// =========
+
+// RX Sweep preprocessing
+// ----------------------
+/*77*/  McuRomRxSweepPreProcessing B2BM=1	// 0xa553
+/*78*/  eol AuxMeas B2BM=1	// 0x8052
+
+// RX Sweep execution
+// ------------------
+/*79*/  rtcc WAKE_UP_MODE=HW_RET_WKUP TIMER_SET_INDEX=Thrs1 TIMER_MODE=VSTART_COUNT_EXC	// 0x0a35
+
+// RX Sweep postprocessing
+// -----------------------
+/*80*/  McuRomRxSweepPostProcessing B2BM=1	// 0xa57c
+/*81*/  eol PostRxSweepAndAuxMeas B2BM=1	// 0x805c
+
+// Aux Measurement
+// ===============
+Loop AuxMeas
+// =========
+
+// AuxMeas preprocessing
+// ---------------------
+
+// AuxMeas execution
+// -----------------
+/*82*/  McuRomAuxMeasFsm B2BM=1	// 0xb434
+/*83*/  eol PostAuxMeas B2BM=1	// 0x805b
+/*84*/  HwsRomRetWkupWithFreqOffsetWithException B2BM=1	// 0x8731
+/*85*/  eol AuxMeasExecute B2BM=1	// 0x8057
+/*86*/  HwsRomContWkupWithFreqOffsetWithException B2BM=1	// 0x8735
+Loop AuxMeasExecute B2BM=1
+/*87*/  HwsRomFsmAuxMeasRxConfigClbAndRadioForContWkup B2BM=1	// 0x8677
+/*88*/  SpuRomSetVbpRxForCh39 B2BM=1	// 0xdd31
+/*89*/  HwsRomFsmFllMeasActivateForContWkupB2B B2BM=1	// 0x86a0
+/*90*/  eol AuxMeas B2BM=1	// 0x8052
+
+// AuxMeas postprocessing
+// ----------------------
+Loop PostAuxMeas
+/*91*/  McuRomAuxMeasPostProcessing B2BM=1	// 0xa622
+Loop PostRxSweepAndAuxMeas
+/*92*/  HwsRomPostAuxMeasSequence B2BM=1	// 0x8664
+/*93*/  eol FlowManagerFsm B2BM=0	// 0x0006
+
+
+// Lo Tx & Rx Calibration
+// ======================
+Loop LoTxRxCalibLoop
+// =================
+/*94*/  SpuRomAuxMeasAndCalibOverlayInitFromGnvm B2BM=1	// 0xde4a
+/*95*/  HwsRomLoCalibPopulateOvlB2B B2BM=1	// 0x86a5
+/*96*/  McuRomLoCalibFsm B2BM=1 // init	// 0xaecf
+Loop LoTxRxCalibExecute
+/*97*/  rtcc WAKE_UP_MODE=HW_RET_WKUP TIMER_SET_INDEX=Thrs1 TIMER_MODE=VSTART_COUNT	// 0x0a45
+/*98*/  HwsRomFsmLoCalibConfigClbAndRadio B2BM=1 // Note: need to copy cw_scaler (even default) to ovl (swspad_05) before	// 0x86a9
+/*99*/  HwsRomFsmFllLoCalibActivateB2B B2BM=1	// 0x86ae
+/*100*/ McuRomLoCalibFsm B2BM=1	// 0xaecf
+/*101*/ eol FlowManagerFsm B2BM=0	// 0x0006
+/*102*/ eol LoTxRxCalibExecute B2BM=1	// 0x8061
+
+
+// (Legacy) Symbol Calibration
+// ===========================
+Loop SymCalibLoop
+// ==============
+/*103*/ HwsRomSymCalib B2BM=1	// 0x874a
+/*104*/ eol FlowManagerFsm B2BM=0	// 0x0006
+
+// Loop SymCalibLoop
+// // ==============
+// SpuRomAuxMeasAndCalibOverlayInitFromGnvm B2BM=1
+// HwsRomSymCalibPopulateOvlB2B B2BM=1
+// rtcc WAKE_UP_MODE=HW_RET_WKUP TIMER_SET_INDEX=Thrs1 TIMER_MODE=VSTART_COUNT
+// HwsRomFsmSymCalibConfigClbAndRadio B2BM=1
+// HwsRomFsmFllSymCalibActivateB2B B2BM=1
+// SpuRomSetStateOperationDoneInd B2BM=1
+// eol FlowManagerFsm B2BM=0
+
+
+// Sec & Tx Sprinkler
+// ==================
+Loop SecAndTxLoop
+// ==============
+
+// GNVM to OVL
+// -----------
+/*105*/ SpuRomSecAndTxOverlayInitFromGnvm B2BM=1	// 0xde4b
+
+// NONCE
+// -----
+/*106*/ HwsRomRadioTrngB2B B2BM=1	// 0x871f
+/*107*/ SpuRomCopyTrngToNonceSrr B2BM=1	// 0xdd72
+/*108*/ McuRomUpdateAdvaFromNonce B2BM=0	// 0x341c
+/*109*/ McuRomSaveChargingTime B2BM=1	// 0xb18f
+
+// Tx Sprinkler
+// ------------
+Loop TxSprinkler
+/*110*/ McuRomTxSprinkler B2BM=1	// 0xb02a
+/*111*/ eol FlowManagerFsm B2BM=0	// 0x0006
+/*112*/ eol TxLegacyLoop B2BM=1	// 0x807a
+/*113*/ eol TxBle5Loop B2BM=1	// 0x8081
+
+// Prepare packet
+// --------------
+Loop PreparePacketLoop
+/*114*/ HwsRomPreparePacketWithConstsB2B B2BM=1	// 0x871b
+/*115*/ McuRomUpdatePacketData B2BM=1	// 0xafb9
+/*116*/ McuRomUpdateNonceForPacketType B2BM=1	// 0xafb1
+/*117*/ HwsRomEncryptDataB2B B2BM=1	// 0x86c7
+/*118*/ McuRomPostPacketPreparation B2BM=1	// 0xaf8e
+/*119*/ eol TxSprinkler B2BM=0 // Back to TxSprinkler FSM	// 0x006e
+/*120*/ eol PreparePacketLoop B2BM=0 // For debug data	// 0x0072
+/*121*/ eol TxBle5Loop B2BM=1 // Jump here for BLE5	// 0x8081
+// Jump here from legacy
+
+// Legacy packet
+// -------------
+Loop TxLegacyLoop
+/*122*/ rtcc WAKE_UP_MODE=HW_RET_WKUP TIMER_SET_INDEX=Thrs1 TIMER_MODE=VSTART_COUNT	// 0x0a45
+/*123*/ SpuRomVddDig2VddAdbDisable B2BM=1	// 0xdd55
+/*124*/ HwsRomFsmPgxLoDivSymConfigHwsAndRadio B2BM=1	// 0x86d2
+/*125*/ SpuRomReduceSramAndRomDcdcFreq B2BM=1	// 0xdc47
+/*126*/ HwsRomFsmPgxActivateSrvcId B2BM=1 // B2B=0 (goes to retention in the middle)	// 0x86e7
+/*127*/ SpuRomVddDig2VddAdbEnable B2BM=1	// 0xdd56
+/*128*/ eol TxSprinkler B2BM=1	// 0x806e
+
+// BLE5 packet
+// -----------
+Loop TxBle5Loop
+// CCA
+/*129*/ rtcc WAKE_UP_MODE=HW_RET_WKUP TIMER_SET_INDEX=Thrs1 TIMER_MODE=VSTART_COUNT	// 0x0a45
+/*130*/ rtcc WAKE_UP_MODE=CONT_WKUP TIMER_SET_INDEX=Thrs1 TIMER_MODE=VSTART_COUNT_EXC B2BM=1	// 0x8a36
+// CH37 packet
+/*131*/ SpuRomVddDig2VddAdbDisable B2BM=1	// 0xdd55
+/*132*/ HwsRomFsmPgxLoDivSymForBle5ConfigHwsAndRadio B2BM=1	// 0x86d9
+/*133*/ SpuRomReduceSramAndRomDcdcFreq B2BM=1	// 0xdc47
+/*134*/ HwsRomFsmPgxActivateAdvExtInd B2BM=1	// 0x86ef
+// Cont wkup for delay (configured right after RET_WKUP)
+// Extended packet
+/*135*/ McuRomTxBle5SetRadioParams B2BM=1	// 0xb0d6
+/*136*/ HwsRomFsmPgxLoDivSymConfigHwsAndRadio B2BM=1	// 0x86d2
+/*137*/ SpuRomReduceSramAndRomDcdcFreq B2BM=1	// 0xdc47
+/*138*/ HwsRomFsmPgxActivateAuxAdvIndRaw B2BM=1 // B2B=0 in the middle	// 0x8700
+/*139*/ SpuRomVddDig2VddAdbEnable B2BM=1	// 0xdd56
+/*140*/ eol TxSprinkler B2BM=1	// 0x806e
+
+
+// ==============================================================================
+//     		S T A T I C	   A N D   D Y N A M I C	C A L I B R A T I O N S
+// ==============================================================================
+
+
+// TempStaticComp
+// ==============
+Loop TempStaticCompLoop
+/*141*/ McuRomAdbDoneDelayTempComp B2BM=1	// 0xab26
+/*142*/ McuRomTempComp B2BM=1	// 0xab13
+/*143*/ eol FlowManagerFsm B2BM=0	// 0x0006
+
+// PowerGearing
+// ============
+Loop PowerGearingLoop
+/*144*/ HwsRomPowerGearing B2BM=1	// 0x8757
+/*145*/ eol FlowManagerFsm B2BM=0	// 0x0006
+
+// Loop PowerGearingLoop
+// SpuRomPowerGearingOverlayInitFromGnvm B2BM=1
+// SpuRomPowerGearSetPowerGearingInd B2BM=1
+// SpuRomElevatorGearConfig B2BM=0
+// SpuRomPowerGearCheckGearReached B2BM=1
+// eol PowerGearingExit B2BM=1
+// SpuRomHighGearConfig B2BM=0
+// SpuRomPowerGearCheckGearReached B2BM=1
+// eol PowerGearingExit B2BM=1
+// SpuRomPowerGearConfigHighGearSteadyState B2BM=1
+// Loop PowerGearingExit
+// SpuRomPowerGearingExit B2BM=1
+// eol FlowManagerFsm B2BM=0
+
+// LcAuxIdacCalib
+// ==============
+Loop LcAuxIdacCalibLoop
+/*146*/ HwsRomLcAuxIdacCalibInit B2BM=1	// 0x8763
+/*147*/ HwsRomLcAuxIdacCalibExecute B2BM=1	// 0x8769
+/*148*/ eol FlowManagerFsm B2BM=0	// 0x0006
+
+// Loop LcAuxIdacCalibLoop
+// SpuRomLcAuxIdacCalibOverlayInitFromGnvm B2BM=1
+// HwsRomSymMeasPopulateOvlB2B B2BM=1
+// McuRomLcAuxCalibCleFsm B2BM=1 // Init
+// Loop LcAuxIdacCalibExecute
+// rtcc WAKE_UP_MODE=HW_RET_WKUP TIMER_SET_INDEX=Thrs1 TIMER_MODE=VSTART_COUNT
+// HwsRomFsmSymMeasLcConfigClbAndRadio B2BM=1
+// SpuRomCopyCleAnalogctlForLcAuxIdacCalib B2BM=1
+// HwsRomCleActivationForFllOperation B2BM=1
+// McuRomLcAuxCalibCleFsm B2BM=1
+// eol FlowManagerFsm B2BM=0
+// eol LcAuxIdacCalibExecute B2BM=1
+
+// WkupThresholdCalib
+// ==================
+Loop WkupThresholdCalibLoop
+/*149*/ SpuRomWkupThresholdCalibOverlayInitFromGnvm B2BM=1	// 0xde4f
+/*150*/ McuRomSetParamsForWkupSequence B2BM=1	// 0xb1b4
+/*151*/ McuRomWkupCalibCleFsm B2BM=1 // Init	// 0xb223
+Loop WkupLowSensitivityCalib B2BM=1
+/*152*/ HwsRomCleActivationForWkupOperation B2BM=1	// 0x8635
+/*153*/ McuRomWkupCalibCleFsm B2BM=1	// 0xb223
+/*154*/ McuRomSetParamsForCcaSequence B2BM=1	// 0xb19b
+/*155*/ eol FlowManagerFsm B2BM=0	// 0x0006
+/*156*/ eol WkupLowSensitivityCalib B2BM=0	// 0x0098
+
+// LoVrefVbpCalib
+// ==============
+Loop LoVrefVbpCalibLoop
+/*157*/ SpuRomLoVrefVbpCalibOverlayInitFromGnvm B2BM=1	// 0xde50
+/*158*/ HwsRomSymMeasPopulateOvlB2B B2BM=1	// 0x866e
+/*159*/ McuRomLoVrefVbpCalibCleFsm B2BM=1 // Init	// 0xabc6
+Loop LoVrefVbpCalibExecute
+/*160*/ rtcc WAKE_UP_MODE=HW_RET_WKUP TIMER_SET_INDEX=Thrs1 TIMER_MODE=VSTART_COUNT_EXC	// 0x0a35
+/*161*/ HwsRomFsmMeasLoVrefVbpCalibConfigClbAndRadioNoSampling B2BM=1	// 0x8692
+/*162*/ SpuRomCopyCleAnalogctlForLoVrefVbpCalib B2BM=1	// 0xdd22
+/*163*/ HwsRomCleActivationForFllOperation B2BM=1	// 0x862e
+/*164*/ McuRomLoVrefVbpCalibCleFsm B2BM=1	// 0xabc6
+/*165*/ eol FlowManagerFsm B2BM=0	// 0x0006
+/*166*/ eol LoVrefVbpCalibExecute B2BM=1	// 0x80a0
+
+// ModIdxCalib
+// ===========
+Loop ModIdxCalibLoop
+/*167*/ SpuRomDfCalibOverlayInitFromGnvm B2BM=1	// 0xde51
+/*168*/ HwsRomAuxMeasPopulateOvlB2B	B2BM=1	// 0x8669
+/*169*/ McuRomDfAndSprinklerStepCalibFsm B2BM=1 // init	// 0xae17
+Loop ModIdxCalibExecute
+/*170*/ rtcc WAKE_UP_MODE=HW_RET_WKUP TIMER_SET_INDEX=Thrs1 TIMER_MODE=VSTART_COUNT_EXC	// 0x0a35
+/*171*/ HwsRomFsmDfMeasConfigClbAndRadio B2BM=1	// 0x8697
+/*172*/ HwsRomFsmDfMeasActivateB2B B2BM=1	// 0x863c
+/*173*/ McuRomDfAndSprinklerStepCalibFsm B2BM=1	// 0xae17
+/*174*/ eol FlowManagerFsm B2BM=0	// 0x0006
+/*175*/ eol ModIdxCalibExecute B2BM=1	// 0x80aa
+
+// Loop ModIdxCalibLoop
+// SpuRomDfCalibOverlayInitFromGnvm B2BM=1
+// HwsRomAuxMeasPopulateOvlB2B	B2BM=1
+// McuRomDfAndSprinklerStepCalibFsm B2BM=1 // init
+// Loop ModIdxCalibExecute
+// rtcc WAKE_UP_MODE=HW_RET_WKUP TIMER_SET_INDEX=Thrs1 TIMER_MODE=VSTART_COUNT_EXC
+// HwsRomFsmAuxMeasLoConfigClbAndRadio B2BM=1
+// HwsRomFsmFllMeasActivateB2B B2BM=1
+// McuRomDfAndSprinklerStepCalibFsm B2BM=1
+// eol FlowManagerFsm B2BM=0
+// eol ModIdxCalibExecute B2BM=1
+
+
+// ==============================================================================
+//                                 P A C I N G
+// ==============================================================================
+
+// Loop PacingLoop
+// rtcc WAKE_UP_MODE=OFF_WKUP TIMER_SET_INDEX=Thrs3 TIMER_MODE=PACE_PEND // mode 7 - this is where we pace 1s for bat tag (1s)
+// eol FlowManagerFsm B2BM=0
+
+// ==============================================================================
+//                                M I N I   R X
+// ==============================================================================
+
+Loop MiniRxLoop
+
+// Copy configuration from OVL and configure the WU mechanism to WU on the 5th Beacon
+/*176*/ SpuRomTestModeOverlayInitFromGnvm B2BM=1	// 0xde55
+/*177*/ HwsRomAuxMeasPopulateOvlB2B B2BM=1	// 0x8669
+/*178*/ HwsRomPreAuxMeasSequence B2BM=1	// 0x8660
+/*179*/ McuRomSetWkupParamsPreRx B2BM=1	// 0xb4da
+/*180*/ rtcc  WAKE_UP_MODE=HW_RET_WKUP TIMER_SET_INDEX=Thrs1 TIMER_MODE=VSTART_COUNT	// 0x0a45
+/*181*/ eol NoContWuForFirstRun B2BM=1	// 0x80b7
+
+// Main Loop which consist of  Wakeup->Measurement
+Loop MiniRxMainLoop
+/*182*/ rtcc WAKE_UP_MODE=CONT_WKUP TIMER_SET_INDEX=Thrs1 TIMER_MODE=VSTART_COUNT	// 0x0a46
+Loop NoContWuForFirstRun
+// Check if WU succeed and set the next FLL measurement  (Or exit loop)
+/*183*/ McuRomMiniRxFSM B2BM=1	// 0xb4df
+/*184*/ eol ExitCheckRx B2BM=1	// 0x80bf
+// Perform measurement on the required beacon
+/*185*/ HwsRomFsmAuxMeasRxConfigClbAndRadioForContWkup B2BM=1	// 0x8677
+/*186*/ SpuRomSetVbpRxForCh39 B2BM=1	// 0xdd31
+/*187*/ HwsRomFsmFllMeasActivateForContWkupB2B B2BM=1	// 0x86a0
+// Check if measuremnt succeed and set the next WU state (Or exit loop)
+/*188*/ McuRomMiniRxFSM B2BM=1	// 0xb4df
+/*189*/ eol ExitCheckRx B2BM=1	// 0x80bf
+/*190*/ eol MiniRxMainLoop B2BM=1	// 0x80b6
+
+// Finish Mini-rx loop and perform operation (Or just return to main flow if no command were received)
+Loop ExitCheckRx
+/*191*/ McuRomMiniRxRestoreWkupParams B2BM=1	// 0xb533
+/*192*/ HwsRomPostAuxMeasSequence B2BM=1	// 0x8664
+/*193*/ McuRomMiniRxCheckDone B2BM=1	// 0xb540
+/*194*/ eol FlowManagerFsm B2BM=0	// 0x0006
+/*195*/ eol HarvesterFlow B2BM=0	// 0x00c4
+
+
+// ==============================================================================
+//                            H A R V E S T E R   F L O W
+// ==============================================================================
+
+Loop HarvesterFlow
+/*196*/ SpuRomSetFlowManagerFsmCycleBeginInd0 B2BM=0	// 0x5d46
+/*197*/ RAW_TX_LOOP B2BM=1	// 0x877f
+/*198*/ SpuRomDummy B2BM=1	// 0xdb69
+/*199*/ rtcc WAKE_UP_MODE=OFF_WKUP TIMER_SET_INDEX=Thrs2 TIMER_MODE=PACE_PEND	// 0x0a78
+/*200*/ SpuRomForceReset B2BM=1	// 0xde43
+/*201*/ eol HarvesterFlow B2BM=0	// 0x00c4
+
+end
