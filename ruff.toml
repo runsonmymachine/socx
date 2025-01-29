@@ -1,0 +1,54 @@
+src = ["src/whyson", "test"]
+exclude = [
+    ".git",
+    ".venv",
+    "*.pyi",
+    "*.eggs",
+    ".ruff_cache",
+    ".pytest_cache",
+    ".gitignore",
+    "src/socrun",
+    "src/static",
+]
+fix = true
+line-length = 80
+cache-dir = "~/.cache/ruff"
+indent-width = 4
+target-version = "py313"
+respect-gitignore = true
+
+[format]
+line-ending = "auto"
+quote-style = "double"
+indent-style = "space"
+docstring-code-format = true
+skip-magic-trailing-comma = false
+docstring-code-line-length = "dynamic"
+
+[lint]
+select = [
+    "A",
+    "B",
+    "C4",
+    "D",
+    "E",
+    "W",
+    "F",
+    "N",
+    "DJ",
+    "PT",
+    "EM",
+    "UP",
+    "NPY",
+    "ISC",
+    "ICN",
+    "SIM",
+    "DOC",
+    "RUF",
+    "PERF",
+    "ASYNC",
+]
+ignore = ["D100", "D101", "D102", "D103", "D104", "D105", "D205", "RUF022"]
+
+[lint.pydocstyle]
+convention = "numpy"
