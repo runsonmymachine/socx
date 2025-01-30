@@ -37,7 +37,7 @@ from pathlib import Path as Path
 LST_SUFFIXES: t.Final[list[str]] = [".lst", ".list"]
 """Default list file suffixes."""
 
-PARSER_OUTPUT_PATH = Path(
+DEFAULT_INPUT_PATH = Path(
     Path(os.environ.get("WAREA", ""))
     / "PIXIE_ROM_FW"
     / "PixieROMApp"
@@ -47,10 +47,10 @@ PARSER_OUTPUT_PATH = Path(
 ).resolve()
 """Default output path for parser generated list files."""
 
-CONVERTER_OUTPUT_PATH = Path(
+DEFAULT_OUTPUT_PATH = Path(
     Path(__file__).parent.parent / "assets" / "converter_out"
 ).resolve()
-"""Default output path for converter generated SystemVerilog files."""
+"""Default output path for converter generated files."""
 
 
 # -----------------------------------------------------------------------------
@@ -82,21 +82,21 @@ _DEFAULT_STATISTICS = dc.field(
 
 @dc.dataclass(init=False)
 class FileInfo:
-    out_base_path: PathType
-    lst_base_path: PathType
+    out_dir_path: PathType
+    in_dir_path: PathType
     lst_file_paths: list[Path]
 
     def __init__(
-        self, lst_base_path: PathType, out_base_path: PathType
+        self, in_dir_path: PathType, out_dir_path: PathType
     ) -> None:
-        self.lst_base_path = self._correct_path(
-            lst_base_path, PARSER_OUTPUT_PATH
+        self.in_dir_path = self._correct_path(
+            in_dir_path, DEFAULT_INPUT_PATH
         )
-        self.out_base_path = self._correct_path(
-            out_base_path, CONVERTER_OUTPUT_PATH
+        self.out_dir_path = self._correct_path(
+            out_dir_path, DEFAULT_OUTPUT_PATH
         )
-        self.lst_file_paths = self._fetch_lists(self.lst_base_path)
-        self._validate(self.lst_base_path, self.lst_file_paths)
+        self.lst_file_paths = self._fetch_lists(self.in_dir_path)
+        self._validate(self.in_dir_path, self.lst_file_paths)
 
     @classmethod
     def _fetch_lists(cls, base_path: Path) -> list[Path]:
@@ -177,7 +177,7 @@ class SVCoverpoint(Formatter["Instruction"]):
             f"bins {func} {assignment} {{ [ "
             + f"(({addr} - {base}) >> 1) : "
             + f"((({addr} - {base} + 'd{blen}) >> 1) - 1) "
-            + f"] }};"
+            + "] };"
         )
 
 class LstLine(Formatter["Instruction"]):
@@ -285,7 +285,7 @@ class Instruction:
 
 
 def prepare(info: FileInfo) -> None:
-    info.out_base_path.mkdir(exist_ok=True, parents=True)
+    info.out_dir_path.mkdir(exist_ok=True, parents=True)
 
 
 def parse_one(file: Path) -> ASM:
@@ -329,11 +329,11 @@ def main() -> int:
     )
     args = argparser.parse_args(sys.argv[1:])
     info = FileInfo(
-        lst_base_path=args.path_in[0] if bool(args.path_in) else None,
-        out_base_path=args.path_out[0] if bool(args.path_out) else None,
+        in_dir_path=args.path_in[0] if bool(args.path_in) else None,
+        out_dir_path=args.path_out[0] if bool(args.path_out) else None,
     )
     prepare(info)
-    write(info.out_base_path, parse(info))
+    write(info.out_dir_path, parse(info))
 
 
 if __name__ == "__main__":
