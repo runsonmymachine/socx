@@ -37,7 +37,7 @@ from pathlib import Path as Path
 LST_SUFFIXES: t.Final[list[str]] = [".lst", ".list"]
 """Default list file suffixes."""
 
-PARSER_OUTPUT_PATH = Path(
+DEFAULT_INPUT_PATH = Path(
     Path(os.environ.get("WAREA", ""))
     / "PIXIE_ROM_FW"
     / "PixieROMApp"
@@ -47,10 +47,10 @@ PARSER_OUTPUT_PATH = Path(
 ).resolve()
 """Default output path for parser generated list files."""
 
-CONVERTER_OUTPUT_PATH = Path(
+DEFAULT_OUTPUT_PATH = Path(
     Path(__file__).parent.parent / "assets" / "converter_out"
 ).resolve()
-"""Default output path for converter generated SystemVerilog files."""
+"""Default output path for converter generated files."""
 
 
 # -----------------------------------------------------------------------------
@@ -82,21 +82,17 @@ _DEFAULT_STATISTICS = dc.field(
 
 @dc.dataclass(init=False)
 class FileInfo:
-    out_base_path: PathType
-    lst_base_path: PathType
+    out_dir_path: PathType
+    in_dir_path: PathType
     lst_file_paths: list[Path]
 
-    def __init__(
-        self, lst_base_path: PathType, out_base_path: PathType
-    ) -> None:
-        self.lst_base_path = self._correct_path(
-            lst_base_path, PARSER_OUTPUT_PATH
+    def __init__(self, in_dir_path: PathType, out_dir_path: PathType) -> None:
+        self.in_dir_path = self._correct_path(in_dir_path, DEFAULT_INPUT_PATH)
+        self.out_dir_path = self._correct_path(
+            out_dir_path, DEFAULT_OUTPUT_PATH
         )
-        self.out_base_path = self._correct_path(
-            out_base_path, CONVERTER_OUTPUT_PATH
-        )
-        self.lst_file_paths = self._fetch_lists(self.lst_base_path)
-        self._validate(self.lst_base_path, self.lst_file_paths)
+        self.lst_file_paths = self._fetch_lists(self.in_dir_path)
+        self._validate(self.in_dir_path, self.lst_file_paths)
 
     @classmethod
     def _fetch_lists(cls, base_path: Path) -> list[Path]:
@@ -164,21 +160,23 @@ class SVCoverpoint(Formatter["Instruction"]):
     ) -> str:
         func = inst.funcname
         blen = inst.bytelen
-        addr = hex(inst.address).replace('0x', "'h", 1)
+        addr = hex(inst.address).replace("0x", "'h", 1)
         fnlen = len(func)
 
-        base = hex(stats.base_address).replace('0x', "'h", 1)
+        base = hex(stats.base_address).replace("0x", "'h", 1)
         maxlen = stats.max_funcname_len
 
         indent = max(1, indent)
         alignment = (1 + (maxlen + (indent - 1)) // indent * indent) - fnlen
         assignment = "=".rjust(alignment, " ")
         return (
+            f"{indent * ' '}"
             f"bins {func} {assignment} {{ [ "
-            + f"(({addr} - {base}) >> 1) : "
-            + f"((({addr} - {base} + 'd{blen}) >> 1) - 1) "
-            + f"] }};"
+            f"(({addr} - {base}) >> 1) : "
+            f"((({addr} - {base} + 'd{blen}) >> 1) - 1) "
+            "] };"
         )
+
 
 class LstLine(Formatter["Instruction"]):
     """
@@ -285,7 +283,7 @@ class Instruction:
 
 
 def prepare(info: FileInfo) -> None:
-    info.out_base_path.mkdir(exist_ok=True, parents=True)
+    info.out_dir_path.mkdir(exist_ok=True, parents=True)
 
 
 def parse_one(file: Path) -> ASM:
@@ -307,33 +305,58 @@ def write(output_dir: Path, asm_modules: list[ASM]) -> None:
         print(f"SystemVerilog output successfuly written to {output_file}")
 
 
-def main() -> int:
+def _init_cli_parser() -> argparse.ArgumentParser:
     argparser = argparse.ArgumentParser(prog="lst_to_cov")
     argparser.add_argument(
         "-i",
-        "--path-in",
-        dest="path_in",
+        "--input",
+        "--input-dir",
+        dest="input_dir",
         nargs=1,
         type=Path,
-        help="Path to parser output directory containing .lst files to be converted.",
         required=False,
+        help=(
+            "Path to parser output directory containing .lst files to be "
+            "converted."
+        ),
     )
     argparser.add_argument(
         "-o",
-        "--path-out",
-        dest="path_out",
+        "--output",
+        "--output-dir",
+        dest="output_dir",
         nargs=1,
         type=Path,
         help="Path to output directory for converter to dump output.",
         required=False,
     )
-    args = argparser.parse_args(sys.argv[1:])
+    argparser.add_argument(
+        "-t",
+        "--tab-width",
+        dest="indent",
+        nargs=1,
+        type=int,
+        default=4,
+        required=False,
+        action='store',
+        help="Number of spaces to use for tab indentations."
+    )
+    return argparser
+
+
+def _parse_cli_args(argparser: argparse.ArgumentParser) -> argparse.Namespace:
+    return argparser.parse_args(sys.argv[1:])
+
+
+def main() -> int:
+    argparser = _init_cli_parser()
+    args = _parse_cli_args(argparser)
     info = FileInfo(
-        lst_base_path=args.path_in[0] if bool(args.path_in) else None,
-        out_base_path=args.path_out[0] if bool(args.path_out) else None,
+        in_dir_path=args.input_dir[0] if bool(args.input_dir) else None,
+        out_dir_path=args.output_dir[0] if bool(args.output_dir) else None,
     )
     prepare(info)
-    write(info.out_base_path, parse(info))
+    write(info.out_dir_path, parse(info))
 
 
 if __name__ == "__main__":
