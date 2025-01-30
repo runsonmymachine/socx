@@ -15,6 +15,7 @@
 # Unexclude common files
 
 !.gitignore
+!.python-version
 !LICENSE
 !README.md
 !Dockerfile

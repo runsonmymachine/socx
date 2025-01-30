@@ -305,12 +305,13 @@ def write(output_dir: Path, asm_modules: list[ASM]) -> None:
         print(f"SystemVerilog output successfuly written to {output_file}")
 
 
-def main() -> int:
+def _init_cli_parser() -> argparse.ArgumentParser:
     argparser = argparse.ArgumentParser(prog="lst_to_cov")
     argparser.add_argument(
         "-i",
-        "--path-in",
-        dest="path_in",
+        "--input",
+        "--input-dir",
+        dest="input_dir",
         nargs=1,
         type=Path,
         required=False,
@@ -321,17 +322,38 @@ def main() -> int:
     )
     argparser.add_argument(
         "-o",
-        "--path-out",
-        dest="path_out",
+        "--output",
+        "--output-dir",
+        dest="output_dir",
         nargs=1,
         type=Path,
         help="Path to output directory for converter to dump output.",
         required=False,
     )
-    args = argparser.parse_args(sys.argv[1:])
+    argparser.add_argument(
+        "-t",
+        "--tab-width",
+        dest="indent",
+        nargs=1,
+        type=int,
+        default=4,
+        required=False,
+        action='store',
+        help="Number of spaces to use for tab indentations."
+    )
+    return argparser
+
+
+def _parse_cli_args(argparser: argparse.ArgumentParser) -> argparse.Namespace:
+    return argparser.parse_args(sys.argv[1:])
+
+
+def main() -> int:
+    argparser = _init_cli_parser()
+    args = _parse_cli_args(argparser)
     info = FileInfo(
-        in_dir_path=args.path_in[0] if bool(args.path_in) else None,
-        out_dir_path=args.path_out[0] if bool(args.path_out) else None,
+        in_dir_path=args.input_dir[0] if bool(args.input_dir) else None,
+        out_dir_path=args.output_dir[0] if bool(args.output_dir) else None,
     )
     prepare(info)
     write(info.out_dir_path, parse(info))

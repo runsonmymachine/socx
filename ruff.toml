@@ -3,7 +3,7 @@ fix = true
 line-length = 79
 cache-dir = "~/.cache/ruff"
 indent-width = 4
-target-version = "py37"
+target-version = "py312"
 respect-gitignore = true
 exclude = [
     ".git",
