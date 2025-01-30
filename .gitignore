@@ -8,7 +8,8 @@
 !/bin/*
 !/src/**/*.py
 !/tests/**/*.py
-!/assets/**/*
+!/assets/sv_out/*
+!/assets/parser_out/*
 !.github/workflows/**/*.yml
 
 # Unexclude common files
