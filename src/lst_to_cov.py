@@ -22,10 +22,11 @@ from __future__ import annotations
 
 import os as os
 import sys as sys
+import abc as abc
 import typing as t
+import dataclasses as dc
 import argparse as argparse
 from pathlib import Path as Path
-import dataclasses as dc
 
 
 # -----------------------------------------------------------------------------
@@ -47,7 +48,7 @@ PARSER_OUTPUT_PATH = Path(
 """Default output path for parser generated list files."""
 
 CONVERTER_OUTPUT_PATH = Path(
-    Path(__file__).parent / "tests" / "assets" / "lst_to_cov" / "sv_out"
+    Path(__file__).parent.parent / "assets" / "converter_out"
 ).resolve()
 """Default output path for converter generated SystemVerilog files."""
 
@@ -57,7 +58,21 @@ CONVERTER_OUTPUT_PATH = Path(
 # -----------------------------------------------------------------------------
 
 
+T = t.TypeVar("T")
+
 PathType = t.Union[str, Path, None]
+
+# -----------------------------------------------------------------------------
+# Dataclass Aliases
+# -----------------------------------------------------------------------------
+
+
+_DEFAULT_LIST = dc.field(default_factory=list, init=False)
+
+
+_DEFAULT_STATISTICS = dc.field(
+    default_factory=lambda: Statistics(), init=False
+)
 
 
 # -----------------------------------------------------------------------------
@@ -65,71 +80,179 @@ PathType = t.Union[str, Path, None]
 # -----------------------------------------------------------------------------
 
 
-class ASMBase:
-    """Base ASM class."""
+@dc.dataclass(init=False)
+class FileInfo:
+    out_base_path: PathType
+    lst_base_path: PathType
+    lst_file_paths: list[Path]
+
+    def __init__(
+        self, lst_base_path: PathType, out_base_path: PathType
+    ) -> None:
+        self.lst_base_path = self._correct_path(
+            lst_base_path, PARSER_OUTPUT_PATH
+        )
+        self.out_base_path = self._correct_path(
+            out_base_path, CONVERTER_OUTPUT_PATH
+        )
+        self.lst_file_paths = self._fetch_lists(self.lst_base_path)
+        self._validate(self.lst_base_path, self.lst_file_paths)
+
+    @classmethod
+    def _fetch_lists(cls, base_path: Path) -> list[Path]:
+        lst = list(base_path.glob("*.lst"))
+        lst.extend(list(base_path.glob("*.list")))
+        return lst
+
+    @classmethod
+    def _correct_path(cls, path: PathType, default: Path) -> Path:
+        if path is None:
+            return default
+        elif isinstance(path, str):
+            return Path(path)
+        else:
+            return path
+
+    @classmethod
+    def _validate(cls, base, lst) -> t.Never:
+        cls._validate_base_path(base)
+        cls._validate_file_paths(lst)
+
+    @classmethod
+    def _validate_base_path(cls, path: Path) -> t.Never:
+        if not path.exists():
+            err = f"Non existent path: {path}"
+            raise OSError(err)
+
+    @classmethod
+    def _validate_file_paths(cls, paths: list[Path]) -> t.Never:
+        if not bool(paths):
+            err = f"No valid paths were found: {paths}."
+            raise OSError(err)
+        elif isinstance(paths, (list, tuple, set)):
+            for path in paths:
+                if path.suffix not in LST_SUFFIXES:
+                    err = f"Invalid file path: {path}"
+                    raise OSError(err)
+        else:  # attempt to recover from user path or path-type mistake
+            paths = Path(paths)
+            if paths.is_dir():
+                paths = cls._fetch_lists(paths)
+            elif paths.is_file():
+                paths = [paths]
+            cls._validate_file_paths([paths])
 
 
-@dc.dataclass(repr=False)
+class Formatter(abc.ABC, t.Generic[T]):
+    """Format an object of type T to a user defined string format."""
+
+    @classmethod
+    @abc.abstractmethod
+    def fmt(cls, obj: T, *args, **kwargs) -> str: ...
+
+
+@dc.dataclass
+class SVCoverpoint(Formatter["Instruction"]):
+    @classmethod
+    def fmt(
+        cls,
+        inst: Instruction,
+        stats: Statistics,
+        indent: int = 4,
+        *args,
+        **kwargs,
+    ) -> str:
+        func = inst.funcname
+        blen = inst.bytelen
+        addr = hex(inst.address).replace('0x', "'h", 1)
+        fnlen = len(func)
+
+        base = hex(stats.base_address).replace('0x', "'h", 1)
+        maxlen = stats.max_funcname_len
+
+        indent = max(1, indent)
+        alignment = (1 + (maxlen + (indent - 1)) // indent * indent) - fnlen
+        assignment = "=".rjust(alignment, " ")
+        return (
+            f"bins {func} {assignment} {{ [ "
+            + f"(({addr} - {base}) >> 1) : "
+            + f"((({addr} - {base} + 'd{blen}) >> 1) - 1) "
+            + f"] }};"
+        )
+
+class LstLine(Formatter["Instruction"]):
+    """
+    Convert an instruction to its corresponding SystemVerilog covergroup
+    representation string.
+    """
+
+    @classmethod
+    def fmt(cls, inst: Instruction, *args, **kwargs) -> str:
+        return (
+            f"""{inst.address} {inst.funcname} {inst.bytelen} {inst.index}"""
+        ).strip()
+
+
+@dc.dataclass
+class Statistics:
+    """Collects statistics on consumed instructions."""
+
+    base_address: int = -1
+    """Base address, currently, address of the first parsed instruction."""
+    max_funcname_len: int = -1
+    """Maximum function name length of consumed instructions."""
+
+    def consume(self, inst: Instruction) -> None:
+        if inst is None:
+            return
+        if self.base_address == -1:
+            self.base_address = inst.address
+        if self.max_funcname_len < len(inst.funcname):
+            self.max_funcname_len = len(inst.funcname)
+
+
+@dc.dataclass
 class ASM:
     """An ordered list of assembly instructions read from a file."""
 
     COMMENT_TOKENS: t.ClassVar[tuple[str, ...]] = ("#",)
     """Possible tokens for inline comments."""
-    base: int
-    """Base address, i.e. address of first instruction."""
-    filename: str
+
+    file: PathType
     """Assembly file name."""
-    instructions: list[Instruction]
-    """Ordered list of assembly instructions."""
-
-    def __init__(self, filename: str) -> None:
-        self.base = None
-        self.filename = filename
-        self.instructions = []
-
-    def to_sv(self) -> str:
-        return "\n".join(
-            instruction.to_sv() for instruction in self.instructions
-        )
-
-    def to_lst(self) -> str:
-        return "\n".join(
-            instruction.to_lst() for instruction in self.instructions
-        )
+    statistics: Statistics = _DEFAULT_STATISTICS
+    """Statistics about the current instruction set."""
+    instructions: list[Instruction] = _DEFAULT_LIST
+    """Ordered list of assembly instructions parsed from consumed strings."""
 
     def consume(self, line: str) -> None:
         if self.is_comment(line):
             return
-        inst = Instruction.fromstr(line)
-        if self.base is None:
-            self.base = inst.address
-        inst.base = self.base
-        self.instructions.append(inst)
+        instruction = Instruction.fromstr(line)
+        self.statistics.consume(instruction)
+        self.instructions.append(instruction)
+
+    def to_sv(self, indent: int = 4) -> str:
+        return "\n".join(
+            SVCoverpoint.fmt(instruction, self.statistics, indent)
+            for instruction in self.instructions
+        )
+
+    def to_lst(self) -> str:
+        return "\n".join(
+            LstLine.fmt(instruction) for instruction in self.instructions
+        )
 
     def is_comment(self, line: str) -> bool:
         line = line.strip()
         return any(line.startswith(tok) for tok in ASM.COMMENT_TOKENS)
 
-    def __str__(self) -> str:
-        return "\n".join(str(instruction) for instruction in self.instructions)
-
-    def __repr__(self) -> str:
-        return "\n".join(
-            repr(instruction) for instruction in self.instructions
-        )
-
-
-class InstructionBase:
-    """Instruction base mixin class."""
-
-    base: int
-
-    def __init__(self, *args, **kwargs):
-        self.base = None
+    def __post_init__(self) -> None:
+        self.file = FileInfo._correct_path(self.file, None)
 
 
 @dc.dataclass
-class Instruction(InstructionBase):
+class Instruction:
     """Represents a single instruction in the list file."""
 
     address: int
@@ -147,93 +270,13 @@ class Instruction(InstructionBase):
         Create an Instruction instance from an instruction line read from a
         list file.
         """
-        args = [field.strip() for field in line.split()]
-        addr, fn, blen, idx = (
-            int(args[0], 16),
-            args[1],
-            int(args[2]),
-            int(args[3]),
+        args = line.strip().split()
+        return cls(
+            address=int(args[0], base=16),
+            funcname=args[1].strip(),
+            bytelen=int(args[2], base=10),
+            index=int(args[3], base=10),
         )
-        return cls(addr, fn, blen, idx)
-
-    def to_sv(self) -> str:
-        return self.__sv_repr__()
-
-    def to_lst(self) -> str:
-        return self.__lst_repr__()
-
-    def __repr__(self) -> str:
-        return self.__sv_repr__()
-
-    def __sv_repr__(self) -> str:
-        """
-        Convert an instruction to its corresponding SystemVerilog covergroup
-        representation string.
-        """
-        return f"""
-        bins {self.funcname} = {{[
-            (('h{self.address} - 'h{self.base}) >> 1) :
-            (('h{self.address} - 'h{self.base} + {self.bytelen}) >> 1) - 1
-        ]}};
-        """.strip()
-
-    def __lst_repr__(self) -> str:
-        """
-        Convert an instruction to its corresponding SystemVerilog covergroup
-        representation string.
-        """
-        return f"""
-        {self.address} {self.funcname} {self.bytelen} {self.index}
-        """.strip()
-
-
-@dc.dataclass(init=False)
-class FileInfo:
-    out_base_path: PathType
-    lst_base_path: PathType
-    lst_file_paths: list[Path]
-
-    def __init__(self, lst_base: PathType, out_base: PathType) -> None:
-        self.lst_file_paths = self._fetch_lists(lst_base)
-        self.lst_base_path = self._correct_path(lst_base, PARSER_OUTPUT_PATH)
-        self.out_base_path = self._correct_path(
-            out_base, CONVERTER_OUTPUT_PATH
-        )
-        self._validate(self.lst_base_path, self.lst_file_paths)
-
-    @classmethod
-    def _correct_path(cls, path: PathType, default: Path) -> Path:
-        if path is None:
-            return default
-        elif isinstance(path, str):
-            return Path(path)
-        else:
-            return path
-
-    @classmethod
-    def _validate(cls, base, lst) -> t.Never:
-        cls._validate_base_path(base)
-        cls._validate_file_paths(lst)
-
-    @classmethod
-    def _fetch_lists(cls, base_path: Path) -> list[Path]:
-        lst = list(base_path.glob("*.lst"))
-        lst.extend(list(base_path.glob("*.list")))
-        return lst
-
-    @classmethod
-    def _validate_base_path(cls, path: t.Union[Path]) -> t.Never:
-        assert path.exists()
-        assert path.is_dir()
-
-    @classmethod
-    def _validate_file_paths(cls, paths: list[Path]) -> t.Never:
-        if not bool(paths):
-            err = f"No valid paths were found: {paths=}."
-            raise OSError(err)
-        for path in paths:
-            assert path.is_file()
-            assert path.suffix in LST_SUFFIXES
 
 
 # -----------------------------------------------------------------------------
@@ -246,27 +289,22 @@ def prepare(info: FileInfo) -> None:
 
 
 def parse_one(file: Path) -> ASM:
-    asm = ASM()
-    text = file.read_text()
-    lines = text.splitlines()
+    asm = ASM(file=file.name)
+    lines = file.read_text().splitlines()
     for line in lines:
         asm.consume(line)
     return asm
 
 
-def parse(info: FileInfo) -> dict[str, ASM]:
-    filename_to_asm = {}
-    for file in info.lst_file_paths:
-        filename_to_asm[file.name] = parse_one(file)
-    return filename_to_asm
+def parse(info: FileInfo) -> list[ASM]:
+    return [parse_one(file) for file in info.lst_file_paths]
 
 
-def write(info: FileInfo, filename_to_asm: dict[str, ASM]) -> None:
-    for filename, asm in filename_to_asm.items():
-        lst_filepath = info.out_base_path / filename
-        sv_filepath = lst_filepath.with_suffix(".sv")
-        sv_filepath.write_text(asm.to_sv())
-        print(f"SystemVerilog output successfuly written to {sv_filepath}")
+def write(output_dir: Path, asm_modules: list[ASM]) -> None:
+    for asm in asm_modules:
+        output_file = output_dir / asm.file.with_suffix(".sv")
+        output_file.write_text(asm.to_sv())
+        print(f"SystemVerilog output successfuly written to {output_file}")
 
 
 def main() -> int:
@@ -290,11 +328,12 @@ def main() -> int:
         required=False,
     )
     args = argparser.parse_args(sys.argv[1:])
-    in_base_path = args.path_in[0] if bool(args.path_in) else None
-    out_base_path = args.path_out[0] if bool(args.path_out) else None
-    info = FileInfo(in_base_path, out_base_path)
+    info = FileInfo(
+        lst_base_path=args.path_in[0] if bool(args.path_in) else None,
+        out_base_path=args.path_out[0] if bool(args.path_out) else None,
+    )
     prepare(info)
-    write(info, parse(info))
+    write(info.out_base_path, parse(info))
 
 
 if __name__ == "__main__":
