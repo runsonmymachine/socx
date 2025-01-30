@@ -87,12 +87,8 @@ class FileInfo:
     in_dir_path: PathType
     lst_file_paths: list[Path]
 
-    def __init__(
-        self, in_dir_path: PathType, out_dir_path: PathType
-    ) -> None:
-        self.in_dir_path = self._correct_path(
-            in_dir_path, DEFAULT_INPUT_PATH
-        )
+    def __init__(self, in_dir_path: PathType, out_dir_path: PathType) -> None:
+        self.in_dir_path = self._correct_path(in_dir_path, DEFAULT_INPUT_PATH)
         self.out_dir_path = self._correct_path(
             out_dir_path, DEFAULT_OUTPUT_PATH
         )
