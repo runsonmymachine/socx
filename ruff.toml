@@ -1,4 +1,10 @@
-src = ["src/whyson", "test"]
+src = ["src", "tests"]
+fix = true
+line-length = 79
+cache-dir = "~/.cache/ruff"
+indent-width = 4
+target-version = "py37"
+respect-gitignore = true
 exclude = [
     ".git",
     ".venv",
@@ -7,15 +13,7 @@ exclude = [
     ".ruff_cache",
     ".pytest_cache",
     ".gitignore",
-    "src/socrun",
-    "src/static",
 ]
-fix = true
-line-length = 79
-cache-dir = "~/.cache/ruff"
-indent-width = 4
-target-version = "py37"
-respect-gitignore = true
 
 [format]
 line-ending = "auto"
@@ -27,28 +25,15 @@ docstring-code-line-length = "dynamic"
 
 [lint]
 select = [
-    "A",
-    "B",
-    "C4",
-    "D",
-    "E",
-    "W",
-    "F",
-    "N",
-    "DJ",
-    "PT",
-    "EM",
-    "UP",
-    "NPY",
-    "ISC",
-    "ICN",
-    "SIM",
-    "DOC",
-    "RUF",
-    "PERF",
-    "ASYNC",
+    "A", "B", "C4", "D", "E", "F", "N", "W",
+    "DJ", "PT", "EM", "UP",
+    "NPY", "ISC", "ICN", "SIM", "DOC", "RUF",
+    "PERF", "ASYNC",
 ]
-ignore = ["D100", "D101", "D102", "D103", "D104", "D105", "D205", "RUF022"]
+ignore = [
+    "D100", "D101", "D102", "D103", "D104", "D105", "D205",
+    "RUF022"
+]
 
 [lint.pydocstyle]
 convention = "numpy"

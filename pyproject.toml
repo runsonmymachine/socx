@@ -18,11 +18,12 @@ dev = [
     "mypy",
     "ruff",
     "pytest",
+    "pytest-cov",
     "pyupgrade",
     "pydocstyle",
     "pycodestyle",
-    "flake8-simplify",
     "flake8-bugbear",
+    "flake8-simplify",
 ]
 
 # ------------------------------------------------------------------------------
