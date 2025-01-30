@@ -86,12 +86,8 @@ class FileInfo:
     in_dir_path: PathType
     lst_file_paths: list[Path]
 
-    def __init__(
-        self, in_dir_path: PathType, out_dir_path: PathType
-    ) -> None:
-        self.in_dir_path = self._correct_path(
-            in_dir_path, DEFAULT_INPUT_PATH
-        )
+    def __init__(self, in_dir_path: PathType, out_dir_path: PathType) -> None:
+        self.in_dir_path = self._correct_path(in_dir_path, DEFAULT_INPUT_PATH)
         self.out_dir_path = self._correct_path(
             out_dir_path, DEFAULT_OUTPUT_PATH
         )
@@ -164,21 +160,23 @@ class SVCoverpoint(Formatter["Instruction"]):
     ) -> str:
         func = inst.funcname
         blen = inst.bytelen
-        addr = hex(inst.address).replace('0x', "'h", 1)
+        addr = hex(inst.address).replace("0x", "'h", 1)
         fnlen = len(func)
 
-        base = hex(stats.base_address).replace('0x', "'h", 1)
+        base = hex(stats.base_address).replace("0x", "'h", 1)
         maxlen = stats.max_funcname_len
 
         indent = max(1, indent)
         alignment = (1 + (maxlen + (indent - 1)) // indent * indent) - fnlen
         assignment = "=".rjust(alignment, " ")
         return (
+            f"{indent * ' '}"
             f"bins {func} {assignment} {{ [ "
-            + f"(({addr} - {base}) >> 1) : "
-            + f"((({addr} - {base} + 'd{blen}) >> 1) - 1) "
-            + "] };"
+            f"(({addr} - {base}) >> 1) : "
+            f"((({addr} - {base} + 'd{blen}) >> 1) - 1) "
+            "] };"
         )
+
 
 class LstLine(Formatter["Instruction"]):
     """
@@ -315,8 +313,11 @@ def main() -> int:
         dest="path_in",
         nargs=1,
         type=Path,
-        help="Path to parser output directory containing .lst files to be converted.",
         required=False,
+        help=(
+            "Path to parser output directory containing .lst files to be "
+            "converted."
+        ),
     )
     argparser.add_argument(
         "-o",
