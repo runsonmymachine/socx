@@ -1,0 +1,35 @@
+dynaconf_merge = true
+
+[file]
+types = ["log", "lst", "text", "binary", "systemverilog", "noideawtf"]
+
+[file.type.lst]
+comments = ["#"]
+extensions = [".lst", ".list"]
+
+[file.type.systemverilog]
+indent = 3
+comments = ["//"]
+extensions = [".sv", ".svh"]
+
+[tool.parser.output] 
+path ="""
+    @format
+    {env[WAREA]}/PIXIE_ROM_FW/PixieROMApp/TapeOutRelease/PIXIE_E4/PxieParser
+"""
+files = [
+    {type = "log", extensions = [".log"] },
+    {type = "lst", extensions = [".lst", ".list"] },
+    {type = "hex", extensions = [".hex"] },
+    {type = "text", extensions = [".txt"] },
+    {type = "noideawtf", extensions = [".liclipse"] },
+]
+
+[tool.covgen.input]
+paths = [ "@format {tool.parser.output.path}", ]
+files = [ {type = "lst", extensions = [".lst", ".list"]} ]
+
+[tool.covgen.output]
+path = "@format {env[WAREA]}/{env[TOP_PROJECT]}/pixie_verif/pixie_top"
+files = [ {type = "systemverilog", extensions = [".svh"]} ]
+

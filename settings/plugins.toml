@@ -1,0 +1,2 @@
+[plugins]
+path = "@path @format src/plugins"

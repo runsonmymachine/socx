@@ -1,0 +1,2 @@
+converter__source = "@path @format {env[HOME]}/.project/git/mom/covgen/assets/inputs"
+converter__target = "@path @format  {env[HOME]}/.project/git/mom/covgen/assets/outputs"
