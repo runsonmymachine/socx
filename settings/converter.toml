@@ -1,88 +1,10 @@
-# -----------------------------------------------------------------------------
-# Path
-# -----------------------------------------------------------------------------
-#
-# Note the difference between [foo] and [[foo]].
-#
-# [foo] represents a table (json examples below), whereas [[foo]] 
-# represents an array of tables.
-#
-# To illustrate the difference consider the following example:
-#
-#   [foo]
-#   bar = 'bazz'
-#   array = false
-#
-# In json, this would be:
-#
-#   {
-#       'foo': {
-#           'bar': 'bazz',
-#           'array': 'false'
-#       }
-#   }
-#
-# On the other hand, the following definition:
-#
-#   [[foo]]
-#   bar = 'bazz'
-#   array = false
-#   
-# Would translate in json to:
-#
-#   {
-#       'foo': [
-#           { 'bar': 'bazz', 'array': 'false' }
-#       ]
-#   }
-#
-# what this means is that arrays allows us to define multiple objects
-# of the same type with different properties:
-#
-#   [[converter]]
-#   source = 'foo/bar'
-#   target = 'bazz'
-#
-#   [converter.options]
-#   collision = "keep"
-#
-#   [[converter]] # Note that this is only allowed for table-arrays
-#   
-#
-#   [[converter]]
-#   source = 'bazz/bar'
-#   target = 'foo'
-# 
-# would translate in json to:
-#
-#   {
-#       converter: [
-#           {
-#               'source': 'foo/bar', 
-#               'target': 'bazz', 
-#               'options': {'collision': 'keep'}
-#           },
-#
-#           { 
-#           
-#           },
-#
-#           {
-#               'source': 'bazz/bar', 
-#               'target': 'foo', 
-#           }
-#       ]
-#   }
-#   
-# -----------------------------------------------------------------------------
-
 [converter]
 
 # Argument: type
 #
 # Typename of the converter class for performing the conversion.
 #
-type = "LstFuncParser"
+type = "LstParser"
 
 # Argument: source
 #
@@ -113,12 +35,6 @@ base_addr_map = "memLd.json"
 #
 base_addr_base = 16
 
-# Argument: exclude
-#
-# Same as include, but excludes files from the list of sources.
-#
-excludes = []
-
 # Argument: include
 #
 # Specifies file names to include in the converter's list of sources to 
@@ -128,6 +44,12 @@ excludes = []
 # combination of both.
 #
 includes = [ "*.lst", "SPUList.list" ]
+
+# Argument: exclude
+#
+# Same as include, but excludes files from the list of sources.
+#
+excludes = []
 
 # Argument: mappings
 #
@@ -140,8 +62,8 @@ includes = [ "*.lst", "SPUList.list" ]
 # the matching missing part in the source name.
 #
 mappings = [
-    {input="*.lst", output="%.svh"},
-    {input="*.list", output="%.sv"},
+    {input="%.lst", output="%.svh"},
+    {input="%.list", output="%.sv"},
     {input="hwsList.lst", output="pixie_hws_cgs.svh"},
 ]
 

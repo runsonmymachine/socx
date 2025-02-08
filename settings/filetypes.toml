@@ -1,4 +1,4 @@
-[[lang]]
+[lang]
 
 # -----------------------------------------------------------------------------
 # Category: Filetype
@@ -67,6 +67,18 @@ block = {begin="/*", end="*/"}
 name = "lst"
 extensions = [".lst", ".list"]
 
-[lang.lst.syntax.comments]
-line = ["#"]
+[[lang.lst.tokens]]
+name = "comment"
+expr = '(#.*)(?=(([A-Z]{3,}\W){2,}))'
+subst = ''
+
+[[lang.lst.tokens]]
+name = "group"
+expr = '(?!#)(([A-Z]+){2,})'
+subst = '\1_\2'
+
+[[lang.lst.tokens]]
+name = "member"
+expr='(^\d+|\w+)'
+subst = '\1'
 

@@ -1,7 +1,0 @@
-dynaconf_merge = true
-
-[tool.covgen.input] 
-path = "@format ./assets/parser_out"
-
-[tool.covgen.output] 
-path = "@format ./assets/converter_out"

@@ -6,7 +6,6 @@ import functools as fun
 
 import click as click
 
-from . import config as cfg
 
 input_: t.Final[click.Option] = fun.partial(
     click.option,

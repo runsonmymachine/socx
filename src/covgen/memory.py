@@ -3,9 +3,12 @@ from __future__ import annotations
 import typing as t
 import dataclasses as dc
 
+import rich as rich
+import rich.table as table
+
 
 @dc.dataclass(frozen=True)
-class AddressSpace:
+class MemorySegment:
     origin: int
     """
     Origin/Base address of the address space.
@@ -47,18 +50,39 @@ class DynamicSymbol:
 
 @dc.dataclass
 class SymbolTable(t.TypedDict):
-    device_name: str
+    device: str
     """
     Name identifier of the device associated with the address space.
     """
 
-    address_space: AddressSpace
+    segment: MemorySegment
     """
     Address space memory adress specification.
     """
 
-    dynamic_symbols: tuple[DynamicSymbol, ...] | None = None
+    symbols: tuple[DynamicSymbol, ...] | None = None
     """
     Tuple listing of all dynamic symbols associated with the device and their
     mapping within the address space.
     """
+
+
+@table.dataclass
+class RichSymTable:
+    device: str
+    """
+    Name identifier of the device associated with the address space.
+    """
+
+    segment: MemorySegment
+    """
+    Address space memory adress specification.
+    """
+
+    symbols: tuple[DynamicSymbol, ...] | None = None
+    """
+    Tuple listing of all dynamic symbols associated with the device and their
+    mapping within the address space.
+    """
+
+

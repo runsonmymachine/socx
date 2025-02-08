@@ -1,5 +1,5 @@
 import typing as t
-from pathlib import Path
+from pathlib import Path as Path
 
 __all__ = ("ConverterValidator",)
 
@@ -59,3 +59,6 @@ class ConverterValidator:
                     set(cls.src.glob(str(exclude)))
                 )
         return paths.union(globpaths)
+
+
+

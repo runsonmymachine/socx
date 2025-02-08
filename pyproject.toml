@@ -2,7 +2,7 @@
 # Project Configurations
 # ------------------------------------------------------------------------------
 [project.scripts]
-covgen='covgen:covgen'
+covgen='covgen.__main__:cli'
 
 [project]
 name = "covgen"
@@ -19,6 +19,8 @@ dependencies = [
     "dynaconf>=3.2.7",
     "jinja2>=3.1.5",
     "flask>=3.1.0",
+    "textual-dev>=1.0.0",
+    "textual>=0.1.18",
 ]
 
 [dependency-groups]
@@ -32,6 +34,7 @@ dev = [
     "pycodestyle",
     "flake8-bugbear",
     "flake8-simplify",
+    "debugpy>=1.8.12",
 ]
 experimental = [
     "bitstring>=4.3.0",

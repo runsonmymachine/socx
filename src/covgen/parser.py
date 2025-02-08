@@ -1,35 +1,60 @@
 from __future__ import annotations
 
-__all__ = ("Parser", "LstFuncParser", "parse")
+__all__ = ("Parser", "LstParser", "parse")
 
+
+import re as re
 import abc as abc
 import json as json
 import typing as t
 import pathlib as pathlib
 import dataclasses as dc
+from pathlib import Path as Path
 
 import rich as rich
 import click as click
+from dynaconf.utils.boxing import DynaBox
 
 from .config import settings as settings
 from .memory import SymbolTable as SymbolTable
-from .memory import AddressSpace as AddressSpace
+from .memory import RichSymTable as RichSymTable
+from .memory import MemorySegment as MemorySegment
 from .memory import DynamicSymbol as DynamicSymbol
-from .validators import ConverterValidator as Validator
+from .tokenizer import Token as Token
+from .tokenizer import Tokenizer as Tokenizer
+from .converter import Converter as Converter
+from .validators import ConverterValidator as ConverterValidator
 
 
-class Parser[T](abc.ABC):
+class Parser(abc.ABC):
     @abc.abstractmethod
-    def parse(self) -> T: ...
+    def parse(self) -> None:
+        """Start the parser."""
+        ...
+
+    @property
+    @abc.abstractmethod
+    def lang(self) -> DynaBox:
+        """Return the 'lang' configuration of the parser's source language."""
+        ...
+
+    @property
+    @abc.abstractmethod
+    def tokens(self) -> dict:
+        """
+        Return a dictionary mapping between token names to their internal
+        representation as object.
+        """
+        ...
 
 
 @dc.dataclass
-class LstFuncParser(Parser[SymbolTable]):
+class LstParser(Parser):
     """
     Parses .lst files to functions definitions represented as a
     python object.
 
-    See DynamicSymbol, AddressSpace, SymbolTable.
+    See DynamicSymbol, MemorySegment, RichSymTable.
     """
 
     options: dict[str, str] | None = None
@@ -74,29 +99,65 @@ class LstFuncParser(Parser[SymbolTable]):
         self.options = options
         self.includes = set()
         self.excludes = set()
-        self.sym_table = SymbolTable()
+        self.sym_table = RichSymTable()
         self.source_dir = source_dir
         self.target_dir = target_dir
-        self.includes = Validator._extract_includes(self.source_dir, includes, excludes)
+        self.includes = ConverterValidator._extract_includes(
+            self.source_dir, includes, excludes
+        )
+
+    @property
+    def lang(self) -> DynaBox:
+        return settings.lang
+
+    @property
+    def tokens(self) -> DynaBox:
+        return settings.lang.lst.tokens
 
     def parse(self) -> None:
         """Parse the sources according to initialization configuration."""
-        self._prepare()
+        for include in self.includes:
+            self.tokenize(include)
         self.sym_table.update(self._parse_sym_table())
 
-    def _prepare(self) -> None:
-        self.target_dir.mkdir(exist_ok=True)
+    def tokenize(self, src: pathlib.Path) -> tuple[Token]:
+        text = src.read_text()
+        lines = text.splitlines(False)
+        tokens = {token.name: token for token in self.tokens}  # noqa: F841
+        expr_map = {  # noqa: F841
+            token.name: re.compile(token.expr) for token in self.tokens
+        }
+        pattern = "|".join(
+            "(?P<%s>%s)" % (token.name, token.expr) for token in self.tokens
+        )
+        for line in lines:
+            for match in re.finditer(pattern, line):
+                if not match:
+                    continue
+                kind = match.group()
+                before = match.string[0 : match.start()]
+                matched = match.string[match.start() : match.end()]
+                after = match.string[match.end() : :]
+                rich.print(f"{kind=}->{before}{matched}{after}")
+
+    def parseone(self, src: Path) -> None:
+        pass
+
+    def parse_line(self, line: str) -> None:
+        pass
+
+    def _parse_lst_source(self: t.Self, src: pathlib.Path) -> RichSymTable:
+        pass
 
     def _parse_sym_table_funcs(self: t.Self) -> None:
         pass
-        # for file in self.includes:
 
-    def _parse_sym_table(self: t.Self) -> SymbolTable:
-        table = SymbolTable()
+    def _parse_sym_table(self: t.Self) -> RichSymTable:
+        table = RichSymTable()
         memory_map = {}
         base_addr_file = settings.converter.base_addr_map
         base_addr_path = pathlib.Path(self.source_dir / base_addr_file)
-        field_names = tuple([field.name for field in dc.fields(AddressSpace)])
+        field_names = tuple([field.name for field in dc.fields(MemorySegment)])
         base_addr_map = json.loads(base_addr_path.read_text())
         for name in field_names:
             for device_field, value in base_addr_map.items():
@@ -108,20 +169,21 @@ class LstFuncParser(Parser[SymbolTable]):
                 memory_map[device][name] = int(
                     value, settings.converter.base_addr_base
                 )
-        table = SymbolTable()
+        table = RichSymTable()
         for device in memory_map:
             if all(name in memory_map[device] for name in field_names):
-                space = AddressSpace(**dict(memory_map[device].items()))
+                space = MemorySegment(**dict(memory_map[device].items()))
+                table = RichSymTable(device, space)
                 table[device] = (space, None)
         self.sym_table = table
         return table
 
 
 @click.pass_context
-def parse(ctx: click.Context) -> SymbolTable:
+def parse(ctx: click.Context) -> RichSymTable:
     src = ctx.source_dir if hasattr(ctx, "source_dir") else None
     target = ctx.target_dir if hasattr(ctx, "target_dir") else None
-    parser = LstFuncParser(src, target)
+    parser = LstParser(src, target)
     parser.parse()
     table = parser.sym_table
     rich.print(parser)
