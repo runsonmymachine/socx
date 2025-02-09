@@ -13,6 +13,7 @@ class Position(t.NamedTuple):
     line: int
     column: int
 
+
 class Token(t.NamedTuple):
     name: str
     expr: str

@@ -1,8 +1,11 @@
-[converter]
+[convert]
+
+
+[convert.lst]
 
 # Argument: type
 #
-# Typename of the converter class for performing the conversion.
+# Typename of the convert class for performing the conversion.
 #
 type = "LstParser"
 
@@ -37,7 +40,7 @@ base_addr_base = 16
 
 # Argument: include
 #
-# Specifies file names to include in the converter's list of sources to 
+# Specifies file names to include in the convert's list of sources to 
 # convert.
 #
 # Values can either be an exact filename, a glob pattern, or a 
@@ -71,12 +74,12 @@ mappings = [
 # Path Options
 # -----------------------------------------------------------------------------
 #
-[converter.options]
+[convert.lst.options]
 
 # Option: collision
 #
 # How name collisions should be handled. In other words, what should the 
-# converter do when an older version of the output file already exists 
+# convert do when an older version of the output file already exists 
 # in the target directory.
 #
 # Options
@@ -101,7 +104,7 @@ collision = "overwrite"
 # Uncomment below to add another path configuration
 # -------------------------------------------------
 #
-# [[converter]]
+# [[convert]]
 # source = """
 # """
 # target = """
@@ -110,7 +113,7 @@ collision = "overwrite"
 # exclude = []
 # mappings = [{}]
 #
-# [converter.options]
+# [convert.options]
 #      
 #      ...
 #

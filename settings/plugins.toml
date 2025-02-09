@@ -1,12 +1,5 @@
 [plugins]
 path = "@path @format src/plugins"
 
-[plugins.cli]
-path = "@path @format {this.plugins.path}/cli"
-
-[plugins.tui]
-path = "@path @format {this.plugins.path}/tui"
-
-[plugins.languages]
-path = "@path @format {this.plugins.path}/languages"
-
+[plugins.convert]
+path = "@path @format {this.plugins.path}/convert"

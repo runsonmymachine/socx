@@ -33,9 +33,7 @@ class ConverterValidator:
             return False
         if not isinstance(cls.src, Path):
             cls.src = Path(cls.src)
-        if not isinstance(
-            includes, list | set | tuple
-        ):
+        if not isinstance(includes, list | set | tuple):
             return False
         paths = cls._extract_includes(cls.src, includes, excludes)
         return bool(paths) and all(path.is_file() for path in paths)
@@ -59,6 +57,3 @@ class ConverterValidator:
                     set(cls.src.glob(str(exclude)))
                 )
         return paths.union(globpaths)
-
-
-

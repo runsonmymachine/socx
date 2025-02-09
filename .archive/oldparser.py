@@ -337,8 +337,8 @@ def _init_cli_parser() -> argparse.ArgumentParser:
         type=int,
         default=4,
         required=False,
-        action='store',
-        help="Number of spaces to use for tab indentations."
+        action="store",
+        help="Number of spaces to use for tab indentations.",
     )
     return argparser
 
@@ -360,4 +360,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     main()
-

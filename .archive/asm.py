@@ -25,7 +25,6 @@ __all__ = (
 )
 
 
-
 class AddressSpaces:
     """Memory address spaces in ROM/NVM."""
 
@@ -53,7 +52,6 @@ class AddressSpaces:
     """
     Base HWS NVM (Non-Volatile Memory) memory adress.
     """
-
 
 
 @dc.dataclass
@@ -135,5 +133,3 @@ class ASM:
     def consume(self, inst: Instruction) -> None:
         self.statistics.consume(inst)
         self.instructions.append(inst)
-
-

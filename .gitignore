@@ -12,6 +12,7 @@
 !/tests/**/*.py
 !/assets/**/*
 !/assets/**/*
+!/plugins/**/*.py
 !/settings/**/*.toml
 !/.archive/**/*
 
@@ -26,7 +27,6 @@
 # Unexclude configurations
 
 !/.env
-!/settings.*
 !/uv.toml
 !/ruff.toml
 !/pyproject.toml

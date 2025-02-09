@@ -84,5 +84,3 @@ class RichSymTable:
     Tuple listing of all dynamic symbols associated with the device and their
     mapping within the address space.
     """
-
-

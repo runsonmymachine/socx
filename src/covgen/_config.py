@@ -1,58 +1,38 @@
-"""
-Management of application configuration settings.
-
-Configurations are defined in .toml files located inside the 'config'
-directory.
-
-The default configurations are under settings.toml and can be used as a
-reference.
-
-Local configurations may be defined in 'settings.local.toml'.
-
-Any local configration have priority over the defaults and will either
-override the default, or be merged with it if dynaconf_merge is true,
-and the keys do not conflict.
-
-Reference the settings.toml file for an example of how configurations are
-defined.
-
-For additional information regarding the internals of this module, reference
-dynaconf documentation on its official-site/github-repository.
-"""
-
 from __future__ import annotations
 
 from typing import Any
 from typing import Final
 from pathlib import Path
-from weakref import proxy
 
 from rich.tree import Tree
 from rich.table import Table
 from rich.console import Group
+from click import get_app_dir
 from dynaconf import Dynaconf
-from dynaconf import LazySettings
 from dynaconf import ValidationError
 from dynaconf import add_converter
 from dynaconf.validator import empty
 from dynaconf.validator import Validator
-from dynaconf.utils.boxing import Box
-from dynaconf.utils.boxing import DynaBox
 
 from .log import log as log
 from .console import console as console
 from .validators import ConverterValidator as ConverterValidator
 
-__all__ = (
-    "settings",
-    "settings_tree",
-)
 
 MODULE_PATH: Final[Path] = Path(__file__).resolve()
 """Absolue path to module."""
 
+
 PACKAGE_PATH: Final[Path] = Path(__spec__.parent).parent.resolve()
 """Absolue path to package root directory."""
+
+
+SETTINGS_ROOT: Final[Path] = Path(PACKAGE_PATH / "settings").resolve()
+"""Absolute path to application's global settings directory."""
+
+
+SETTINGS_HOME: Final[Path] = (Path(get_app_dir("covgen")) / "settings").resolve()
+"""Absolute path to application's local user settings directory."""
 
 
 def _init_settings() -> Dynaconf:
@@ -60,7 +40,7 @@ def _init_settings() -> Dynaconf:
     add_converter("path", lambda x: Path(x).resolve())
     _settings: Dynaconf = Dynaconf(
         envvar_prefix="COVGEN",
-        root_path=str(PACKAGE_PATH / "settings"),
+        root_path=str(SETTINGS_ROOT),
         settings_file=["convert.toml", "filetypes.toml", "plugins.toml"],
         load_dotenv=True,
         environments=False,
@@ -151,27 +131,4 @@ def _to_table(key: str, val: Any) -> Table:
         node.add_column(str(key))
         node.add_row(str(val))
     return node
-
-
-def settings_tree(
-    root: Dynaconf | DynaBox | dict,
-    label: str = "Settings",
-) -> Tree | Table:
-    """Get a tree representation of a dynaconf settings instance."""
-    if isinstance(root, Dynaconf):
-        root = root.as_dict()
-    if not isinstance(root, dict | list | tuple | set):
-        root = str(root)
-    return _to_tree(label, root)
-
-
-settings = _get_settings()
-"""
-Global settings instance.
-
-Any attribute/key accesses to this instance trigger a lazy loading operation
-which will attempt to find and read the value of the attribute from any of the
-.toml configuration files under the 'settings' directory.
-"""
-
 

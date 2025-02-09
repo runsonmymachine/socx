@@ -1,0 +1,2 @@
+convert__lst__source = "@path @format {env[HOME]}/.project/git/mom/covgen/assets/inputs"
+convert__lst__target = "@path @format  {env[HOME]}/.project/git/mom/covgen/assets/outputs"

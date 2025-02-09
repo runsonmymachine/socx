@@ -22,7 +22,6 @@ from .memory import MemorySegment as MemorySegment
 from .memory import DynamicSymbol as DynamicSymbol
 from .tokenizer import Token as Token
 from .tokenizer import Tokenizer as Tokenizer
-from .converter import Converter as Converter
 from .validators import ConverterValidator as ConverterValidator
 
 
@@ -81,21 +80,21 @@ class LstParser(Parser):
             parser.
         target_dir
             Target directory to which parsed sources will be saved with as
-            configured in converter.toml
+            configured in convert.toml
         options
-            Options for handling the conversion operation. See `converter.toml`
+            Options for handling the conversion operation. See `convert.toml`
             for additional info.
         """
         if options is None:
-            options = settings.converter.options
+            options = self.convert.options
         if includes is None:
-            includes = settings.converter.includes
+            includes = self.convert.includes
         if excludes is None:
-            excludes = settings.converter.excludes
+            excludes = self.convert.excludes
         if source_dir is None:
-            source_dir = settings.converter.source
+            source_dir = self.convert.source
         if target_dir is None:
-            target_dir = settings.converter.target
+            target_dir = self.convert.target
         self.options = options
         self.includes = set()
         self.excludes = set()
@@ -107,12 +106,16 @@ class LstParser(Parser):
         )
 
     @property
+    def cfg(self) -> DynaBox:
+        return settings.convert[self.lang]
+
+    @property
     def lang(self) -> DynaBox:
-        return settings.lang
+        return "lst"
 
     @property
     def tokens(self) -> DynaBox:
-        return settings.lang.lst.tokens
+        return settings.lang[self.lang].tokens
 
     def parse(self) -> None:
         """Parse the sources according to initialization configuration."""
@@ -155,7 +158,7 @@ class LstParser(Parser):
     def _parse_sym_table(self: t.Self) -> RichSymTable:
         table = RichSymTable()
         memory_map = {}
-        base_addr_file = settings.converter.base_addr_map
+        base_addr_file = self.convert.base_addr_map
         base_addr_path = pathlib.Path(self.source_dir / base_addr_file)
         field_names = tuple([field.name for field in dc.fields(MemorySegment)])
         base_addr_map = json.loads(base_addr_path.read_text())
@@ -167,7 +170,7 @@ class LstParser(Parser):
                 if device not in memory_map:
                     memory_map[device] = {}
                 memory_map[device][name] = int(
-                    value, settings.converter.base_addr_base
+                    value, self.convert.base_addr_base
                 )
         table = RichSymTable()
         for device in memory_map:
