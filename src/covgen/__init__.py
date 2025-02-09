@@ -6,6 +6,10 @@ __all__ = (
     "console",
     "settings",
     "settings_tree",
+    "MODULE_PATH",
+    "PACKAGE_PATH",
+    "SETTINGS_ROOT",
+    "SETTINGS_HOME",
     "SymbolTable",
     "RichSymTable",
     "MemorySegment",
@@ -32,6 +36,10 @@ from .cli import CONTEXT_SETTINGS as CONTEXT_SETTINGS
 
 from .config import settings as settings
 from .config import settings_tree as settings_tree
+from .config import MODULE_PATH as MODULE_PATH
+from .config import PACKAGE_PATH as PACKAGE_PATH
+from .config import SETTINGS_ROOT as SETTINGS_ROOT
+from .config import SETTINGS_HOME as SETTINGS_HOME
 
 from .console import console as console
 
