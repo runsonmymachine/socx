@@ -18,11 +18,11 @@ from dynaconf.utils.boxing import DynaBox
 from .console import console as console
 from .config import settings as settings
 from .memory import SymbolTable as SymbolTable
-from .memory import SymbolTable as SymbolTable
 from .memory import MemorySegment as MemorySegment
 from .memory import DynamicSymbol as DynamicSymbol
 from .tokenizer import Token as Token
 from .tokenizer import Tokenizer as Tokenizer
+from .tokenizer import LstTokenizer as LstTokenizer
 from .validators import ConverterValidator as ConverterValidator
 
 
@@ -96,10 +96,11 @@ class LstParser(Parser):
             source_dir = self.cfg.source
         if target_dir is None:
             target_dir = self.cfg.target
+        self.sym_table = SymbolTable()
+        self.tokenizer = LstTokenizer()
         self.options = options
         self.includes = set()
         self.excludes = set()
-        self.sym_table = SymbolTable()
         self.source_dir = source_dir
         self.target_dir = target_dir
         self.includes = ConverterValidator._extract_includes(
@@ -116,62 +117,21 @@ class LstParser(Parser):
 
     @property
     def tokens(self) -> DynaBox:
-        return settings.lang[self.lang].tokens
+        return self.tokenizer.tokens
+
+    @property
+    def token_map(self) -> dict[str: Token]:
+        return self.tokenizer.token_map
 
     def parse(self) -> None:
         """Parse the sources according to initialization configuration."""
         for include in self.includes:
-            self.tokenize(include)
+            matches = self.tokenize(include)
+            self.tokenizer.print_matches(matches)
         self.sym_table.update(self._parse_sym_table())
 
-    def tokenize(self, src: pathlib.Path) -> tuple[Token]:
-        def next_idx(i):
-            return i + 1 if i + 1 < len(self.tokens) else 0
-        text = src.read_text()
-        lines = text.splitlines(False)
-        expr_lst = tuple([re.compile(token.expr, re.DOTALL | re.VERBOSE) for token in self.tokens])
-        subst_lst = tuple([token.subst for token in self.tokens])
-        expr_map = {
-            token.name: re.compile(token.expr) for token in self.tokens
-        }
-        token_map = {token.name: token for token in self.tokens} 
-        # pattern = "|".join(
-        #     "(?P<%s>%s)" % (token.name, token.expr) for token in self.tokens
-        # )
-        idx = 0
-        # subst = "".join("(%s)" % (token.subst) for token in self.tokens)
-        flags = re.MULTILINE | re.DOTALL | re.VERBOSE
-        pattern = re.compile("|".join("(?P<%s>%s)" % (token.name, token.expr) for token in self.tokens), flags)
-        matched = []
-        substitutions = []
-        for line in lines:
-            for match in pattern.finditer(line):
-                if match:
-                    matched.append((match, match.group()))
-                    idx = next_idx(idx)
-                    continue
-        # for match in re.finditer(pattern, text, flags):
-        #     if not match:
-        #         continue
-            # kind = match.group()
-            # before = match.string[0 : match.start()]
-            # matched = match.string[match.start() : match.end()]
-            # after = match.string[match.end() : :]
-            # console.print(f"{kind=}->{before}{matched}{after}")
-            # matched.append(match)
-            # replaced.append(match.expand(subst))
-        style_type = '[magenta]'
-        style_in = '[red]'
-        style_out = '[green]'
-        with console.pager(styles=True, links=True):
-            for match in matched:
-                subst = token_map[match[0].lastgroup].subst
-                console.rule(f"{style_type}{match[0].lastgroup}")
-                console.line(1)
-                console.print(f"{style_in}[b]In:[/b] {match[0].string}")
-                console.print(f"{style_out}Out: {match[0].expand(subst)}")
-                console.line(1)
-
+    def tokenize(self, src: Path) -> tuple[re.Match]:
+        return self.tokenizer.tokenize(src)
 
     def parseone(self, src: Path) -> None:
         pass
@@ -199,9 +159,7 @@ class LstParser(Parser):
                 device = str(device_field).removesuffix(f"_{name}")
                 if device not in memory_map:
                     memory_map[device] = {}
-                memory_map[device][name] = int(
-                    value, self.cfg.base_addr_base
-                )
+                memory_map[device][name] = int(value, self.cfg.base_addr_base)
         table = SymbolTable()
         for device in memory_map:
             if all(name in memory_map[device] for name in field_names):
@@ -209,6 +167,9 @@ class LstParser(Parser):
                 table[device] = (space, None)
         self.sym_table = table
         return table
+
+    def __hash__(self) -> int:
+        return hash(tuple(self.includes))
 
 
 @click.pass_context

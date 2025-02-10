@@ -67,18 +67,34 @@ block = {begin="/*", end="*/"}
 name = "lst"
 extensions = [".lst", ".list"]
 
-[[lang.lst.tokens]]
-name = 'group'
-expr = '([#])(?P<mem>NVM|ROM)(\W+)(?P<device>[A-Z]{2,})'
-subst = 'covergroup: \g<device>_\g<mem>'
 
 [[lang.lst.tokens]]
 name = 'comment'
+scope = "line"
 expr = '([#])(?!([A-Z]{2,}))(?P<content>.*)'
 subst = '@format {this.lang.systemverilog.syntax.comments.line} \g<content>'
+starts_scope = false
+
+
+[[lang.lst.tokens]]
+name = 'group'
+expr = '([#])(?P<mem>NVM|ROM)(\W+)(?P<device>[A-Z]{2,})'
+subst = '''
+covergroup cg__\g<device>_\g<mem>_access;
+
+    cp__\g<device>_\g<mem>_func: coverpoint { vif.\g<device>_\g<mem>_addr }
+    {
+'''
+starts_scope = true
+scope_ender = '''         bins NoFunc = default; 
+    }
+endgroup: cg__\g<device>_\g<mem>_access
+'''
+
 
 [[lang.lst.tokens]]
 name = 'statement'
 expr='(?P<addr>0x[0-9a-fA-F]+)\W+(?P<func>\w+)\W+(?P<len>\d+)(?P<other>.*)'
-subst = 'address: \g<addr>, func: \g<func>, len: \g<len>'
+subst = '''         bins \g<func> = { [ ((\g<addr> - {{base}}) >> 1) : (((\g<addr> - {{base}} + 'd\g<len>) >> 1) - 1) ] };'''
+starts_scope = false
 
