@@ -15,9 +15,10 @@ import rich as rich
 import click as click
 from dynaconf.utils.boxing import DynaBox
 
+from .console import console as console
 from .config import settings as settings
 from .memory import SymbolTable as SymbolTable
-from .memory import RichSymTable as RichSymTable
+from .memory import SymbolTable as SymbolTable
 from .memory import MemorySegment as MemorySegment
 from .memory import DynamicSymbol as DynamicSymbol
 from .tokenizer import Token as Token
@@ -53,7 +54,7 @@ class LstParser(Parser):
     Parses .lst files to functions definitions represented as a
     python object.
 
-    See DynamicSymbol, MemorySegment, RichSymTable.
+    See DynamicSymbol, MemorySegment, SymbolTable.
     """
 
     options: dict[str, str] | None = None
@@ -86,19 +87,19 @@ class LstParser(Parser):
             for additional info.
         """
         if options is None:
-            options = self.convert.options
+            options = self.cfg.options
         if includes is None:
-            includes = self.convert.includes
+            includes = self.cfg.includes
         if excludes is None:
-            excludes = self.convert.excludes
+            excludes = self.cfg.excludes
         if source_dir is None:
-            source_dir = self.convert.source
+            source_dir = self.cfg.source
         if target_dir is None:
-            target_dir = self.convert.target
+            target_dir = self.cfg.target
         self.options = options
         self.includes = set()
         self.excludes = set()
-        self.sym_table = RichSymTable()
+        self.sym_table = SymbolTable()
         self.source_dir = source_dir
         self.target_dir = target_dir
         self.includes = ConverterValidator._extract_includes(
@@ -124,24 +125,53 @@ class LstParser(Parser):
         self.sym_table.update(self._parse_sym_table())
 
     def tokenize(self, src: pathlib.Path) -> tuple[Token]:
+        def next_idx(i):
+            return i + 1 if i + 1 < len(self.tokens) else 0
         text = src.read_text()
         lines = text.splitlines(False)
-        tokens = {token.name: token for token in self.tokens}  # noqa: F841
-        expr_map = {  # noqa: F841
+        expr_lst = tuple([re.compile(token.expr, re.DOTALL | re.VERBOSE) for token in self.tokens])
+        subst_lst = tuple([token.subst for token in self.tokens])
+        expr_map = {
             token.name: re.compile(token.expr) for token in self.tokens
         }
-        pattern = "|".join(
-            "(?P<%s>%s)" % (token.name, token.expr) for token in self.tokens
-        )
+        token_map = {token.name: token for token in self.tokens} 
+        # pattern = "|".join(
+        #     "(?P<%s>%s)" % (token.name, token.expr) for token in self.tokens
+        # )
+        idx = 0
+        # subst = "".join("(%s)" % (token.subst) for token in self.tokens)
+        flags = re.MULTILINE | re.DOTALL | re.VERBOSE
+        pattern = re.compile("|".join("(?P<%s>%s)" % (token.name, token.expr) for token in self.tokens), flags)
+        matched = []
+        substitutions = []
         for line in lines:
-            for match in re.finditer(pattern, line):
-                if not match:
+            for match in pattern.finditer(line):
+                if match:
+                    matched.append((match, match.group()))
+                    idx = next_idx(idx)
                     continue
-                kind = match.group()
-                before = match.string[0 : match.start()]
-                matched = match.string[match.start() : match.end()]
-                after = match.string[match.end() : :]
-                rich.print(f"{kind=}->{before}{matched}{after}")
+        # for match in re.finditer(pattern, text, flags):
+        #     if not match:
+        #         continue
+            # kind = match.group()
+            # before = match.string[0 : match.start()]
+            # matched = match.string[match.start() : match.end()]
+            # after = match.string[match.end() : :]
+            # console.print(f"{kind=}->{before}{matched}{after}")
+            # matched.append(match)
+            # replaced.append(match.expand(subst))
+        style_type = '[magenta]'
+        style_in = '[red]'
+        style_out = '[green]'
+        with console.pager(styles=True, links=True):
+            for match in matched:
+                subst = token_map[match[0].lastgroup].subst
+                console.rule(f"{style_type}{match[0].lastgroup}")
+                console.line(1)
+                console.print(f"{style_in}[b]In:[/b] {match[0].string}")
+                console.print(f"{style_out}Out: {match[0].expand(subst)}")
+                console.line(1)
+
 
     def parseone(self, src: Path) -> None:
         pass
@@ -149,16 +179,16 @@ class LstParser(Parser):
     def parse_line(self, line: str) -> None:
         pass
 
-    def _parse_lst_source(self: t.Self, src: pathlib.Path) -> RichSymTable:
+    def _parse_lst_source(self: t.Self, src: pathlib.Path) -> SymbolTable:
         pass
 
     def _parse_sym_table_funcs(self: t.Self) -> None:
         pass
 
-    def _parse_sym_table(self: t.Self) -> RichSymTable:
-        table = RichSymTable()
+    def _parse_sym_table(self: t.Self) -> SymbolTable:
+        table = SymbolTable()
         memory_map = {}
-        base_addr_file = self.convert.base_addr_map
+        base_addr_file = self.cfg.base_addr_map
         base_addr_path = pathlib.Path(self.source_dir / base_addr_file)
         field_names = tuple([field.name for field in dc.fields(MemorySegment)])
         base_addr_map = json.loads(base_addr_path.read_text())
@@ -170,20 +200,19 @@ class LstParser(Parser):
                 if device not in memory_map:
                     memory_map[device] = {}
                 memory_map[device][name] = int(
-                    value, self.convert.base_addr_base
+                    value, self.cfg.base_addr_base
                 )
-        table = RichSymTable()
+        table = SymbolTable()
         for device in memory_map:
             if all(name in memory_map[device] for name in field_names):
                 space = MemorySegment(**dict(memory_map[device].items()))
-                table = RichSymTable(device, space)
                 table[device] = (space, None)
         self.sym_table = table
         return table
 
 
 @click.pass_context
-def parse(ctx: click.Context) -> RichSymTable:
+def parse(ctx: click.Context) -> SymbolTable:
     src = ctx.source_dir if hasattr(ctx, "source_dir") else None
     target = ctx.target_dir if hasattr(ctx, "target_dir") else None
     parser = LstParser(src, target)

@@ -46,7 +46,7 @@ indent = 4
 #
 # Line comment tokens
 #
-line = [ "//", ]
+line = "//"
 
 # Option: filetype.syntax.comments.block
 #
@@ -68,17 +68,17 @@ name = "lst"
 extensions = [".lst", ".list"]
 
 [[lang.lst.tokens]]
-name = "comment"
-expr = '(#.*)(?=(([A-Z]{3,}\W){2,}))'
-subst = ''
+name = 'group'
+expr = '([#])(?P<mem>NVM|ROM)(\W+)(?P<device>[A-Z]{2,})'
+subst = 'covergroup: \g<device>_\g<mem>'
 
 [[lang.lst.tokens]]
-name = "group"
-expr = '(?!#)(([A-Z]+){2,})'
-subst = '\1_\2'
+name = 'comment'
+expr = '([#])(?!([A-Z]{2,}))(?P<content>.*)'
+subst = '@format {this.lang.systemverilog.syntax.comments.line} \g<content>'
 
 [[lang.lst.tokens]]
-name = "member"
-expr='(^\d+|\w+)'
-subst = '\1'
+name = 'statement'
+expr='(?P<addr>0x[0-9a-fA-F]+)\W+(?P<func>\w+)\W+(?P<len>\d+)(?P<other>.*)'
+subst = 'address: \g<addr>, func: \g<func>, len: \g<len>'
 

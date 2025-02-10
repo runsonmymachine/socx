@@ -1,7 +1,9 @@
 import click
 
-CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
+from covgen import parse, command
 
-@click.command(context_settings=CONTEXT_SETTINGS)
-def cli():
+@command()
+@click.pass_context
+def cli(ctx: click.Context):
     """Convert symbol tables from an LST file to SystemVerilog covergroups."""
+    ctx.invoke(parse)
