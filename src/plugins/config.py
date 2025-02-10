@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path
 
 import rich
@@ -17,6 +18,22 @@ from covgen import (
 @click.pass_context
 def cli(ctx: click.Context):
     """Get, set, list, or modify settings configuration values."""
+
+
+@command("help", parent=cli)
+@click.argument("command", required=False, default=None, type=str)
+@click.pass_context
+def help_(ctx: click.Context, command: str | None = None):
+    """Display usage and help information."""
+    cmd = cli.get_command(ctx, command) if command else None
+    help_text = cmd.get_help(ctx) if cmd else cli.get_help(ctx)
+    rule_text = f"covgen->config->help{f'->{cmd.name}' if cmd else ''}"
+    rule_style = "[magenta on gray30]"
+
+    with console.pager(styles=True, links=True):
+        console.rule(f"{rule_style}{rule_text}", align="center")
+        console.print(f"{help_text}")
+        console.rule("")
 
 
 @command(parent=cli)
@@ -51,7 +68,20 @@ def get(field_name: str):
 
 @command(parent=cli)
 def edit():
-    """Edit current settings from console using nano/vim/nvim/gvim."""
+    """Edit settings from console using nano/vim/nvim/gvim (interactive)."""
+    help_text = """[magenta on gray23]
+
+    You may hit [u]<Ctrl-C>[/u] at any time to abort.
+
+    When inside an editor, [u]close it without saving to abort[/u].[/magenta
+    on gray23]
+    """
+    console.clear()
+    console.line(2)
+    console.rule("Edit")
+    console.line(1)
+    console.print(help_text, justify="center")
+    console.line(1)
     file = Prompt.ask(
         console=console,
         prompt="Which configuration would you like to edit?",
@@ -65,5 +95,3 @@ def edit():
     )
     file = Path(settings.path_for(file))
     click.edit(filename=str(file), editor=editor, require_save=True)
-
-
