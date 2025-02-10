@@ -1,6 +1,8 @@
 # ------------------------------------------------------------------------------
 # Project Configurations
 # ------------------------------------------------------------------------------
+[project.scripts]
+covgen='covgen.__main__:cli'
 
 [project]
 name = "covgen"
@@ -11,6 +13,14 @@ maintainers = [ { name = "Sagi Kimhi", email = "sagi.kim5@gmail.com" } ]
 description = "Convert .lst files to SystemVerilog covergroups and coverpoints."
 requires-python = ">=3.12"
 dependencies = [
+    "click>=8.1.8",
+    "rich-cli>=1.8.0",
+    "python-dotenv[cli]>=1.0.1",
+    "dynaconf>=3.2.7",
+    "jinja2>=3.1.5",
+    "flask>=3.1.0",
+    "textual-dev>=1.0.0",
+    "textual>=0.1.18",
 ]
 
 [dependency-groups]
@@ -24,6 +34,12 @@ dev = [
     "pycodestyle",
     "flake8-bugbear",
     "flake8-simplify",
+    "debugpy>=1.8.12",
+]
+experimental = [
+    "bitstring>=4.3.0",
+    "numpy>=2.2.2",
+    "python-constraint>=1.4.0",
 ]
 
 # ------------------------------------------------------------------------------

@@ -1,0 +1,5 @@
+[plugins]
+path = "@path @format src/plugins"
+
+[plugins.convert]
+path = "@path @format {this.plugins.path}/convert"

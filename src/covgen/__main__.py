@@ -1,4 +1,4 @@
-from covgen import main
+from covgen import cli as cli
 
-if __name__ == '__main__':
-    main()
+if __name__ == "__main__":
+    cli(obj={})

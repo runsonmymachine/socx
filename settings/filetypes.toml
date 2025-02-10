@@ -1,0 +1,84 @@
+[lang]
+
+# -----------------------------------------------------------------------------
+# Category: Filetype
+# -----------------------------------------------------------------------------
+#
+# An array of language element tables where each table specifies a small
+# subset of language features.
+# 
+# Each language is identified by name, and is linked by the configured set of 
+# possible filetype extensions.
+#
+[lang.systemverilog]
+name = "systemverilog"
+extensions = [".sv", ".svh"]
+
+
+# -----------------------------------------------------------------------------
+# Group: Syntax
+# -----------------------------------------------------------------------------
+#
+# Provides example definitions of various lexical language options 
+# supported through configuration.
+#
+[lang.systemverilog.syntax]
+
+# Option: filetype.indent
+#
+# 4 or 2, these are your options.
+#
+# It has to be a multiple of 2. always has been. enough with the 3 
+# spaces madness.
+#
+# 3 doesnt even make any sense! "meh.. but UVM is so big and it also uses 3 
+# spaces and i read online tha.." NOOOOO! Shut up! I dont care! 
+#
+# 4 or 2! thse are your only options! from now on the mad 3 people get 
+# an angry Exception with a recommendation to see a psychologist.
+#
+indent = 4
+
+
+[lang.systemverilog.syntax.comments]
+
+# Option: filetype.syntax.comments.line
+#
+# Line comment tokens
+#
+line = "//"
+
+# Option: filetype.syntax.comments.block
+#
+# Block comment token specification.
+#
+# Attributes
+# ----------
+#   begin:
+#       The token that starts the block comment.
+#
+#   end:
+#       The token that ends the block comment.
+#
+block = {begin="/*", end="*/"}
+
+
+[lang.lst]
+name = "lst"
+extensions = [".lst", ".list"]
+
+[[lang.lst.tokens]]
+name = 'group'
+expr = '([#])(?P<mem>NVM|ROM)(\W+)(?P<device>[A-Z]{2,})'
+subst = 'covergroup: \g<device>_\g<mem>'
+
+[[lang.lst.tokens]]
+name = 'comment'
+expr = '([#])(?!([A-Z]{2,}))(?P<content>.*)'
+subst = '@format {this.lang.systemverilog.syntax.comments.line} \g<content>'
+
+[[lang.lst.tokens]]
+name = 'statement'
+expr='(?P<addr>0x[0-9a-fA-F]+)\W+(?P<func>\w+)\W+(?P<len>\d+)(?P<other>.*)'
+subst = 'address: \g<addr>, func: \g<func>, len: \g<len>'
+
