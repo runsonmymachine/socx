@@ -6,17 +6,27 @@
 
 !*/
 !/bin/*
-!/src/**/*.py
+!/src/*.py
+!/src/socx/**/*.py
+!/src/plugins/**/*.py
 !/tests/**/*.py
-!/assets/sv_out/*
-!/assets/parser_out/*
-!.github/workflows/**/*.yml
+!/assets/**/*
+!/assets/**/*
+!/plugins/**/*.py
+!/settings/**/*.toml
 
 # Unexclude common files
 
-!.gitignore
-!LICENSE
-!README.md
-!Dockerfile
-!ruff.toml
-!pyproject.toml
+!/.gitignore
+!/.python-version
+!/LICENSE
+!/README.md
+!/Dockerfile
+
+# Unexclude configurations
+
+!/.env
+!/uv.toml
+!/ruff.toml
+!/pyproject.toml
+

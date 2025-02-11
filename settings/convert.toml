@@ -1,0 +1,119 @@
+[convert]
+
+
+[convert.lst]
+
+# Argument: type
+#
+# Typename of the convert class for performing the conversion.
+#
+type = "LstParser"
+
+# Argument: source
+#
+# source directory from which names and patterns defined in include will 
+# be searched.
+#
+source = """
+@path @format {env[WAREA]}/PIXIE_ROM_FW/PixieROMApp/TapeOutRelease/PIXIE_E4/PxieParser
+"""
+
+# Argument: target
+#
+# target directory to which generated outputs will be written.
+#
+target = """
+@path @format {env[TOP_VERIF]}/scripts/socx/assets/outputs
+"""
+
+# Argument: base_addr_map
+#
+# Name of the json adress map file of ROM base addresses.
+#
+base_addr_map = "memLd.json"
+
+# Argument: base_addr_base
+#
+# The address value's numeric base (hex/octal/decimal/etc.)
+#
+base_addr_base = 16
+
+# Argument: include
+#
+# Specifies file names to include in the convert's list of sources to 
+# convert.
+#
+# Values can either be an exact filename, a glob pattern, or a 
+# combination of both.
+#
+includes = [ "*.lst", "SPUList.list" ]
+
+# Argument: exclude
+#
+# Same as include, but excludes files from the list of sources.
+#
+excludes = []
+
+# Argument: mappings
+#
+# Mappings between source file names to target file names.
+#
+# Both source and target can either be an exact file name or a 
+# 'match' pattern specified by the character %.
+#
+# A match pattern will simply match the missing part of the target's name with 
+# the matching missing part in the source name.
+#
+mappings = [
+    {input="%.lst", output="%.svh"},
+    {input="%.list", output="%.sv"},
+    {input="hwsList.lst", output="pixie_hws_cgs.svh"},
+]
+
+# -----------------------------------------------------------------------------
+# Path Options
+# -----------------------------------------------------------------------------
+#
+[convert.lst.options]
+
+# Option: collision
+#
+# How name collisions should be handled. In other words, what should the 
+# convert do when an older version of the output file already exists 
+# in the target directory.
+#
+# Options
+# -------
+#   skip:
+#       filename collisions will be skipped, and the original file is 
+#       kept.
+#
+#   backup:
+#       same as overwrite, but creates a copy of the original file with 
+#       with a '.backup.<timestamp>' file where <timestamp> is replaced 
+#       with the date and time of when the back up was created.
+#
+#   overwrite:
+#       filename collisions are handled by overwriting any existing file 
+#       with the new one upon name collision.
+#
+collision = "overwrite"
+
+
+# -------------------------------------------------
+# Uncomment below to add another path configuration
+# -------------------------------------------------
+#
+# [[convert]]
+# source = """
+# """
+# target = """
+# """
+# include = []
+# exclude = []
+# mappings = [{}]
+#
+# [convert.options]
+#      
+#      ...
+#
