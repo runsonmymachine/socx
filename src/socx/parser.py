@@ -124,9 +124,6 @@ class LstParser(Parser):
 
     def parse(self) -> None:
         """Parse the sources according to initialization configuration."""
-        for include in self.includes:
-            matches = self.tokenize(include)
-            self.tokenizer.print_matches(matches)
         self.sym_table.update(self._parse_sym_table())
 
     def tokenize(self, src: Path) -> tuple[re.Match]:
