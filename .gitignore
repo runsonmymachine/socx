@@ -14,7 +14,6 @@
 !/assets/**/*
 !/plugins/**/*.py
 !/settings/**/*.toml
-!/.archive/**/*
 
 # Unexclude common files
 
