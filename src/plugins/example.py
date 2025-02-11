@@ -1,8 +1,9 @@
 from rich.syntax import Syntax
+from rich.prompt import Confirm
 
-from covgen import console, command, settings
+from socx import console, command, settings
 
-style = "[magenta on gray30][bold][underline]"
+style = "[magenta on gray23][bold][underline]"
 text = """
 :wave: Hello from plugin example! :wave:
 
@@ -18,17 +19,23 @@ code = Syntax.from_path(
     word_wrap=False,
     line_numbers=True,
     indent_guides=True,
-    theme='nord',
-    path=settings.plugins.path/"example.py"
+    theme="nord",
+    path=settings.plugins.path / "example.py",
 )
+
 
 @command()
 def cli():
     """Command-line-interface plugin example."""
-    with console.pager(styles=True, links=True):
-        console.line(3)
-        console.print(f"{style}{text}", justify="center")
-        console.line(3)
-        console.rule("This Plugin's Code:")
+    console.clear()
+    console.line(3)
+    console.print(f"{style}{text}", justify="center")
+    console.line(3)
+    if Confirm.ask(
+        console=console, prompt="Display the code for this example?"
+    ):
+        console.rule(f"{style}Plugin Code:")
         console.line(3)
         console.print(code)
+    else:
+        console.print("Goodbye :)")

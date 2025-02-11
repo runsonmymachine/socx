@@ -5,7 +5,7 @@ import rich
 import click
 from rich.prompt import Prompt
 
-from covgen import (
+from socx import (
     group,
     command,
     console,
@@ -27,28 +27,26 @@ def help_(ctx: click.Context, command: str | None = None):
     """Display usage and help information."""
     cmd = cli.get_command(ctx, command) if command else None
     help_text = cmd.get_help(ctx) if cmd else cli.get_help(ctx)
-    rule_text = f"covgen->config->help{f'->{cmd.name}' if cmd else ''}"
+    rule_text = f"{ctx.command_path}{f'->{cmd.name}' if cmd else ''}"
     rule_style = "[magenta on gray30]"
-
-    with console.pager(styles=True, links=True):
-        console.rule(f"{rule_style}{rule_text}", align="center")
-        console.print(f"{help_text}")
-        console.rule("")
+    console.rule(f"{rule_style}{rule_text}", align="center")
+    console.print(f"{help_text}")
+    console.rule("")
 
 
 @command(parent=cli)
 def inspect():
     """Inspect the current settings instance and print the results."""
-    with console.pager(styles=True, links=True):
-        rich.inspect(settings, console=console, all=True)
+    console.clear()
+    rich.inspect(settings, console=console, all=True)
 
 
 @command("list", parent=cli)
 def list_():
     """Print a list of all current configuration values."""
     tree = settings_tree(settings)
-    with console.pager(styles=True, links=True):
-        console.print(tree)
+    console.clear()
+    console.print(tree)
 
 
 @command(parent=cli)
@@ -62,8 +60,8 @@ def get(field_name: str):
         console.print(f"No such field: {field_name}")
         console.print(click.get_current_context().get_help())
     else:
-        with console.pager(styles=True, links=True):
-            console.print(tree)
+        console.clear()
+        console.print(tree)
 
 
 @command(parent=cli)

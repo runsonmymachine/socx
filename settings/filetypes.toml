@@ -70,7 +70,6 @@ extensions = [".lst", ".list"]
 
 [[lang.lst.tokens]]
 name = 'comment'
-scope = "line"
 expr = '([#])(?!([A-Z]{2,}))(?P<content>.*)'
 subst = '@format {this.lang.systemverilog.syntax.comments.line} \g<content>'
 starts_scope = false
@@ -86,15 +85,19 @@ covergroup cg__\g<device>_\g<mem>_access;
     {
 '''
 starts_scope = true
-scope_ender = '''         bins NoFunc = default; 
+scope_ender = '''
+        bins NoFunc = default; 
     }
 endgroup: cg__\g<device>_\g<mem>_access
+
 '''
 
 
 [[lang.lst.tokens]]
 name = 'statement'
 expr='(?P<addr>0x[0-9a-fA-F]+)\W+(?P<func>\w+)\W+(?P<len>\d+)(?P<other>.*)'
-subst = '''         bins \g<func> = { [ ((\g<addr> - {{base}}) >> 1) : (((\g<addr> - {{base}} + 'd\g<len>) >> 1) - 1) ] };'''
+subst = '''
+        bins \g<func> = { [ ((\g<addr> - {{base}}) >> 1) : (((\g<addr> - {{base}} + 'd\g<len>) >> 1) - 1) ] };
+'''
 starts_scope = false
 

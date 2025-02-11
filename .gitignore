@@ -7,7 +7,7 @@
 !*/
 !/bin/*
 !/src/*.py
-!/src/covgen/**/*.py
+!/src/socx/**/*.py
 !/src/plugins/**/*.py
 !/tests/**/*.py
 !/assets/**/*

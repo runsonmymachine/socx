@@ -16,7 +16,7 @@ from dynaconf.validator import Validator
 
 from .log import log as log
 from .console import console as console
-from .validators import ConverterValidator as ConverterValidator
+from .validators import PathValidator as PathValidator
 
 
 MODULE_PATH: Final[Path] = Path(__file__).resolve()
@@ -31,7 +31,7 @@ SETTINGS_ROOT: Final[Path] = Path(PACKAGE_PATH / "settings").resolve()
 """Absolute path to application's global settings directory."""
 
 
-SETTINGS_HOME: Final[Path] = (Path(get_app_dir("covgen")) / "settings").resolve()
+SETTINGS_HOME: Final[Path] = (Path(get_app_dir("socx")) / "settings").resolve()
 """Absolute path to application's local user settings directory."""
 
 
@@ -39,7 +39,7 @@ def _init_settings() -> Dynaconf:
     log.debug("Settings initialization starting...")
     add_converter("path", lambda x: Path(x).resolve())
     _settings: Dynaconf = Dynaconf(
-        envvar_prefix="COVGEN",
+        envvar_prefix="SOCX",
         root_path=str(SETTINGS_ROOT),
         settings_file=["convert.toml", "filetypes.toml", "plugins.toml"],
         load_dotenv=True,
@@ -59,12 +59,12 @@ def _validate_settings(_settings: Dynaconf) -> None:
             _settings.validators.register(
                 Validator(
                     f"convert.{converter_type}.source",
-                    condition=ConverterValidator.source_validator,
+                    condition=PathValidator.source_validator,
                     must_exist=True,
                 ),
                 Validator(
                     f"convert.{converter_type}.target",
-                    condition=ConverterValidator.target_validator,
+                    condition=PathValidator.target_validator,
                     must_exist=True,
                 ),
                 # Validator(

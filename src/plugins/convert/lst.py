@@ -1,9 +1,6 @@
-import click
-
-from covgen import parse, command
+from socx import command, LstConverter
 
 @command()
-@click.pass_context
-def cli(ctx: click.Context):
+def cli():
     """Convert symbol tables from an LST file to SystemVerilog covergroups."""
-    ctx.invoke(parse)
+    LstConverter().convert()

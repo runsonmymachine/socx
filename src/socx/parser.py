@@ -20,10 +20,9 @@ from .config import settings as settings
 from .memory import SymbolTable as SymbolTable
 from .memory import MemorySegment as MemorySegment
 from .memory import DynamicSymbol as DynamicSymbol
-from .tokenizer import Token as Token
 from .tokenizer import Tokenizer as Tokenizer
 from .tokenizer import LstTokenizer as LstTokenizer
-from .validators import ConverterValidator as ConverterValidator
+from .validators import PathValidator as PathValidator
 
 
 class Parser(abc.ABC):
@@ -103,7 +102,7 @@ class LstParser(Parser):
         self.excludes = set()
         self.source_dir = source_dir
         self.target_dir = target_dir
-        self.includes = ConverterValidator._extract_includes(
+        self.includes = PathValidator._extract_includes(
             self.source_dir, includes, excludes
         )
 
@@ -120,7 +119,7 @@ class LstParser(Parser):
         return self.tokenizer.tokens
 
     @property
-    def token_map(self) -> dict[str: Token]:
+    def token_map(self) -> dict[str, DynaBox]:
         return self.tokenizer.token_map
 
     def parse(self) -> None:

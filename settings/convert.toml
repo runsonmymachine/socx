@@ -23,7 +23,7 @@ source = """
 # target directory to which generated outputs will be written.
 #
 target = """
-@path @format {env[WAREA]}/{env[TOP_PROJECT]}/pixie_verif/pixie_top
+@path @format {env[TOP_VERIF]}/scripts/socx/assets/outputs
 """
 
 # Argument: base_addr_map

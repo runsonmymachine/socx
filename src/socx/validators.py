@@ -1,10 +1,10 @@
 import typing as t
 from pathlib import Path as Path
 
-__all__ = ("ConverterValidator",)
+__all__ = ("PathValidator",)
 
 
-class ConverterValidator:
+class PathValidator:
     src: t.ClassVar[Path] = None
     target: t.ClassVar[Path] = None
 
@@ -53,7 +53,5 @@ class ConverterValidator:
             if "*" not in exclude:
                 paths.discard(Path(cls.src / exclude))
             else:
-                globpaths = globpaths.difference_update(
-                    set(cls.src.glob(str(exclude)))
-                )
+                globpaths.difference_update(set(cls.src.glob(str(exclude))))
         return paths.union(globpaths)

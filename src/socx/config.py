@@ -29,7 +29,7 @@ from dynaconf.utils.boxing import DynaBox
 
 from .log import log as log
 from .console import console as console
-from .validators import ConverterValidator as ConverterValidator
+from .validators import PathValidator as PathValidator
 
 from ._config import _to_tree
 from ._config import _get_settings

@@ -14,7 +14,7 @@ build-backend = "hatchling.build"
 name = "socx"
 version = "0.1.0"
 readme = "README.md"
-license = "Apache 2.0"
+license = "Apache-2.0"
 authors = [ { name = "Sagi Kimhi", email = "sagi.kim5@gmail.com" } ]
 maintainers = [ { name = "Sagi Kimhi", email = "sagi.kim5@gmail.com" } ]
 description = "Tool executer and plugin manager for SoC team."
@@ -32,7 +32,7 @@ license-files = ["LICENSE"]
 requires-python = ">=3.12"
 
 [project.scripts]
-covgen='covgen.__main__:cli'
+socx='socx.__main__:cli'
 
 [project.gui-scripts]
 
