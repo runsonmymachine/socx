@@ -88,4 +88,4 @@ def command(*args, parent: click.Group | None = None, **kwargs):
 
 @group(invoke_without_command=True)
 def cli():
-    """Convert lst files to SystemVerilog covergroups."""
+    """SoC team tool executer and plugin manager."""
