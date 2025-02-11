@@ -1,2 +1,2 @@
-convert__lst__source = "@path @format {env[TOP_VERIF]}/assets/inputs"
+# convert__lst__source = "@path @format {env[TOP_VERIF]}/assets/inputs"
 convert__lst__target = "@path @format {env[TOP_VERIF]}/assets/outputs"
