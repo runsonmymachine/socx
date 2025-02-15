@@ -1,0 +1,39 @@
+[regression]
+root = "@path @format /space/users/ci_wiliot/vw_e0_nightly_regression/regressions"
+
+[regression.logs]
+path = "@path @format {this.regression.root}/logs"
+prev = "@path @format {this.regression.logs.path}/prev"
+latest = "@path @format {this.regression.logs.path}/latest"
+
+[regression.nightly]
+path = "@path @format {this.regression.root}/nightly"
+
+[regression.files.socrgr_db]
+name = "socRgrDB.pyclass"
+parent = "@path @format {this.regression.nightly}"
+
+[regression.files.rerun_cfg]
+name = "rerun_list.cfg"
+parent = "@path @format {this.regression.logs.latest}"
+
+[regression.files.test_summary]
+name =  "regression_summary.log"
+parent = "@path @format {this.regression.logs.latest}"
+columns = [
+    {name="test_name", index=0, type="path"},
+    {name="Iter_num", index=1, type="int"},
+    {name="testStaus", index=2, type="str"},
+    {name="NumErrors", index=3, type="int"},
+    {name="SimTime[ns]", index=4, type="time"},
+    {name="seed", index=5, type="int"},
+]
+
+[regression.files.error_summary]
+name = "errors_summary.log"
+parent = "@path @format {this.regression.logs.latest}"
+
+[regression.files.failure_history]
+name = "failed_tests_history.log"
+parent = "@path @format {this.regression.logs.latest}"
+

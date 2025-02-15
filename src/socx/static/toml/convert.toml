@@ -23,7 +23,7 @@ source = """
 # target directory to which generated outputs will be written.
 #
 target = """
-@path @format {env[TOP_VERIF]}/scripts/socx/assets/outputs
+@path @format {env[TOP_VERIF]}/scripts/socx/assets/lst/outputs
 """
 
 # Argument: base_addr_map

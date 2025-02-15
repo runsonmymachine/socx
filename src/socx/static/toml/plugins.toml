@@ -1,0 +1,15 @@
+[plugins]
+path = "@path @format src/plugins"
+includes = [
+    "rgr",
+    "config",
+    "convert",
+    "example",
+]
+
+[plugins.rgr]
+path = "@path @format {this.plugins.path}/rgr"
+
+[plugins.convert]
+path = "@path @format {this.plugins.path}/convert"
+

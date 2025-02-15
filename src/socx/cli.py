@@ -1,26 +1,23 @@
 from __future__ import annotations
 
-from types import CodeType
-from typing import Self
-from typing import Iterator
 from pathlib import Path
-from functools import wraps
+from types import CodeType
+from collections.abc import Iterator
 
 import click
 
-from .log import log
+from .log import logger
 from .config import settings
-from .console import console
 
 
-CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
+_CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 
 class CLIPlugin(click.Group):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         name = args[0] if args else kwargs.get("name")
-        log.debug(f"Plugin {name} created.")
+        logger.debug(f"Plugin {name} created.")
 
     def __iter__(self) -> Iterator:
         ctx = click.get_current_context()
@@ -31,6 +28,19 @@ class CLIPlugin(click.Group):
         if self.name in ["cli", "plugins"]:
             return "plugins"
         return self.name
+
+    @property
+    def includes(self) -> Path:
+        plugs = []
+        includes = None
+        try:
+            includes = self.plug_settings["includes"]
+        except KeyError:
+            return list(self.plug_path.glob("*.py"))
+        else:
+            for include in includes:
+                plugs.extend(self.plug_path.glob(f"*{include}*"))
+            return plugs
 
     @property
     def plug_path(self) -> Path:
@@ -45,7 +55,7 @@ class CLIPlugin(click.Group):
 
     def list_commands(self, ctx) -> list[str]:
         commands = list(self.commands.keys())
-        for path in self.plug_path.glob("**/*.py"):
+        for path in self.includes:
             parent = path.parent
             if path.name == "__init__.py" and parent.name != self.plug_name:
                 commands.append(parent.name)
@@ -80,7 +90,7 @@ def group(*args, plugin: bool = True, parent: click.Group = None, **kwargs):
         kwargs["no_args_is_help"] = True
 
     if "context_settings" not in kwargs:
-        kwargs["context_settings"] = CONTEXT_SETTINGS
+        kwargs["context_settings"] = _CONTEXT_SETTINGS
 
     if parent is None:
         return click.group(*args, **kwargs)
@@ -91,15 +101,14 @@ def group(*args, plugin: bool = True, parent: click.Group = None, **kwargs):
 def command(*args, parent: click.Group | None = None, **kwargs):
     if parent is None:
         return click.command(
-            *args, context_settings=CONTEXT_SETTINGS, **kwargs
+            *args, context_settings=_CONTEXT_SETTINGS, **kwargs
         )
     else:
         return parent.command(
-            *args, context_settings=CONTEXT_SETTINGS, **kwargs
+            *args, context_settings=_CONTEXT_SETTINGS, **kwargs
         )
 
 
 @group(invoke_without_command=True)
 def cli():
     """SoC team tool executer and plugin manager."""
-

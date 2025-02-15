@@ -27,37 +27,36 @@ from rich.table import Table
 from dynaconf import Dynaconf
 from dynaconf.utils.boxing import DynaBox
 
-from .log import log as log
-from .console import console as console
-from .validators import PathValidator as PathValidator
-
 from ._config import _to_tree
 from ._config import _get_settings
 
 __all__ = (
-    "MODULE_PATH",
-    "PACKAGE_PATH",
-    "SETTINGS_ROOT",
-    "SETTINGS_HOME",
+    # API
     "settings",
     "settings_tree",
+    # Metadata
+    "APPLICATION_NAME",
+    "APPLICATION_AUTHOR",
+    "APPLICATION_VERSION",
+    # Directories
+    "APPLICATION_LOG_DIR",
+    "APPLICATION_DATA_DIR",
+    "APPLICATION_CACHE_DIR",
+    "APPLICATION_STATE_DIR",
+    "APPLICATION_CONFIG_DIR",
+    "APPLICATION_RUNTIME_DIR",
 )
 
-from ._config import MODULE_PATH as MODULE_PATH
-from ._config import PACKAGE_PATH as PACKAGE_PATH
-from ._config import SETTINGS_ROOT as SETTINGS_ROOT
-from ._config import SETTINGS_HOME as SETTINGS_HOME
 
-def settings_tree(
-    root: Dynaconf | DynaBox | dict,
-    label: str = "Settings",
-) -> Tree | Table:
-    """Get a tree representation of a dynaconf settings instance."""
-    if isinstance(root, Dynaconf):
-        root = root.as_dict()
-    if not isinstance(root, dict | list | tuple | set):
-        root = str(root)
-    return _to_tree(label, root)
+from ._config import APPLICATION_NAME as APPLICATION_NAME
+from ._config import APPLICATION_AUTHOR as APPLICATION_AUTHOR
+from ._config import APPLICATION_VERSION as APPLICATION_VERSION
+from ._config import APPLICATION_LOG_DIR as APPLICATION_LOG_DIR
+from ._config import APPLICATION_DATA_DIR as APPLICATION_DATA_DIR
+from ._config import APPLICATION_CACHE_DIR as APPLICATION_CACHE_DIR
+from ._config import APPLICATION_STATE_DIR as APPLICATION_STATE_DIR
+from ._config import APPLICATION_CONFIG_DIR as APPLICATION_CONFIG_DIR
+from ._config import APPLICATION_RUNTIME_DIR as APPLICATION_RUNTIME_DIR
 
 
 settings = _get_settings()
@@ -70,3 +69,13 @@ which will attempt to find and read the value of the attribute from any of the
 """
 
 
+def settings_tree(
+    root: Dynaconf | DynaBox | dict,
+    label: str = "Settings",
+) -> Tree | Table:
+    """Get a tree representation of a dynaconf settings instance."""
+    if isinstance(root, Dynaconf):
+        root = root.as_dict()
+    if not isinstance(root, dict | list | tuple | set):
+        root = str(root)
+    return _to_tree(label, root)

@@ -4,7 +4,7 @@ from pathlib import Path
 from dataclasses import field
 from dataclasses import dataclass
 
-from .log import log
+from .log import logger
 
 
 @dataclass
@@ -54,4 +54,5 @@ class FileWriter[T](Writer):
             "Target path must point to a directory, not a file."
         )
         exc = ValueError(err)
-        log.exception(err, exc_info=exc)
+        logger.exception(err, exc_info=exc)
+        raise exc

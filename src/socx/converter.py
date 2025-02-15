@@ -2,13 +2,11 @@ from __future__ import annotations
 
 import abc
 from typing import override
-from pathlib import Path
 from dataclasses import dataclass
 
 from dynaconf.utils.boxing import DynaBox
 
-from .log import log
-from .console import console
+from .log import logger
 from .config import settings
 from .reader import Reader
 from .reader import FileReader
@@ -67,7 +65,7 @@ class LstConverter(Converter):
             outputs[path] = self.formatter.format(
                 self.tokenizer.token_map, matches, self.parser.sym_table
             )
-            log.debug(f"{input_text=}")
-            log.debug(f"{outputs[path]=}")
-            log.debug(f"{self.parser.sym_table=}")
+            logger.debug(f"{input_text=}")
+            logger.debug(f"{outputs[path]=}")
+            logger.debug(f"{self.parser.sym_table=}")
             self.writer.write(outputs[path], path.with_suffix(".svh").name)

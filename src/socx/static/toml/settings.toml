@@ -1,0 +1,6 @@
+dynaconf_include = [
+    "convert.toml",
+    "filetypes.toml",
+    "regression.toml",
+    "plugins.toml",
+]
