@@ -1,6 +1,7 @@
 __all__ = (
     # modules
     "log",
+    "test",
     "memory",
     "config",
     "console",
@@ -18,6 +19,10 @@ __all__ = (
     "group",
     "command",
     "CLIPlugin",
+    # test
+    "Test",
+    "TestStatus",
+    "TestCommand",
     # config
     "settings",
     "settings_tree",
@@ -75,6 +80,9 @@ from .cli import group as group
 from .cli import command as command
 from .cli import CLIPlugin as CLIPlugin
 from .log import logger as logger
+from .test import Test as Test
+from .test import TestStatus as TestStatus
+from .test import TestCommand as TestCommand
 from .config import settings as settings
 from .config import settings_tree as settings_tree
 from .config import APPLICATION_NAME as APPLICATION_NAME
