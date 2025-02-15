@@ -37,15 +37,6 @@ class Parser(abc.ABC):
         """Return the 'lang' configuration of the parser's source language."""
         ...
 
-    @property
-    @abc.abstractmethod
-    def tokens(self) -> dict:
-        """
-        Return a dictionary mapping between token names to their internal
-        representation as object.
-        """
-        ...
-
 
 @dc.dataclass
 class LstParser(Parser):
@@ -95,16 +86,15 @@ class LstParser(Parser):
             source_dir = self.cfg.source
         if target_dir is None:
             target_dir = self.cfg.target
-        self.sym_table = SymbolTable()
-        self.tokenizer = LstTokenizer()
         self.options = options
-        self.includes = set()
-        self.excludes = set()
+        self.includes = includes
+        self.excludes = excludes
         self.source_dir = source_dir
         self.target_dir = target_dir
         self.includes = PathValidator._extract_includes(
             self.source_dir, includes, excludes
         )
+        self.sym_table = SymbolTable()
 
     @property
     def cfg(self) -> DynaBox:
@@ -114,38 +104,14 @@ class LstParser(Parser):
     def lang(self) -> DynaBox:
         return "lst"
 
-    @property
-    def tokens(self) -> DynaBox:
-        return self.tokenizer.tokens
-
-    @property
-    def token_map(self) -> dict[str, DynaBox]:
-        return self.tokenizer.token_map
-
     def parse(self) -> None:
         """Parse the sources according to initialization configuration."""
-        self.sym_table.update(self._parse_sym_table())
-
-    def tokenize(self, src: Path) -> tuple[re.Match]:
-        return self.tokenizer.tokenize(src)
-
-    def parseone(self, src: Path) -> None:
-        pass
-
-    def parse_line(self, line: str) -> None:
-        pass
-
-    def _parse_lst_source(self: t.Self, src: pathlib.Path) -> SymbolTable:
-        pass
-
-    def _parse_sym_table_funcs(self: t.Self) -> None:
-        pass
+        self._parse_sym_table()
 
     def _parse_sym_table(self: t.Self) -> SymbolTable:
-        table = SymbolTable()
         memory_map = {}
         base_addr_file = self.cfg.base_addr_map
-        base_addr_path = pathlib.Path(self.source_dir / base_addr_file)
+        base_addr_path = pathlib.Path(self.source_dir) / base_addr_file
         field_names = tuple([field.name for field in dc.fields(MemorySegment)])
         base_addr_map = json.loads(base_addr_path.read_text())
         for name in field_names:
@@ -156,13 +122,13 @@ class LstParser(Parser):
                 if device not in memory_map:
                     memory_map[device] = {}
                 memory_map[device][name] = int(value, self.cfg.base_addr_base)
-        table = SymbolTable()
+        self.sym_table.clear()
         for device in memory_map:
             if all(name in memory_map[device] for name in field_names):
                 space = MemorySegment(**dict(memory_map[device].items()))
-                table[device] = (space, None)
-        self.sym_table = table
-        return table
+                self.sym_table[device] = (space, None)
+        self.sym_table = self.sym_table
+        return self.sym_table
 
     def __hash__(self) -> int:
         return hash(tuple(self.includes))
