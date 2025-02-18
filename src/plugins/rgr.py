@@ -1,5 +1,7 @@
 import click
 
+from pathlib import Path
+
 from socx import console, settings, Test, cli as soc_cli
 
 
@@ -12,7 +14,7 @@ def cli():
 def rrfh():
     """Command alias of rerun-failure-history."""
     failure_history = settings.regression.files.failure_history
-    history_fp = failure_history.parent / failure_history.name
+    history_fp = Path(failure_history.parent) / failure_history.name
     with click.open_file(history_fp, mode="r", encoding="utf-8") as file:
         for line in file:
             console.print(Test(line))
