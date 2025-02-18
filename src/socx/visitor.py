@@ -3,6 +3,18 @@ from __future__ import annotations
 from typing import Protocol
 
 
+__all__ = (
+    "Node",
+    "Visitor",
+    "Structure",
+    "Proxy",
+    "Adapter",
+    "TopDownTraversal",
+    "BottomUpTraversal",
+    "ByLevelTraversal",
+)
+
+
 class Node[NODE](Protocol):
     def accept(self, v: Visitor[NODE]) -> None:
         """Accept a visit from a visitor."""
