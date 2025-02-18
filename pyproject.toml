@@ -54,6 +54,10 @@ dev = [
     "debugpy>=1.8.12",
 ]
 
+[project.urls]
+Homepage = "https://github.com/MomsPancakes/socx"
+Issues = "https://github.com/MomsPancakes/socx/issues"
+
 # -----------------------------------------------------------------------------
 # Developer Configurations
 # -----------------------------------------------------------------------------

@@ -21,10 +21,6 @@ def rrfh():
 @cli.command("rerun-failure-history")
 def rerun_failure_history():
     """Rerun failed tests from all past regressions."""
-    failure_history = settings.regression.files.failure_history
-    history_fp = failure_history.parent / failure_history.name
-    with click.open_file(history_fp, mode="r", encoding="utf-8") as file:
-        for line in file:
-            console.print(Test(line))
+    rrfh()
 
 
