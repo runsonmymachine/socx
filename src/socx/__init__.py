@@ -122,5 +122,5 @@ from .converter import Converter as Converter
 from .converter import LstConverter as LstConverter
 from .validators import PathValidator as PathValidator
 from .regression import Test as Test
-from .regression import TestStatus as TestStatus
-from .regression import TestCommand as TestCommand
+from .regression import Status as Status
+from .regression import Command as Command

@@ -15,8 +15,8 @@ from dynaconf.utils.boxing import DynaBox
 
 from .. import visitor
 from .test import Test
-from .test import TestStatus
-from .test import TestCommand
+from .test import Status
+from .test import Command
 from ..config import settings
 
 
@@ -26,7 +26,7 @@ class Regression:
     name: str
     log: Path
     tests: list[Test]
-    status: list[TestStatus]
+    status: list[Status]
     options: DynaBox
     test_logs: list[Path]
 
@@ -91,7 +91,7 @@ class Regression:
         pass
 
     @property
-    def status(self) -> TestStatus:
+    def status(self) -> Status:
         """A `TestStatus` representing the state/status of the test."""
         pass
 
