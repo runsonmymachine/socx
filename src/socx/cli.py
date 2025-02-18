@@ -3,6 +3,7 @@ from __future__ import annotations
 from types import CodeType
 
 import click
+from trogon import tui
 
 from .log import logger
 from .console import console
@@ -152,6 +153,7 @@ class CmdLine(RichGroup, click.Group):
         logger.debug(f"'{name}' (plugin) unloaded", exc_info=exc)
 
 
+@tui()
 @click.group("socx", cls=CmdLine)
 @click.option(
     "--configure/--no-configure",
