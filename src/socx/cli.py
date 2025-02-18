@@ -1,11 +1,8 @@
 from __future__ import annotations
 
-import io
 from types import CodeType
-from contextlib import suppress
 
 import click
-from rich.console import Console
 
 from .log import logger
 from .console import console
@@ -14,14 +11,16 @@ from .config import USER_CONFIG_DIR
 
 
 _CONTEXT_SETTINGS = dict(
-    help_option_names=["?", "-h", "--help",],
+    help_option_names=[
+        "?",
+        "-h",
+        "--help",
+    ],
 )
 
 
 class RichHelp:
-    def get_help(
-        self, ctx: click.Context
-    ) -> None:
+    def get_help(self, ctx: click.Context) -> None:
         return self._header(ctx) + super().get_help(ctx) + self._footer()
 
     def _header(self, ctx: click.Context) -> str:
@@ -52,7 +51,6 @@ class RichGroup(RichHelp, click.Group):
     def command(self, *args, **kwargs) -> click.RichCommand:
         kwargs["cls"] = RichCommand
         return super().command(*args, **kwargs)
-
 
 
 class CmdLine(RichGroup, click.Group):
@@ -165,4 +163,5 @@ def cli(configure: bool) -> None:
     """SoC team tool executer and plugin manager."""
     if configure:
         from .config._config import _load_settings
+
         _load_settings(USER_CONFIG_DIR)
