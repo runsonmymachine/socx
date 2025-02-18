@@ -7,6 +7,7 @@ __all__ = (
     "parser",
     "reader",
     "writer",
+    "visitor",
     "tokenizer",
     "formatter",
     "converter",
@@ -48,6 +49,15 @@ __all__ = (
     # Writer
     "Writer",
     "FileWriter",
+    # Visitor
+    "Node",
+    "Proxy",
+    "Visitor",
+    "Adapter",
+    "Structure",
+    "TopDownTraversal",
+    "BottomUpTraversal",
+    "ByLevelTraversal",
     # Tokenizer
     "Tokenizer",
     "LstTokenizer",
@@ -66,6 +76,7 @@ from . import config as config
 from . import parser as parser
 from . import reader as reader
 from . import writer as writer
+from . import visitor as visitor
 from . import tokenizer as tokenizer
 from . import formatter as formatter
 from . import converter as converter
@@ -95,6 +106,14 @@ from .reader import Reader as Reader
 from .reader import FileReader as FileReader
 from .writer import Writer as Writer
 from .writer import FileWriter as FileWriter
+from .visitor import Node as Node
+from .visitor import Proxy as Proxy
+from .visitor import Visitor as Visitor
+from .visitor import Adapter as Adapter
+from .visitor import Structure as Structure
+from .visitor import TopDownTraversal as TopDownTraversal
+from .visitor import BottomUpTraversal as BottomUpTraversal
+from .visitor import ByLevelTraversal as ByLevelTraversal
 from .tokenizer import Tokenizer as Tokenizer
 from .tokenizer import LstTokenizer as LstTokenizer
 from .formatter import Formatter as Formatter
