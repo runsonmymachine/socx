@@ -1,6 +1,14 @@
 [regression]
 root = "@path @format /space/users/ci_wiliot/vw_e0_nightly_regression/regressions"
 
+[regression.user.options]
+test_timeout = 7200
+max_runs_in_parallel = 10
+
+[regression.user.options.logs]
+path = "@format {env[RAREA]}/regressions"
+enabled = true
+
 [regression.logs]
 path = "@path @format {this.regression.root}/logs"
 prev = "@path @format {this.regression.logs.path}/prev"
