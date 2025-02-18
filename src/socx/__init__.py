@@ -19,6 +19,8 @@ __all__ = (
     "Test",
     "TestStatus",
     "TestCommand",
+    "Regression",
+    "RegressionStatus",
     # Config
     "settings",
     "settings_tree",
@@ -122,5 +124,7 @@ from .converter import Converter as Converter
 from .converter import LstConverter as LstConverter
 from .validators import PathValidator as PathValidator
 from .regression import Test as Test
-from .regression import Status as Status
-from .regression import Command as Command
+from .regression import TestStatus as TestStatus
+from .regression import TestCommand as TestCommand
+from .regression import Regression as Regression
+from .regression import RegressionStatus as RegressionStatus
