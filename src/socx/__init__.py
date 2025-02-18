@@ -4,7 +4,6 @@ __all__ = (
     "test",
     "memory",
     "config",
-    "console",
     "parser",
     "reader",
     "writer",
@@ -15,10 +14,6 @@ __all__ = (
     "logger",
     # cli
     "cli",
-    "app",
-    "group",
-    "command",
-    "CLIPlugin",
     # test
     "Test",
     "TestStatus",
@@ -26,15 +21,15 @@ __all__ = (
     # config
     "settings",
     "settings_tree",
-    "APPLICATION_NAME",
-    "APPLICATION_AUTHOR",
-    "APPLICATION_VERSION",
-    "APPLICATION_LOG_DIR",
-    "APPLICATION_DATA_DIR",
-    "APPLICATION_CACHE_DIR",
-    "APPLICATION_STATE_DIR",
-    "APPLICATION_CONFIG_DIR",
-    "APPLICATION_RUNTIME_DIR",
+    "APP_NAME",
+    "APP_AUTHOR",
+    "APP_VERSION",
+    "USER_LOG_DIR",
+    "USER_DATA_DIR",
+    "USER_CACHE_DIR",
+    "USER_STATE_DIR",
+    "USER_CONFIG_DIR",
+    "USER_RUNTIME_DIR",
     # console
     "console",
     # memory
@@ -66,9 +61,9 @@ __all__ = (
 )
 
 from . import log as log
+from . import test as test
 from . import memory as memory
 from . import config as config
-from . import console as console
 from . import parser as parser
 from . import reader as reader
 from . import writer as writer
@@ -76,24 +71,21 @@ from . import tokenizer as tokenizer
 from . import formatter as formatter
 from . import converter as converter
 from .cli import cli as cli
-from .cli import group as group
-from .cli import command as command
-from .cli import CLIPlugin as CLIPlugin
 from .log import logger as logger
 from .test import Test as Test
 from .test import TestStatus as TestStatus
 from .test import TestCommand as TestCommand
 from .config import settings as settings
 from .config import settings_tree as settings_tree
-from .config import APPLICATION_NAME as APPLICATION_NAME
-from .config import APPLICATION_AUTHOR as APPLICATION_AUTHOR
-from .config import APPLICATION_VERSION as APPLICATION_VERSION
-from .config import APPLICATION_LOG_DIR as APPLICATION_LOG_DIR
-from .config import APPLICATION_DATA_DIR as APPLICATION_DATA_DIR
-from .config import APPLICATION_CACHE_DIR as APPLICATION_CACHE_DIR
-from .config import APPLICATION_STATE_DIR as APPLICATION_STATE_DIR
-from .config import APPLICATION_CONFIG_DIR as APPLICATION_CONFIG_DIR
-from .config import APPLICATION_RUNTIME_DIR as APPLICATION_RUNTIME_DIR
+from .config import APP_NAME as APP_NAME
+from .config import APP_AUTHOR as APP_AUTHOR
+from .config import APP_VERSION as APP_VERSION
+from .config import USER_LOG_DIR as USER_LOG_DIR
+from .config import USER_DATA_DIR as USER_DATA_DIR
+from .config import USER_CACHE_DIR as USER_CACHE_DIR
+from .config import USER_STATE_DIR as USER_STATE_DIR
+from .config import USER_CONFIG_DIR as USER_CONFIG_DIR
+from .config import USER_RUNTIME_DIR as USER_RUNTIME_DIR
 from .console import console as console
 from .memory import SymbolTable as SymbolTable
 from .memory import RichSymTable as RichSymTable

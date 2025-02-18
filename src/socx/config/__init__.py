@@ -19,8 +19,9 @@ defined.
 For additional information regarding the internals of this module, reference
 dynaconf documentation on its official-site/github-repository.
 """
-
 from __future__ import annotations
+
+from pathlib import Path
 
 from rich.tree import Tree
 from rich.table import Table
@@ -35,28 +36,28 @@ __all__ = (
     "settings",
     "settings_tree",
     # Metadata
-    "APPLICATION_NAME",
-    "APPLICATION_AUTHOR",
-    "APPLICATION_VERSION",
+    "APP_NAME",
+    "APP_AUTHOR",
+    "APP_VERSION",
     # Directories
-    "APPLICATION_LOG_DIR",
-    "APPLICATION_DATA_DIR",
-    "APPLICATION_CACHE_DIR",
-    "APPLICATION_STATE_DIR",
-    "APPLICATION_CONFIG_DIR",
-    "APPLICATION_RUNTIME_DIR",
+    "USER_LOG_DIR",
+    "USER_DATA_DIR",
+    "USER_CACHE_DIR",
+    "USER_STATE_DIR",
+    "USER_CONFIG_DIR",
+    "USER_RUNTIME_DIR",
 )
 
 
-from ._config import APPLICATION_NAME as APPLICATION_NAME
-from ._config import APPLICATION_AUTHOR as APPLICATION_AUTHOR
-from ._config import APPLICATION_VERSION as APPLICATION_VERSION
-from ._config import APPLICATION_LOG_DIR as APPLICATION_LOG_DIR
-from ._config import APPLICATION_DATA_DIR as APPLICATION_DATA_DIR
-from ._config import APPLICATION_CACHE_DIR as APPLICATION_CACHE_DIR
-from ._config import APPLICATION_STATE_DIR as APPLICATION_STATE_DIR
-from ._config import APPLICATION_CONFIG_DIR as APPLICATION_CONFIG_DIR
-from ._config import APPLICATION_RUNTIME_DIR as APPLICATION_RUNTIME_DIR
+from ._config import APP_NAME as APP_NAME
+from ._config import APP_AUTHOR as APP_AUTHOR
+from ._config import APP_VERSION as APP_VERSION
+from ._config import USER_LOG_DIR as USER_LOG_DIR
+from ._config import USER_DATA_DIR as USER_DATA_DIR
+from ._config import USER_CACHE_DIR as USER_CACHE_DIR
+from ._config import USER_STATE_DIR as USER_STATE_DIR
+from ._config import USER_CONFIG_DIR as USER_CONFIG_DIR
+from ._config import USER_RUNTIME_DIR as USER_RUNTIME_DIR
 
 
 settings = _get_settings()
@@ -68,6 +69,10 @@ which will attempt to find and read the value of the attribute from any of the
 .toml configuration files under the 'settings' directory.
 """
 
+def reconfigure(path: Path) -> Dynaconf:
+    from ._config import _load_settings
+    from ._config import _validate_settings
+    _load_settings(path)
 
 def settings_tree(
     root: Dynaconf | DynaBox | dict,

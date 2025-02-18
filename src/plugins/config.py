@@ -1,70 +1,67 @@
-import sys
 from pathlib import Path
+from contextlib import suppress
 
 import rich
 import click
 from rich.prompt import Prompt
 
-from socx import (
-    group,
-    command,
-    console,
-    settings,
-    settings_tree,
-)
+from socx import cli as soc_cli
+from socx import logger
+from socx import console
+from socx import settings
+from socx import settings_tree
 
 
-@group("config", plugin=False)
+@soc_cli.group("config")
 @click.pass_context
 def cli(ctx: click.Context):
     """Get, set, list, or modify settings configuration values."""
 
 
-@command("help", parent=cli)
-@click.argument("command", required=False, default=None, type=str)
-@click.pass_context
-def help_(ctx: click.Context, command: str | None = None):
-    """Display usage and help information."""
-    cmd = cli.get_command(ctx, command) if command else None
-    help_text = cmd.get_help(ctx) if cmd else cli.get_help(ctx)
-    rule_text = f"{ctx.command_path}{f'->{cmd.name}' if cmd else ''}"
-    rule_style = "[magenta on gray30]"
-    console.rule(f"{rule_style}{rule_text}", align="center")
-    console.print(f"{help_text}")
-    console.rule("")
-
-
-@command(parent=cli)
+@cli.command()
 def inspect():
     """Inspect the current settings instance and print the results."""
     console.clear()
     rich.inspect(settings, console=console, all=True)
 
 
-@command("list", parent=cli)
+@cli.command("list")
 def list_():
     """Print a list of all current configuration values."""
+    console.print(settings.as_dict())
+
+
+@cli.command("tree")
+def tree_():
+    """Print a tree of all loaded configurations."""
     tree = settings_tree(settings)
-    console.clear()
     console.print(tree)
 
 
-@command(parent=cli)
-@click.argument("field_name", required=True, type=str)
-def get(field_name: str):
+@cli.command()
+@click.argument("name", required=True, type=str)
+def get(name: str):
     """Print a tree/table/value representation of the settings field."""
-    try:
-        field = settings[field_name]
-        tree = settings_tree(field, field_name)
-    except (KeyError, AttributeError):
-        console.print(f"No such field: {field_name}")
-        console.print(click.get_current_context().get_help())
-    else:
-        console.clear()
+    tree = None
+    with suppress(KeyError, AttributeError):
+        field = settings[name]
+        tree = settings_tree(field, name)
         console.print(tree)
+    if not tree:
+        console.print(f"No such field: {name}")
+        console.print(click.get_current_context().get_help())
 
 
-@command(parent=cli)
+@cli.command("set")
+@click.argument("name", required=True, type=str)
+@click.argument("value", required=True, type=str)
+def set_(name: str, value: str):
+    """Print a tree/table/value representation of the settings field."""
+    logger.debug(f"settings update: '{name}={value}'")
+    settings.update({name: value}, validate_on_update=True)
+
+
+@cli.command()
 def edit():
     """Edit settings from console using nano/vim/nvim/gvim (interactive)."""
     help_text = """[magenta on gray23]

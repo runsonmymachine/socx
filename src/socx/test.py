@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import signal
+from contextlib import suppress
 from functools import lru_cache
 from typing import TextIO
 from enum import auto
@@ -70,16 +71,10 @@ class TestCommand:
             raise AttributeError
 
     def extract_argv(self, arg: str) -> str:
-        try:
+        with suppress(ValueError):
             index = self.args.index(f"{arg}")
-        except ValueError:
-            return ""
-        else:
-            return (
-                self.args[index + 1]
-                if index + 1 < len(self.args)
-                else ""
-            )
+            return self.args[index + 1] if index + 1 < len(self.args) else ""
+        return ""
 
     def __post_init__(self) -> None:
         self.line = self.line.strip()
@@ -118,8 +113,8 @@ class Test:
     def name(self) -> str:
         """The test name or empty string if command does not specify a test."""
         test = self.command.test
-        if '/' in test:
-            test = test.partition('/')[-1]
+        if "/" in test:
+            test = test.partition("/")[-1]
         return test
 
     @property
@@ -130,10 +125,10 @@ class Test:
     @property
     def seed(self):
         """The test seed."""
-        try:
-            return int(self.command.seed)
-        except AttributeError:
-            return 0
+        with suppress(AttributeError):
+            rv = int(self.command.seed)
+            return rv
+        return 0
 
     def start(self) -> None:
         """Start a test in a subprocess."""

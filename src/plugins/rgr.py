@@ -1,23 +1,30 @@
 import click
 
-from socx import command, group, console, settings, Test
+from socx import console, settings, Test, cli as soc_cli
 
-@group("rgr", plugin=False)
+
+@soc_cli.group("rgr")
 def cli():
     """Perform various regression related actions."""
 
 
-@command(parent=cli)
-def rerun_history():
-    """Rerun all failed tests from the dawn of history of regressions."""
-    failure_history = settings.regression.failure_history
-    history_fp = failure_history.parent/failure_history.name
+@cli.command()
+def rrfh():
+    """Command alias of rerun-failure-history."""
+    failure_history = settings.regression.files.failure_history
+    history_fp = failure_history.parent / failure_history.name
     with click.open_file(history_fp, mode="r", encoding="utf-8") as file:
         for line in file:
             console.print(Test(line))
 
 
-@command(parent=cli)
-def rrfh():
-    """Alias for rerun-failed-history command."""
-    rerun_history()
+@cli.command("rerun-failure-history")
+def rerun_failure_history():
+    """Rerun failed tests from all past regressions."""
+    failure_history = settings.regression.files.failure_history
+    history_fp = failure_history.parent / failure_history.name
+    with click.open_file(history_fp, mode="r", encoding="utf-8") as file:
+        for line in file:
+            console.print(Test(line))
+
+

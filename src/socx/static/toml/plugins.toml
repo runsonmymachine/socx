@@ -1,15 +1,5 @@
 [plugins]
-path = "@path @format src/plugins"
-includes = [
-    "rgr",
-    "config",
-    "convert",
-    "example",
-]
-
-[plugins.rgr]
-path = "@path @format {this.plugins.path}/rgr"
-
-[plugins.convert]
-path = "@path @format {this.plugins.path}/convert"
-
+rgr = "@path @format src/plugins/rgr.py"
+config = "@path @format src/plugins/config.py"
+example = "@path @format src/plugins/example.py"
+convert = "@path @format src/plugins/convert/lst.py"

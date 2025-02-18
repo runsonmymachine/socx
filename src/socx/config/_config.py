@@ -1,15 +1,14 @@
 from __future__ import annotations
 
-import logging
-import shutil
-from weakref import proxy
+import sys
 from typing import Any
 from typing import Final
 from pathlib import Path
-from importlib import resources
 from importlib.metadata import version
 from importlib.metadata import metadata
 from importlib.metadata import PackageMetadata
+from contextlib import suppress
+from collections.abc import Iterable
 
 from click import open_file
 from rich.tree import Tree
@@ -20,8 +19,14 @@ from rich.logging import RichHandler
 from dynaconf import Dynaconf
 from dynaconf import ValidationError
 from dynaconf import add_converter
+from dynaconf.utils.boxing import DynaBox
+from dynaconf.utils import object_merge
 from dynaconf.validator import empty
 from dynaconf.validator import Validator
+from platformdirs import site_data_dir
+from platformdirs import site_cache_dir
+from platformdirs import site_config_dir
+from platformdirs import site_runtime_dir
 from platformdirs import user_log_dir
 from platformdirs import user_data_dir
 from platformdirs import user_state_dir
@@ -30,10 +35,8 @@ from platformdirs import user_config_dir
 from platformdirs import user_runtime_dir
 
 from ..log import logger
-from ..log import get_logger
 from ..log import add_handler
 from ..log import DEFAULT_LEVEL
-from ..log import DEFAULT_FORMAT
 from ..log import DEFAULT_TIME_FORMAT
 from ..validators import PathValidator
 
@@ -48,7 +51,7 @@ __metadata__ = metadata(__package__.partition(".")[0])
 PACKAGE_NAME: Final[str] = __package__.partition(".")[0]
 """Package name."""
 
-PACKAGE_PATH: Final[Path] = Path(__file__).parents[1].resolve()
+PACKAGE_PATH: Final[Path] = Path(sys.modules[PACKAGE_NAME].__file__).parent
 """Absolute path to package."""
 
 PACKAGE_AUTHOR: Final[str] = __author__
@@ -60,105 +63,167 @@ PACKAGE_VERSION: Final[str] = __version__
 PACKAGE_METADATA: Final[PackageMetadata] = __metadata__
 """Package metadata."""
 
-APPLICATION_NAME: Final[str] = PACKAGE_NAME
+APP_NAME: Final[str] = PACKAGE_NAME
 """Application name."""
 
-APPLICATION_AUTHOR: Final[str] = PACKAGE_METADATA
+APP_AUTHOR: Final[str] = PACKAGE_METADATA
 """Application author"""
 
-APPLICATION_VERSION: Final[str] = PACKAGE_VERSION
+APP_VERSION: Final[str] = PACKAGE_VERSION
 """Application version."""
 
-APPLICATION_LOG_DIR: Final[Path] = Path(
+SITE_DATA_DIR: Final[Path] = Path(
+    site_data_dir(
+        appname=APP_NAME,
+        version=APP_VERSION,
+        appauthor=APP_AUTHOR,
+        ensure_exists=False,
+    )
+).resolve()
+"""Absolute path to platform's native application data directory."""
+
+SITE_CACHE_DIR: Final[Path] = Path(
+    site_cache_dir(
+        appname=APP_NAME,
+        version=APP_VERSION,
+        appauthor=APP_AUTHOR,
+        ensure_exists=False,
+    )
+).resolve()
+"""Absolute path to platform's native application cache directory."""
+
+SITE_CONFIG_DIR: Final[Path] = Path(
+    site_config_dir(
+        appname=APP_NAME,
+        version=APP_VERSION,
+        appauthor=APP_AUTHOR,
+        ensure_exists=False,
+    )
+).resolve()
+"""Absolute path to platform's native application config directory."""
+
+SITE_RUNTIME_DIR: Final[Path] = Path(
+    site_runtime_dir(
+        appname=APP_NAME,
+        version=APP_VERSION,
+        appauthor=APP_AUTHOR,
+        ensure_exists=False,
+    )
+).resolve()
+"""Absolute path to platform's native application runtime directory."""
+
+USER_LOG_DIR: Final[Path] = Path(
     user_log_dir(
-        appname=APPLICATION_NAME,
-        version=APPLICATION_VERSION,
-        appauthor=APPLICATION_AUTHOR,
+        appname=APP_NAME,
+        version=APP_VERSION,
+        appauthor=APP_AUTHOR,
         ensure_exists=True,
     )
 )
 """Absolute path to platform's native application logs directory."""
 
-APPLICATION_DATA_DIR: Final[Path] = Path(
+USER_DATA_DIR: Final[Path] = Path(
     user_data_dir(
-        appname=APPLICATION_NAME,
-        version=APPLICATION_VERSION,
-        appauthor=APPLICATION_AUTHOR,
+        appname=APP_NAME,
+        version=APP_VERSION,
+        appauthor=APP_AUTHOR,
         ensure_exists=True,
     )
 ).resolve()
 """Absolute path to platform's native application data directory."""
 
-APPLICATION_CACHE_DIR: Final[Path] = Path(
+USER_CACHE_DIR: Final[Path] = Path(
     user_cache_dir(
-        appname=APPLICATION_NAME,
-        version=APPLICATION_VERSION,
-        appauthor=APPLICATION_AUTHOR,
+        appname=APP_NAME,
+        version=APP_VERSION,
+        appauthor=APP_AUTHOR,
         ensure_exists=True,
     )
 ).resolve()
 """Absolute path to platform's native application cache directory."""
 
-APPLICATION_STATE_DIR: Final[Path] = Path(
+USER_STATE_DIR: Final[Path] = Path(
     user_state_dir(
-        appname=APPLICATION_NAME,
-        version=APPLICATION_VERSION,
-        appauthor=APPLICATION_AUTHOR,
+        appname=APP_NAME,
+        version=APP_VERSION,
+        appauthor=APP_AUTHOR,
         ensure_exists=True,
     )
 ).resolve()
 """Absolute path to platform's native application state directory."""
 
-APPLICATION_CONFIG_DIR: Final[Path] = Path(
+USER_CONFIG_DIR: Final[Path] = Path(
     user_config_dir(
-        appname=APPLICATION_NAME,
-        version=APPLICATION_VERSION,
-        appauthor=APPLICATION_AUTHOR,
+        appname=APP_NAME,
+        version=APP_VERSION,
+        appauthor=APP_AUTHOR,
         ensure_exists=True,
     )
 ).resolve()
 """Absolute path to platform's native application config directory."""
 
-APPLICATION_RUNTIME_DIR: Final[Path] = Path(
+USER_RUNTIME_DIR: Final[Path] = Path(
     user_runtime_dir(
-        appname=APPLICATION_NAME,
-        version=APPLICATION_VERSION,
-        appauthor=APPLICATION_AUTHOR,
+        appname=APP_NAME,
+        version=APP_VERSION,
+        appauthor=APP_AUTHOR,
         ensure_exists=True,
     )
 ).resolve()
 """Absolute path to platform's native application runtime directory."""
 
-_log: Path = Path(APPLICATION_LOG_DIR / "run").with_suffix(".log")
+_init_done: bool = False
 
-_settings: Dynaconf | None = None
+_settings: Dynaconf | dict = {
+    name: value for name, value in vars().items() if not name.startswith("_")
+}
 
-_initialized: bool = False
+_user_log: Path = USER_LOG_DIR / "run.log"
 
-_settings_root: Path = Path(PACKAGE_PATH / "static" / "toml").resolve()
+_static_dir: Path = Path(PACKAGE_PATH) / "static" / "toml"
+
+_static_file: Path = "settings.toml"
+
+_user_settings: Path = Path(USER_CONFIG_DIR) / "settings.toml"
+
+_static_settings: Path = Path(_static_dir) / _static_file
+
+_settings_kwargs = dict(
+    encoding="utf-8",
+    lowercase_read=True,
+    envvar_prefix=APP_NAME.upper(),
+    load_dotenv=False,
+    environments=False,
+    dotenv_override=False,
+    sysenv_fallback=True,
+    validate_on_update="all",
+    validators=[Validator(r"convert.*", ne=empty)],
+)
 
 
 def _init_module() -> None:
-    global _initialized
-    logger.debug("Initializing module.")
+    global _init_done
+    logger.debug("initializing module.")
     _init_logger()
-    _init_dynaconf()
-    _init_config_files()
-    _init_user_settings()
-    _validate_dynaconf_settings()
-    _initialized = True
-    logger.debug("Module initialized.")
+    _init_converters()
+    _load_settings()
+    _validate_settings()
+    _init_done = True
+    logger.debug("module initialized.")
 
 
 def _init_logger() -> None:
     global logger
-    logger.debug("Initializing logger.")
+    logger.debug("initializing logger.")
     add_handler(
         RichHandler(
             level=DEFAULT_LEVEL,
             console=Console(
                 file=open_file(
-                    filename=str(_log), mode="w", encoding="utf-8", lazy=True
+                    filename=str(_user_log),
+                    mode="w",
+                    encoding="utf-8",
+                    lazy=True,
                 ),
                 tab_size=4,
                 width=110,
@@ -176,66 +241,42 @@ def _init_logger() -> None:
             log_time_format=DEFAULT_TIME_FORMAT,
         )
     )
-    logger.debug("Logging initialized.")
-    logger.debug(f"Logging at path: {_log}")
+    logger.info("logging initialized.")
+    logger.info(f"logging at path: {_user_log}")
 
 
-def _init_dynaconf() -> None:
-    logger.debug("Initializing dynaconf.")
+def _init_converters() -> None:
+    logger.debug("initializing settings converters.")
     add_converter("path", lambda x: Path(str(x)).resolve())
     add_converter("glob", lambda x: next(Path().glob(x)).resolve())
-    logger.debug("Dynaconf initialized.")
+    logger.debug("settings converters initialized.")
 
 
-def _init_config_files() -> None:
-    logger.debug("Initializing user config files.")
-    for config_file in _settings_root.glob("*.toml"):
-        user_config_file = Path(APPLICATION_CONFIG_DIR / config_file.name)
-        if not user_config_file.exists():
-            logger.debug(
-                "user config file not found, "
-                f"writing default config file: '{user_config_file.name}'..."
-            )
-            user_config_file.write_text(config_file.read_text())
-            logger.debug(
-                f"config file succesfuly written to {user_config_file}."
-            )
-    logger.debug("User config files initialized.")
-
-
-def _init_user_settings() -> Dynaconf:
+def _load_settings(
+    path: Path | None = None,
+    preload: Iterable[str] | None = None,
+    includes: Iterable[str] | None = None,
+) -> Dynaconf:
     global _settings
-    logger.debug("Initializing settings.")
-    _settings = Dynaconf(
-        root_path=str(APPLICATION_CONFIG_DIR),
-        settings_files=["settings.toml"],
-        envvar_prefix=APPLICATION_NAME.upper(),
-        load_dotenv=False,
-        environments=False,
-        dotenv_override=False,
-        sysenv_fallback=True,
-        validate_on_update="all",
-        validators=[Validator(r"convert.*", ne=empty)],
+    path = path if path else _static_settings
+    preload = preload if preload else []
+    includes = includes if includes else []
+    logger.debug(f"loading settings from {path}.")
+    settings = Dynaconf(
+        root_path=path.parent,
+        preload=preload,
+        settings_files=[str(path)],
+        includes=includes,
+        **_settings_kwargs,
+        **_settings.as_dict() if isinstance(_settings, Dynaconf) else _settings,
     )
-    _settings.update({
-        "PACKAGE_NAME": PACKAGE_NAME,
-        "PACKAGE_PATH": PACKAGE_PATH,
-        "PACKAGE_AUTHOR": PACKAGE_AUTHOR,
-        "PACKAGE_VERSION": PACKAGE_VERSION,
-        "APPLICATION_NAME": APPLICATION_NAME,
-        "APPLICATION_AUTHOR": APPLICATION_AUTHOR,
-        "APPLICATION_VERSION": APPLICATION_VERSION,
-        "APPLICATION_LOG_DIR": APPLICATION_LOG_DIR,
-        "APPLICATION_DATA_DIR": APPLICATION_DATA_DIR,
-        "APPLICATION_CACHE_DIR": APPLICATION_CACHE_DIR,
-        "APPLICATION_STATE_DIR": APPLICATION_STATE_DIR,
-        "APPLICATION_CONFIG_DIR": APPLICATION_CONFIG_DIR,
-        "APPLICATION_RUNTIME_DIR": APPLICATION_RUNTIME_DIR,
-    })
-    logger.debug("Settings initialized.")
+    settings.update(_settings)
+    _settings = settings
+    logger.debug("settings loaded.")
+    return _settings
 
 
-def _validate_dynaconf_settings() -> None:
+def _validate_settings() -> None:
     global _settings
     logger.debug("Validating settings.")
     for lang in _settings.convert:
@@ -255,7 +296,7 @@ def _validate_dynaconf_settings() -> None:
 
 
 def _get_settings() -> Dynaconf:
-    if not _initialized:
+    if not _init_done:
         _init_module()
     return _settings
 

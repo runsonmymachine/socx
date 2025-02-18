@@ -45,7 +45,7 @@ Level: NewType = NewType("Level", int | str)
 Union type definition of `int | str` for annotating level arguments.
 """
 
-DEFAULT_LEVEL: Final[Level] = os.environ.get("SOCX_VERBOSITY", logging.INFO)
+DEFAULT_LEVEL: Final[Level] = os.environ.get("SOCX_VERBOSITY", logging.WARN)
 """
 Default logger level, a.k.a verbosity.
 """
@@ -126,7 +126,7 @@ def get_logger(name: str, filename: str | None = None) -> logging.Logger:
     A pretty printing logging.Logger instance.
 
     """
-    rv = logger.getChild(name)
+    rv = _logger.getChild(name)
     if filename is not None:
         handler = logging.FileHandler(
             filename=filename, mode="w", encoding="utf-8"
@@ -212,7 +212,6 @@ def is_enabled_for(level: Level) -> bool:
     if isinstance(level, str):
         level = logging.getLevelName(level)
     return _logger.isEnabledFor(level)
-
 
 logger = proxy(_logger)
 """
