@@ -1,23 +1,21 @@
 from __future__ import annotations
 
-import signal
-from enum import auto
-from enum import IntEnum
 from typing import TextIO
 from pathlib import Path
-from contextlib import suppress
-from subprocess import PIPE
 from subprocess import Popen
-from dataclasses import field
 from dataclasses import dataclass
 
 from dynaconf.utils.boxing import DynaBox
 
-from .. import visitor
-from .test import Test
-from .test import Status
-from .test import Command
+# from .. import visitor
 from ..config import settings
+from .test import Test
+
+
+__all__ = ("Status", "Regression")
+
+
+from .test import Status as Status
 
 
 @dataclass(init=False)
@@ -129,4 +127,3 @@ class Regression:
     def returncode(self) -> int | None:
         """The return code from the test process or None if running or idle."""
         pass
-
