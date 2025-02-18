@@ -24,12 +24,9 @@ dependencies = [
     "dynaconf>=3.2.7",
     "jinja2>=3.1.5",
     "platformdirs>=4.3.6",
-    "cython>=3.0.12",
     "trogon>=0.6.0",
-    "textual-dev>=1.7.0",
     "textual-serve>=1.1.1",
     "textual-web>=0.4.2",
-    "textual[dev]>=2.0.4",
     "pyarrow>=19.0.0",
 ]
 license-files = ["LICENSE"]
@@ -39,6 +36,7 @@ requires-python = ">=3.12"
 socx='socx.__main__:cli'
 
 [project.gui-scripts]
+# socx-tui
 
 [project.optional-dependencies]
 dev = [
@@ -52,6 +50,9 @@ dev = [
     "flake8-bugbear",
     "flake8-simplify",
     "debugpy>=1.8.12",
+    "textual-dev>=1.7.0",
+    "textual[dev]>=2.0.4",
+    "textual-terminal>=0.3.0",
 ]
 
 [project.urls]
