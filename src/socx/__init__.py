@@ -1,5 +1,5 @@
 __all__ = (
-    # modules
+    # Modules
     "log",
     "test",
     "memory",
@@ -10,15 +10,15 @@ __all__ = (
     "tokenizer",
     "formatter",
     "converter",
-    # log
+    # Log
     "logger",
-    # cli
+    # Cli
     "cli",
-    # test
+    # Regression
     "Test",
     "TestStatus",
     "TestCommand",
-    # config
+    # Config
     "settings",
     "settings_tree",
     "APP_NAME",
@@ -30,38 +30,37 @@ __all__ = (
     "USER_STATE_DIR",
     "USER_CONFIG_DIR",
     "USER_RUNTIME_DIR",
-    # console
+    # Console
     "console",
-    # memory
+    # Memory
     "SymbolTable",
     "RichSymTable",
     "MemorySegment",
     "DynamicSymbol",
-    # parser
+    # Parser
     "parse",
     "write",
     "Parser",
     "LstParser",
-    # reader
+    # Reader
     "Reader",
     "FileReader",
-    # writer
+    # Writer
     "Writer",
     "FileWriter",
-    # tokenizer
+    # Tokenizer
     "Tokenizer",
     "LstTokenizer",
-    # formatter
+    # Formatter
     "Formatter",
     "SystemVerilogFormatter",
-    # converter
+    # Converter
     "Converter",
     "LstConverter",
     "PathValidator",
 )
 
 from . import log as log
-from . import test as test
 from . import memory as memory
 from . import config as config
 from . import parser as parser
@@ -72,9 +71,6 @@ from . import formatter as formatter
 from . import converter as converter
 from .cli import cli as cli
 from .log import logger as logger
-from .test import Test as Test
-from .test import TestStatus as TestStatus
-from .test import TestCommand as TestCommand
 from .config import settings as settings
 from .config import settings_tree as settings_tree
 from .config import APP_NAME as APP_NAME
@@ -95,7 +91,6 @@ from .parser import parse as parse
 from .parser import write as write
 from .parser import Parser as Parser
 from .parser import LstParser as LstParser
-
 from .reader import Reader as Reader
 from .reader import FileReader as FileReader
 from .writer import Writer as Writer
@@ -107,3 +102,6 @@ from .formatter import SystemVerilogFormatter as SystemVerilogFormatter
 from .converter import Converter as Converter
 from .converter import LstConverter as LstConverter
 from .validators import PathValidator as PathValidator
+from .regression import Test as Test
+from .regression import TestStatus as TestStatus
+from .regression import TestCommand as TestCommand
