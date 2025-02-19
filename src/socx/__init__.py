@@ -84,6 +84,8 @@ from . import formatter as formatter
 from . import converter as converter
 from .cli import cli as cli
 from .log import logger as logger
+from .core import TypedPtrMixin as TypedPtrMixin
+from .core import UIDMixin as UIDMixin
 from .config import settings as settings
 from .config import settings_tree as settings_tree
 from .config import APP_NAME as APP_NAME
