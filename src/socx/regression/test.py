@@ -11,9 +11,9 @@ from dataclasses import field
 from dataclasses import dataclass
 
 
-class Status(IntEnum):
+class TestStatus(IntEnum):
     """
-    Status representation of a test process as an `IntEnum`.
+    TestStatus representation of a test process as an `IntEnum`.
 
     Members
     -------
@@ -41,7 +41,7 @@ class Status(IntEnum):
 
 
 @dataclass
-class Command:
+class TestCommand:
     """
     Representation of a 'run test' command-line as an object.
 
@@ -91,16 +91,16 @@ class Test:
     name: str
     flow: str
     seed: int
-    status: Status
-    command: Command
+    status: TestStatus
+    command: TestCommand
     process: Popen | None
 
-    def __init__(self, command: str | Command) -> None:
+    def __init__(self, command: str | TestCommand) -> None:
         self._proc = None
         self._command = (
             command
-            if isinstance(command, Command)
-            else Command(command)
+            if isinstance(command, TestCommand)
+            else TestCommand(command)
         )
 
     @property
@@ -194,12 +194,12 @@ class Test:
         return self.process.stderr if self.process else None
 
     @property
-    def status(self) -> Status:
+    def status(self) -> TestStatus:
         """A `TestStatus` representing the state/status of the test."""
         return self._status()
 
     @property
-    def command(self) -> Command:
+    def command(self) -> TestCommand:
         """A `TestCommand` represeinting the test's command line invocation."""
         return self._command
 
@@ -211,17 +211,17 @@ class Test:
     @property
     def idle(self) -> bool:
         """True if test has no active process and has not yet started."""
-        return self.status is Status.Idle
+        return self.status is TestStatus.Idle
 
     @property
     def passed(self) -> bool:
         """True if test has finished running and no errors occured."""
-        return not self.finished and self.status is Status.Passed
+        return not self.finished and self.status is TestStatus.Passed
 
     @property
     def failed(self) -> bool:
         """True if test finished running and at least one error occured."""
-        return self.finished and self.status is Status.Failed
+        return self.finished and self.status is TestStatus.Failed
 
     @property
     def running(self) -> bool:
@@ -233,12 +233,12 @@ class Test:
         """True if test finished running without normally interruption."""
         return self.process is not None and self.process.poll() is not None
 
-    def _status(self) -> Status:
+    def _status(self) -> TestStatus:
         if self.process is None:
-            return Status.Idle
+            return TestStatus.Idle
         elif self.stdout.strip().startswith("PPPP"):
-            return Status.Passed
+            return TestStatus.Passed
         elif self.stdout.strip().startswith("FFFF"):
-            return Status.Running
+            return TestStatus.Running
         else:
-            return Status.Failed
+            return TestStatus.Failed

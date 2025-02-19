@@ -7,8 +7,8 @@ __all__ = (
 )
 
 from .test import Test as Test
-from .test import Status as TestStatus
-from .test import Command as TestCommand
+from .test import TestStatus as TestStatus
+from .test import TestCommand as TestCommand
 
 from .regression import Status as RegressionStatus
 from .regression import Regression as Regression
