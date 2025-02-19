@@ -1,0 +1,5 @@
+[plugins]
+rgr = "@path @format src/plugins/rgr.py"
+config = "@path @format src/plugins/config.py"
+example = "@path @format src/plugins/example.py"
+convert = "@path @format src/plugins/convert/lst.py"

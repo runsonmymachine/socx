@@ -1,91 +1,169 @@
 from __future__ import annotations
 
 from types import CodeType
-from pathlib import Path
 
 import click
+from trogon import tui
 
-from .log import log
+from .log import logger
+from .console import console
 from .config import settings
+from .config import USER_CONFIG_DIR
 
 
-CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
+_CONTEXT_SETTINGS = dict(
+    help_option_names=[
+        "?",
+        "-h",
+        "--help",
+    ],
+)
 
 
-class CLIPlugin(click.Group):
+class RichHelp:
+    def get_help(self, ctx: click.Context) -> None:
+        return self._header(ctx) + super().get_help(ctx) + self._footer()
+
+    def _header(self, ctx: click.Context) -> str:
+        path_text = "->".join(ctx.command_path.split())
+        with console.capture() as header:
+            console.line(1)
+            console.rule("")
+            console.print("[b]Help & Usage", justify="center")
+            console.print(f"[b][u]({path_text})", justify="center")
+        return header.get()
+
+    def _footer(self) -> str:
+        with console.capture() as footer:
+            console.line(1)
+            console.rule("")
+        return footer.get()
+
+
+class RichCommand(RichHelp, click.Command):
+    pass
+
+
+class RichGroup(RichHelp, click.Group):
+    def group(self, *args, **kwargs) -> click.RichGroup:
+        kwargs["cls"] = RichGroup
+        return super().group(*args, **kwargs)
+
+    def command(self, *args, **kwargs) -> click.RichCommand:
+        kwargs["cls"] = RichCommand
+        return super().command(*args, **kwargs)
+
+
+class CmdLine(RichGroup, click.Group):
     def __init__(self, *args, **kwargs):
+        kwargs["context_settings"] = _CONTEXT_SETTINGS
         super().__init__(*args, **kwargs)
-        name = args[0] if args else kwargs.get("name")
-        log.debug(f"Plugin {name} created.")
+        self._plugins = None
 
     @property
-    def plug_name(self) -> str:
-        if self.name in ["cli", "plugins"]:
-            return "plugins"
-        return self.name
+    def plugins(self) -> list[click.Command]:
+        if self._plugins is None:
+            self._load_plugins()
+        return self._plugins
 
     @property
-    def plug_path(self) -> Path:
-        return self.plug_settings.path
-
-    @property
-    def plug_settings(self) -> dict:
-        if self.plug_name in ["cli", "plugins"]:
-            return settings.plugins
-        else:
-            return settings.plugins.get(self.plug_name)
-
-    def list_commands(self, ctx) -> list[str]:
-        commands = list(self.commands.keys())
-        for path in self.plug_path.glob("**/*.py"):
-            parent = path.parent
-            if path.name == "__init__.py" and parent.name != self.plug_name:
-                commands.append(parent.name)
-            elif path.name != "__init__.py" and parent.name == self.plug_name:
-                commands.append(path.stem)
-        commands.sort()
-        return commands
+    def plugin_names(self) -> list[str]:
+        return [cmd.name for cmd in self.plugins.values()]
 
     def get_command(self, ctx: click.Context, name: str) -> CodeType:
-        def _compile(file, name):
-            ns = {}
-            code = compile(file.read_text(), name, "exec")
-            eval(code, ns, ns)
-            return ns.get("cli")
+        logger.debug(f"get_command({ctx=}, {name=}) was called...")
+        if name in self.plugins and self.plugins[name] is not None:
+            rv = self.plugins[name]
+            logger.debug(
+                f"get_command({ctx=}, {name=}) returning plugin {rv=}."
+            )
+            return rv
+        rv = super().get_command(ctx, name)
+        logger.debug(f"get_command({ctx=}, {name=}) returning command {rv=}.")
+        return rv
 
-        if name in self.commands:
-            return self.commands[name]
-        for file in self.plug_path.glob(f"**/{name}.py"):
-            if file.parent.name == self.plug_name and file.stem == name:
-                return _compile(file, file.name)
-        for file in self.plug_path.glob("**/__init__.py"):
-            if file.parent.name != self.plug_name and file.parent.name == name:
-                return _compile(file, file.name)
+    def list_commands(self, ctx) -> list[str]:
+        logger.debug(f"list_commands({ctx=}) was called...")
+        rv = list(self.plugins.values())
+        rv += super().list_commands(ctx)
+        logger.debug(f"list_commands({ctx=}) returning {rv=}.")
+        return rv
+
+    @classmethod
+    def _listify(cls, args: str | list | tuple | set | dict) -> list:
+        logger.debug(f"{cls.__name__}._listify called with {args=}")
+        if isinstance(args, list):
+            rv = args
+        elif isinstance(args, dict):
+            rv = list(args.values())
+        elif isinstance(args, set | tuple):
+            rv = list(args)
+        else:
+            rv = [args]
+        logger.debug(f"{cls.__name__}._listify returning value '{rv=}'")
+        return rv
+
+    @classmethod
+    def _unique(cls, args: str | list | tuple | set) -> list:
+        logger.debug(f"{cls.__name__}._unique called with {args=}")
+        lookup = set()
+        args = cls._listify(args)
+        args = [
+            x for x in args if args not in lookup and lookup.add(x) is None
+        ]
+        logger.debug(f"{cls.__name__}._unique returning {args=}")
+
+    @classmethod
+    def _compile(cls, file, name):
+        logger.debug(f"{cls.__name__}._compile called with {file=}, {name=}")
+        ns = {}
+        logger.debug(f"compiling '{name}' (plugin: {file})...")
+        code = compile(file.read_text(), name, "exec")
+        logger.debug(f"'{name}' compiled.")
+        eval(code, ns, ns)
+        logger.debug(f"'{name}' evaluated.")
+        plugin = ns.get("cli")
+        if plugin:
+            logger.debug(f"'{name}' loaded.")
+            logger.debug(f"{cls.__name__}._compile returning {plugin=}")
+            return plugin
+        cls._missing_cli_err(name)
         return None
 
+    def _load_plugins(self) -> None:
+        if self._plugins is None:
+            self._plugins = {}
+        else:
+            self._plugins.clear()
+        for name, path in settings.plugins.items():
+            cmd = self._compile(path, name)
+            self._plugins[name] = cmd
+        for name, cmd in self._plugins.items():
+            self.add_command(cmd, name)
 
-def group(*args, plugin: bool = True, **kwargs):
-    if plugin and "cls" not in kwargs:
-        kwargs["cls"] = CLIPlugin
-    return click.group(
-        *args,
-        no_args_is_help=True,
-        context_settings=CONTEXT_SETTINGS,
-        **kwargs,
-    )
-
-
-def command(*args, parent: click.Group | None = None, **kwargs):
-    if parent is None:
-        return click.command(
-            *args, context_settings=CONTEXT_SETTINGS, **kwargs
+    @classmethod
+    def _missing_cli_err(cls, name) -> None:
+        err = (
+            f"failed to load '{name}' (plugin).\n"
+            "please make ensure that function 'cli' is defined and has "
+            "either @group or @command decorator applied."
         )
-    else:
-        return parent.command(
-            *args, context_settings=CONTEXT_SETTINGS, **kwargs
-        )
+        exc = ValueError(err)
+        logger.exception(err, exc_info=exc)
+        logger.debug(f"'{name}' (plugin) unloaded", exc_info=exc)
 
 
-@group(invoke_without_command=True)
-def cli():
-    """Convert lst files to SystemVerilog covergroups."""
+@tui()
+@click.group("socx", cls=CmdLine)
+@click.option(
+    "--configure/--no-configure",
+    default=True,
+    show_default=True,
+    help="load/dont-load user configurations at startup.",
+)
+def cli(configure: bool) -> None:
+    """SoC team tool executer and plugin manager."""
+    if configure:
+        from .config._config import _load_settings
+
+        _load_settings(USER_CONFIG_DIR)
