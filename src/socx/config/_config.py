@@ -191,7 +191,7 @@ _settings_kwargs = dict(
     envvar_prefix=APP_NAME.upper(),
     load_dotenv=True,
     environments=False,
-    dotenv_override=True,
+    dotenv_override=False,
     sysenv_fallback=True,
     validate_on_update="all",
     validators=[Validator(r"convert.*", ne=empty)],
