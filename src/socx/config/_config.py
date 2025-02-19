@@ -265,7 +265,9 @@ def _load_settings(
         settings_files=[str(path)],
         includes=includes,
         **_settings_kwargs,
-        **_settings.as_dict() if isinstance(_settings, Dynaconf) else _settings,
+        **_settings.as_dict()
+        if isinstance(_settings, Dynaconf)
+        else _settings,
     )
     settings.update(_settings)
     _settings = settings

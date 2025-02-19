@@ -19,6 +19,7 @@ defined.
 For additional information regarding the internals of this module, reference
 dynaconf documentation on its official-site/github-repository.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -69,10 +70,11 @@ which will attempt to find and read the value of the attribute from any of the
 .toml configuration files under the 'settings' directory.
 """
 
+
 def reconfigure(path: Path) -> Dynaconf:
     from ._config import _load_settings
-    from ._config import _validate_settings
     _load_settings(path)
+
 
 def settings_tree(
     root: Dynaconf | DynaBox | dict,

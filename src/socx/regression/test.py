@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import signal
 from contextlib import suppress
-from functools import lru_cache
 from typing import TextIO
 from enum import auto
 from enum import IntEnum
