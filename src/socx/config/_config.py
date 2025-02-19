@@ -7,7 +7,6 @@ from pathlib import Path
 from importlib.metadata import version
 from importlib.metadata import metadata
 from importlib.metadata import PackageMetadata
-from contextlib import suppress
 from collections.abc import Iterable
 
 from click import open_file
@@ -19,8 +18,6 @@ from rich.logging import RichHandler
 from dynaconf import Dynaconf
 from dynaconf import ValidationError
 from dynaconf import add_converter
-from dynaconf.utils.boxing import DynaBox
-from dynaconf.utils import object_merge
 from dynaconf.validator import empty
 from dynaconf.validator import Validator
 from platformdirs import site_data_dir
@@ -192,9 +189,9 @@ _settings_kwargs = dict(
     encoding="utf-8",
     lowercase_read=True,
     envvar_prefix=APP_NAME.upper(),
-    load_dotenv=False,
+    load_dotenv=True,
     environments=False,
-    dotenv_override=False,
+    dotenv_override=True,
     sysenv_fallback=True,
     validate_on_update="all",
     validators=[Validator(r"convert.*", ne=empty)],
