@@ -20,13 +20,14 @@ maintainers = [ { name = "Sagi Kimhi", email = "sagi.kim5@gmail.com" } ]
 description = "Tool executer and plugin manager for SoC team."
 dependencies = [
     "click>=8.1.8",
-    "rich-cli>=1.8.0",
     "python-dotenv[cli]>=1.0.1",
     "dynaconf>=3.2.7",
     "jinja2>=3.1.5",
-    "flask>=3.1.0",
-    "textual-dev>=1.0.0",
-    "textual>=0.1.18",
+    "platformdirs>=4.3.6",
+    "trogon>=0.6.0",
+    "textual-serve>=1.1.1",
+    "textual-web>=0.4.2",
+    "pyarrow>=19.0.0",
 ]
 license-files = ["LICENSE"]
 requires-python = ">=3.12"
@@ -35,6 +36,7 @@ requires-python = ">=3.12"
 socx='socx.__main__:cli'
 
 [project.gui-scripts]
+# socx-tui
 
 [project.optional-dependencies]
 dev = [
@@ -48,7 +50,14 @@ dev = [
     "flake8-bugbear",
     "flake8-simplify",
     "debugpy>=1.8.12",
+    "textual-dev>=1.7.0",
+    "textual[dev]>=2.0.4",
+    "textual-terminal>=0.3.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/MomsPancakes/socx"
+Issues = "https://github.com/MomsPancakes/socx/issues"
 
 # -----------------------------------------------------------------------------
 # Developer Configurations

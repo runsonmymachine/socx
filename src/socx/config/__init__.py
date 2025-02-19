@@ -19,45 +19,45 @@ defined.
 For additional information regarding the internals of this module, reference
 dynaconf documentation on its official-site/github-repository.
 """
-
 from __future__ import annotations
+
+from pathlib import Path
 
 from rich.tree import Tree
 from rich.table import Table
 from dynaconf import Dynaconf
 from dynaconf.utils.boxing import DynaBox
 
-from .log import log as log
-from .console import console as console
-from .validators import PathValidator as PathValidator
-
 from ._config import _to_tree
 from ._config import _get_settings
 
 __all__ = (
-    "MODULE_PATH",
-    "PACKAGE_PATH",
-    "SETTINGS_ROOT",
-    "SETTINGS_HOME",
+    # API
     "settings",
     "settings_tree",
+    # Metadata
+    "APP_NAME",
+    "APP_AUTHOR",
+    "APP_VERSION",
+    # Directories
+    "USER_LOG_DIR",
+    "USER_DATA_DIR",
+    "USER_CACHE_DIR",
+    "USER_STATE_DIR",
+    "USER_CONFIG_DIR",
+    "USER_RUNTIME_DIR",
 )
 
-from ._config import MODULE_PATH as MODULE_PATH
-from ._config import PACKAGE_PATH as PACKAGE_PATH
-from ._config import SETTINGS_ROOT as SETTINGS_ROOT
-from ._config import SETTINGS_HOME as SETTINGS_HOME
 
-def settings_tree(
-    root: Dynaconf | DynaBox | dict,
-    label: str = "Settings",
-) -> Tree | Table:
-    """Get a tree representation of a dynaconf settings instance."""
-    if isinstance(root, Dynaconf):
-        root = root.as_dict()
-    if not isinstance(root, dict | list | tuple | set):
-        root = str(root)
-    return _to_tree(label, root)
+from ._config import APP_NAME as APP_NAME
+from ._config import APP_AUTHOR as APP_AUTHOR
+from ._config import APP_VERSION as APP_VERSION
+from ._config import USER_LOG_DIR as USER_LOG_DIR
+from ._config import USER_DATA_DIR as USER_DATA_DIR
+from ._config import USER_CACHE_DIR as USER_CACHE_DIR
+from ._config import USER_STATE_DIR as USER_STATE_DIR
+from ._config import USER_CONFIG_DIR as USER_CONFIG_DIR
+from ._config import USER_RUNTIME_DIR as USER_RUNTIME_DIR
 
 
 settings = _get_settings()
@@ -69,4 +69,18 @@ which will attempt to find and read the value of the attribute from any of the
 .toml configuration files under the 'settings' directory.
 """
 
+def reconfigure(path: Path) -> Dynaconf:
+    from ._config import _load_settings
+    from ._config import _validate_settings
+    _load_settings(path)
 
+def settings_tree(
+    root: Dynaconf | DynaBox | dict,
+    label: str = "Settings",
+) -> Tree | Table:
+    """Get a tree representation of a dynaconf settings instance."""
+    if isinstance(root, Dynaconf):
+        root = root.as_dict()
+    if not isinstance(root, dict | list | tuple | set):
+        root = str(root)
+    return _to_tree(label, root)

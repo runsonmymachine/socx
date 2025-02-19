@@ -6,13 +6,14 @@ from dataclasses import dataclass
 
 from dynaconf.utils.boxing import DynaBox
 
-from .console import console
+from .log import logger
 from .config import settings
 from .reader import Reader
 from .reader import FileReader
 from .writer import Writer
 from .writer import FileWriter
 from .parser import Parser
+from .parser import LstParser
 from .tokenizer import Tokenizer
 from .tokenizer import LstTokenizer
 from .formatter import Formatter
@@ -42,11 +43,11 @@ class Converter(abc.ABC):
 @dataclass
 class LstConverter(Converter):
     def __post_init__(self) -> None:
-        # self.parser = LstParser()
+        self.parser = LstParser()
         self.reader = FileReader(
             self.cfg.source, self.cfg.includes, self.cfg.excludes
         )
-        self.writer = FileWriter()
+        self.writer = FileWriter(self.cfg.target)
         self.tokenizer = LstTokenizer()
         self.formatter = SystemVerilogFormatter()
 
@@ -56,35 +57,15 @@ class LstConverter(Converter):
         return "lst"
 
     def convert(self) -> None:
-        console.clear()
         inputs = self.reader.read()
         outputs = {path: "" for path in inputs}
+        self.parser.parse()
         for path, input_text in inputs.items():
             matches = self.tokenizer.tokenize(input_text)
             outputs[path] = self.formatter.format(
-                self.tokenizer.token_map, matches
+                self.tokenizer.token_map, matches, self.parser.sym_table
             )
-            console.rule("Input:")
-            console.print(input_text)
-            console.rule("Output:")
-            console.print(outputs[path])
-
-    #         if token_map[token_name].starts_scope:
-    #             matched_expr = active_scope_map[token_name]
-    #             end_scope_subst = token_map[token_name].scope_ender
-    #             if matched_expr is not None:
-    #                 console.print(matched_expr.expand(end_scope_subst))
-    #                 active_scope_map[token_name] = None
-    #             active_scope_map[token_name] = match
-    #
-    #         subst = self.token_map[token_name].subst
-    #         console.print(f"{out_style}{match.expand(subst)}")
-    #
-    #     for name, in token_map:
-    #         match = active_scope_map.get(name)
-    #         if match is not None:
-    #             end_scope_subst = token_map[name].scope_ender
-    #             console.print(f"{out_style}{match.expand(end_scope_subst)}")
-    #
-    # def format_output(self) -> str:
-    #     pass
+            logger.debug(f"{input_text=}")
+            logger.debug(f"{outputs[path]=}")
+            logger.debug(f"{self.parser.sym_table=}")
+            self.writer.write(outputs[path], path.with_suffix(".svh").name)

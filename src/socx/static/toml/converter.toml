@@ -15,7 +15,7 @@ type = "LstParser"
 # be searched.
 #
 source = """
-@path @format {env[WAREA]}/PIXIE_ROM_FW/PixieROMApp/TapeOutRelease/PIXIE_E4/PxieParser
+@path @format {env[WAREA]}/Pixie_ROM_FW/PixieROMApp/TapeOutRelease/PIXIE_E4/PxieParserOut
 """
 
 # Argument: target
@@ -23,7 +23,7 @@ source = """
 # target directory to which generated outputs will be written.
 #
 target = """
-@path @format {env[TOP_VERIF]}/scripts/socx/assets/outputs
+@path @format {env[TOP_VERIF]}/scripts/socx/assets/lst/outputs
 """
 
 # Argument: base_addr_map
