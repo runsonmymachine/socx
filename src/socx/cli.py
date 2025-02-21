@@ -21,27 +21,26 @@ _CONTEXT_SETTINGS = dict(
 
 
 class RichHelp:
-    def get_help(self, ctx: click.Context) -> None:
-        return self._header(ctx) + super().get_help(ctx) + self._footer()
+    def get_help(self, ctx: click.Context) -> str:
+        return self._header(ctx) + super().get_help(ctx) + self._footer(ctx)
 
     def _header(self, ctx: click.Context) -> str:
-        path_text = "->".join(ctx.command_path.split())
         with console.capture() as header:
-            console.line(1)
-            console.rule("")
-            console.print("[b]Help & Usage", justify="center")
-            console.print(f"[b][u]({path_text})", justify="center")
+            console.line()
+            console.rule(characters="=")
+            console.line()
+            console.print(f"SoCX", justify="center", highlight=True)
+            console.print("[b][u]Help & Usage", justify="center", highlight=True)
+            console.line()
         return header.get()
 
-    def _footer(self) -> str:
+    def _footer(self, ctx: click.Context) -> str:
+        path_text = "->".join(ctx.command_path.split())
         with console.capture() as footer:
-            console.line(1)
-            console.rule("")
+            console.line(2)
+            console.print(f"[bright_black](help: {path_text})", justify="center", highlight=True)
+            console.rule(characters="=")
         return footer.get()
-
-
-class RichCommand(RichHelp, click.Command):
-    pass
 
 
 class RichGroup(RichHelp, click.Group):
@@ -52,6 +51,10 @@ class RichGroup(RichHelp, click.Group):
     def command(self, *args, **kwargs) -> click.RichCommand:
         kwargs["cls"] = RichCommand
         return super().command(*args, **kwargs)
+
+
+class RichCommand(RichHelp, click.Command):
+    pass
 
 
 class CmdLine(RichGroup, click.Group):
@@ -155,11 +158,14 @@ class CmdLine(RichGroup, click.Group):
 
 @tui()
 @click.group("socx", cls=CmdLine)
+@click.help_option(
+    "?", "-h", "--help"
+)
 @click.option(
     "--configure/--no-configure",
     default=True,
     show_default=True,
-    help="load/dont-load user configurations at startup.",
+    help="whether or not user configurations should be read.",
 )
 def cli(configure: bool) -> None:
     """SoC team tool executer and plugin manager."""
