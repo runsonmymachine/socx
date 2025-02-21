@@ -1,94 +1,21 @@
 from __future__ import annotations
 
-import abc
+import asyncio as aio
 import time
 import signal
 from enum import auto
 from enum import IntEnum
 from typing import TextIO
-from typing import override
 from contextlib import suppress
 from subprocess import Popen
 from subprocess import PIPE
 from dataclasses import field
 from dataclasses import dataclass
 
+from .log import logger
 from .mixins import UIDMixin
-from .mixins import PtrMixin
 from .visitor import Node
 from .visitor import Visitor
-
-class TestStatus(IntEnum):
-    """
-    TestStatus representation of a test process as an `IntEnum`.
-
-    Members
-    -------
-    Idle: IntEnum
-        Idle state, awaiting to be started.
-
-    Running: IntEnum
-        Test is currently running on a seperate process.
-
-    Passed: IntEnum
-        Test has ended with no errors and a clean exit code.
-
-    Failed: IntEnum
-        Test had failed due to an error or an invalid exit code.
-
-    Killed: IntEnum
-        Test was intentionally killed by a signal.
-    """
-
-    Idle = auto(0)
-    Running = auto()
-    Passed = auto()
-    Failed = auto()
-    Killed = auto()
-
-
-@dataclass
-class TestCommand(UIDMixin):
-    """
-    Representation of a 'run test' command-line as an object.
-
-    Members
-    -------
-    line: str
-        Full commandline string of the command represented by this object.
-
-    name: str
-        Name of the command represented by this object, i.e. sys.argv[0].
-
-    args: list[str]
-        Arguments of the command represented by this object split by
-        whitespace.
-    """
-
-    name: str = field(init=False)
-    args: list[str] = field(init=False)
-    line: str
-
-    def __getattr__(self, attr: str) -> str:
-        v = self.extract_argv(f"--{attr}")
-        if v:
-            return v
-        else:
-            raise AttributeError
-
-    def extract_argv(self, arg: str) -> str:
-        with suppress(ValueError):
-            index = self.args.index(f"{arg}")
-            return self.args[index + 1] if index + 1 < len(self.args) else ""
-        return ""
-
-    def __post_init__(self) -> None:
-        self.line = self.line.strip()
-        self.args = [arg.strip() for arg in self.line.split()]
-        self.name = self.args[0] if self.args else ""
-
-    def __hash__(self) -> int:
-        return hash(self.line)
 
 
 @dataclass(init=False)
@@ -214,17 +141,19 @@ class Test(UIDMixin):
 
     def start(self) -> None:
         """Start a test in a subprocess."""
-        if self.idle:
-            self._proc = Popen(
-                args=self.command.args,
-                text=True,
-                stdout=PIPE,
-                stderr=PIPE,
-                shell=True,
-            )
-        else:
-            err = "Test is already running."
-            raise OSError(err)
+        if not self.idle:
+            msg = "Cannot start a test when it is already running."
+            exc = OSError(msg)
+            logger.exception(msg, exc_info=exc, stack_info=True)
+            raise exc
+
+        self._proc = Popen(
+            args=self.command.args,
+            text=True,
+            stdout=PIPE,
+            stderr=PIPE,
+            shell=True,
+        )
 
     def stop(self) -> None:
         """Send a keyboard interrupt (SIGINT) to stop a running test."""
@@ -255,3 +184,78 @@ class Test(UIDMixin):
         """See `subprocess.Popen.terminate`."""
         if self.running:
             self.process.terminate()
+
+
+class TestStatus(IntEnum):
+    """
+    TestStatus representation of a test process as an `IntEnum`.
+
+    Members
+    -------
+    Idle: IntEnum
+        Idle state, awaiting to be started.
+
+    Running: IntEnum
+        Test is currently running on a seperate process.
+
+    Passed: IntEnum
+        Test has ended with no errors and a clean exit code.
+
+    Failed: IntEnum
+        Test had failed due to an error or an invalid exit code.
+
+    Killed: IntEnum
+        Test was intentionally killed by a signal.
+    """
+
+    Idle = auto(0)
+    Running = auto()
+    Passed = auto()
+    Failed = auto()
+    Killed = auto()
+
+
+@dataclass
+class TestCommand(UIDMixin):
+    """
+    Representation of a 'run test' command-line as an object.
+
+    Members
+    -------
+    line: str
+        Full commandline string of the command represented by this object.
+
+    name: str
+        Name of the command represented by this object, i.e. sys.argv[0].
+
+    args: list[str]
+        Arguments of the command represented by this object split by
+        whitespace.
+    """
+
+    name: str = field(init=False)
+    args: list[str] = field(init=False)
+    line: str
+
+    def __getattr__(self, attr: str) -> str:
+        v = self.extract_argv(f"--{attr}")
+        if v:
+            return v
+        else:
+            raise AttributeError
+
+    def extract_argv(self, arg: str) -> str:
+        with suppress(ValueError):
+            index = self.args.index(f"{arg}")
+            return self.args[index + 1] if index + 1 < len(self.args) else ""
+        return ""
+
+    def __post_init__(self) -> None:
+        self.line = self.line.strip()
+        self.args = [arg.strip() for arg in self.line.split()]
+        self.name = self.args[0] if self.args else ""
+
+    def __hash__(self) -> int:
+        return hash(self.line)
+
+
