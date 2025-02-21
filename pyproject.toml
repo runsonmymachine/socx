@@ -74,3 +74,8 @@ color_output = true
 show_error_codes = true
 warn_unreachable = true
 
+[dependency-groups]
+dev = [
+    "pre-commit>=4.1.0",
+]
+
