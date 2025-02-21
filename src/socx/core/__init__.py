@@ -4,5 +4,5 @@ __all__ = (
     "TypedPtrMixin",
 )
 from .mixins import UIDMixin as UIDMixin
-from .mixins import TypedPtrMixin as PtrMixin
-from .mixins import TypedPtrMixin as TypedPtrMixin
+from .mixins import PtrMixin as PtrMixin
+from .mixins import PtrMixin as TypedPtrMixin

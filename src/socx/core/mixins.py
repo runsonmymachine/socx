@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from ._uid import _UIDMeta
 
 
-class TypedPtrMixin(metaclass=_UIDMeta):
+class PtrMixin(metaclass=_UIDMeta):
     """
     It is probably very unsafe in context of software-security, use this
     for ez compute and lazy eval but using it in an object that also encrypts
@@ -20,12 +20,12 @@ class TypedPtrMixin(metaclass=_UIDMeta):
         return _UIDMeta.ref(self)
 
     @classmethod
-    def dref(cls, ref: int) -> TypedPtrMixin:
+    def dref(cls, ref: int) -> PtrMixin:
         return _UIDMeta.dref(ref)
 
 
 @dataclass  # cuz a true alpha man never implements __repr__ themselves
-class UIDMixin(TypedPtrMixin):
+class UIDMixin(PtrMixin):
     """
     A mixin class that generates unique instance ids for instances of the same
     class.
