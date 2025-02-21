@@ -35,6 +35,7 @@ from ._config import _get_settings
 __all__ = (
     # API
     "settings",
+    "reconfigure",
     "settings_tree",
     # Metadata
     "APP_NAME",
@@ -72,6 +73,7 @@ which will attempt to find and read the value of the attribute from any of the
 
 
 def reconfigure(path: Path) -> Dynaconf:
+    """Reconfigure the current settings with configurations from path."""
     from ._config import _load_settings
     _load_settings(path)
 

@@ -18,12 +18,12 @@ from dataclasses import dataclass
 from dynaconf.utils.boxing import DynaBox
 
 from .test import Test
-from ..visitor import Node
-from ..visitor import Visitor
-from ..visitor import Structure
-from ..core import UIDMixin 
-from ..core import TypedPtrMixin
-from ..config import settings
+from .mixins import UIDMixin 
+from .mixins import PtrMixin
+from .config import settings
+from .visitor import Node
+from .visitor import Visitor
+from .visitor import Structure
 
 
 __all__ = ("Status", "Regression")

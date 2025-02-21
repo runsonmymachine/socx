@@ -170,6 +170,5 @@ class CmdLine(RichGroup, click.Group):
 def cli(configure: bool) -> None:
     """SoC team tool executer and plugin manager."""
     if configure:
-        from .config._config import _load_settings
-
-        _load_settings(USER_CONFIG_DIR)
+        from .config import reconfigure
+        reconfigure(USER_CONFIG_DIR)

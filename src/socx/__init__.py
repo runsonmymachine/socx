@@ -84,8 +84,8 @@ from . import formatter as formatter
 from . import converter as converter
 from .cli import cli as cli
 from .log import logger as logger
-from .core import PtrMixin as PtrMixin
-from .core import UIDMixin as UIDMixin
+from .mixins import UIDMixin as UIDMixin
+from .mixins import PtrMixin as PtrMixin
 from .config import settings as settings
 from .config import settings_tree as settings_tree
 from .config import APP_NAME as APP_NAME
@@ -97,7 +97,6 @@ from .config import USER_CACHE_DIR as USER_CACHE_DIR
 from .config import USER_STATE_DIR as USER_STATE_DIR
 from .config import USER_CONFIG_DIR as USER_CONFIG_DIR
 from .config import USER_RUNTIME_DIR as USER_RUNTIME_DIR
-from .console import console as console
 from .memory import SymbolTable as SymbolTable
 from .memory import RichSymTable as RichSymTable
 from .memory import MemorySegment as MemorySegment
@@ -118,6 +117,7 @@ from .visitor import Structure as Structure
 from .visitor import TopDownTraversal as TopDownTraversal
 from .visitor import BottomUpTraversal as BottomUpTraversal
 from .visitor import ByLevelTraversal as ByLevelTraversal
+from .console import console as console
 from .tokenizer import Tokenizer as Tokenizer
 from .tokenizer import LstTokenizer as LstTokenizer
 from .formatter import Formatter as Formatter
@@ -125,8 +125,8 @@ from .formatter import SystemVerilogFormatter as SystemVerilogFormatter
 from .converter import Converter as Converter
 from .converter import LstConverter as LstConverter
 from .validators import PathValidator as PathValidator
-from .regression import Test as Test
-from .regression import TestStatus as TestStatus
-from .regression import TestCommand as TestCommand
+from .test import Test as Test
+from .test import TestStatus as TestStatus
+from .test import TestCommand as TestCommand
 from .regression import Regression as Regression
 from .regression import RegressionStatus as RegressionStatus

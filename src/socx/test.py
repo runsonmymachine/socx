@@ -1,15 +1,22 @@
 from __future__ import annotations
 
+import abc
+import time
 import signal
-from contextlib import suppress
-from typing import TextIO
 from enum import auto
 from enum import IntEnum
+from typing import TextIO
+from typing import override
+from contextlib import suppress
 from subprocess import Popen
 from subprocess import PIPE
 from dataclasses import field
 from dataclasses import dataclass
 
+from .mixins import UIDMixin
+from .mixins import PtrMixin
+from .visitor import Node
+from .visitor import Visitor
 
 class TestStatus(IntEnum):
     """
@@ -41,7 +48,7 @@ class TestStatus(IntEnum):
 
 
 @dataclass
-class TestCommand:
+class TestCommand(UIDMixin):
     """
     Representation of a 'run test' command-line as an object.
 
@@ -85,23 +92,32 @@ class TestCommand:
 
 
 @dataclass(init=False)
-class Test:
-    """Representation of a test as a python object."""
+class Test(UIDMixin):
+    """Holds information about a test."""
 
     name: str
     flow: str
     seed: int
     status: TestStatus
     command: TestCommand
-    process: Popen | None
+    stop_time: time.time | None
+    start_time: time.time | None
+    elapsed_time: time.time | None
 
-    def __init__(self, command: str | TestCommand) -> None:
+    def __init__(self, command: str | TestCommand, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
         self._proc = None
         self._command = (
             command
             if isinstance(command, TestCommand)
             else TestCommand(command)
         )
+        self.stop_time = None
+        self.start_time = None
+        self.elapsed_time = None
+
+    def accept(self, visitor: Visitor[Node]) -> None:
+        visitor.visit(self)
 
     @property
     def pid(self) -> int | None:
@@ -128,6 +144,73 @@ class Test:
             rv = int(self.command.seed)
             return rv
         return 0
+
+    @property
+    def command(self) -> TestCommand:
+        """A `TestCommand` represeinting the test's command line invocation."""
+        return self._command
+
+    @property
+    def status(self) -> TestStatus:
+        """A `TestStatus` representing the state/status of the test."""
+        if self.process is None:
+            return TestStatus.Idle
+        elif self.stdout.strip().startswith("PPPP"):
+            return TestStatus.Passed
+        elif self.stdout.strip().startswith("FFFF"):
+            return TestStatus.Running
+        else:
+            return TestStatus.Failed
+
+    @property
+    def idle(self) -> bool:
+        """True if test has no active process and has not yet started."""
+        return self.status is TestStatus.Idle
+
+    @property
+    def passed(self) -> bool:
+        """True if test has finished running and no errors occured."""
+        return not self.finished and self.status is TestStatus.Passed
+
+    @property
+    def failed(self) -> bool:
+        """True if test finished running and at least one error occured."""
+        return self.finished and self.status is TestStatus.Failed
+
+    @property
+    def running(self) -> bool:
+        """True if test is currently running in a dedicated process."""
+        return self.process is not None and self.process.poll() is None
+
+    @property
+    def finished(self) -> bool:
+        """True if test finished running without normally interruption."""
+        return self.process is not None and self.process.poll() is not None
+
+    @property
+    def stdin(self) -> TextIO | None:
+        """The standard input of the test's process or None if not running."""
+        return self.process.stdin if self.process else None
+
+    @property
+    def stdout(self) -> TextIO | None:
+        """The standard output of the test's process or None if not running."""
+        return self.process.stdout if self.process else None
+
+    @property
+    def stderr(self) -> TextIO | None:
+        """The standard error of the test's process or None if not running."""
+        return self.process.stderr if self.process else None
+
+    @property
+    def process(self) -> Popen | None:
+        """The active process of the running test or None if not running."""
+        return self._proc
+
+    @property
+    def returncode(self) -> int | None:
+        """The return code from the test process or None if running or idle."""
+        return self.process.returncode if self.finished else None
 
     def start(self) -> None:
         """Start a test in a subprocess."""
@@ -172,73 +255,3 @@ class Test:
         """See `subprocess.Popen.terminate`."""
         if self.running:
             self.process.terminate()
-
-    @property
-    def process(self) -> Popen | None:
-        """The active process of the running test or None if not running."""
-        return self._proc
-
-    @property
-    def stdin(self) -> TextIO | None:
-        """The standard input of the test's process or None if not running."""
-        return self.process.stdin if self.process else None
-
-    @property
-    def stdout(self) -> TextIO | None:
-        """The standard output of the test's process or None if not running."""
-        return self.process.stdout if self.process else None
-
-    @property
-    def stderr(self) -> TextIO | None:
-        """The standard error of the test's process or None if not running."""
-        return self.process.stderr if self.process else None
-
-    @property
-    def status(self) -> TestStatus:
-        """A `TestStatus` representing the state/status of the test."""
-        return self._status()
-
-    @property
-    def command(self) -> TestCommand:
-        """A `TestCommand` represeinting the test's command line invocation."""
-        return self._command
-
-    @property
-    def returncode(self) -> int | None:
-        """The return code from the test process or None if running or idle."""
-        return self.process.returncode if self.finished else None
-
-    @property
-    def idle(self) -> bool:
-        """True if test has no active process and has not yet started."""
-        return self.status is TestStatus.Idle
-
-    @property
-    def passed(self) -> bool:
-        """True if test has finished running and no errors occured."""
-        return not self.finished and self.status is TestStatus.Passed
-
-    @property
-    def failed(self) -> bool:
-        """True if test finished running and at least one error occured."""
-        return self.finished and self.status is TestStatus.Failed
-
-    @property
-    def running(self) -> bool:
-        """True if test is currently running in a dedicated process."""
-        return self.process is not None and self.process.poll() is None
-
-    @property
-    def finished(self) -> bool:
-        """True if test finished running without normally interruption."""
-        return self.process is not None and self.process.poll() is not None
-
-    def _status(self) -> TestStatus:
-        if self.process is None:
-            return TestStatus.Idle
-        elif self.stdout.strip().startswith("PPPP"):
-            return TestStatus.Passed
-        elif self.stdout.strip().startswith("FFFF"):
-            return TestStatus.Running
-        else:
-            return TestStatus.Failed
