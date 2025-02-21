@@ -6,10 +6,10 @@ from collections.abc import Iterable
 
 __all__ = (
     "Node",
-    "Visitor",
-    "Structure",
     "Proxy",
     "Adapter",
+    "Visitor",
+    "Structure",
     "TopDownTraversal",
     "BottomUpTraversal",
     "ByLevelTraversal",
