@@ -11,8 +11,6 @@ from rich.logging import RichHandler
 
 
 __all__ = (
-    # types
-    "Level",
     # API
     "log",
     "info",
@@ -23,17 +21,20 @@ __all__ = (
     "warning",
     "exception",
     "critical",
-    "level",
+    "get_level",
     "set_level",
-    "has_handlers",
+    "get_logger",
     "add_handler",
     "get_handler",
+    "has_handlers",
     "remove_handler",
     "get_handler_names",
     "add_filter",
     "remove_filter",
     "is_enabled_for",
-    # defaults
+    # Types
+    "Level",
+    # Defaults
     "DEFAULT_LEVEL",
     "DEFAULT_FORMAT",
     "DEFAULT_HANDLERS",
@@ -172,7 +173,7 @@ def critical(msg: str, *args, **kwargs) -> None:
     _logger.critical(msg, *args, **kwargs)
 
 
-def level() -> str:
+def get_level() -> str:
     return _logger.getEffectiveLevel()
 
 
