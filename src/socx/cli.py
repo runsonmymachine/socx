@@ -29,8 +29,8 @@ class RichHelp:
             console.line()
             console.rule(characters="=")
             console.line()
-            console.print(f"SoCX", justify="center", highlight=True)
-            console.print("[b][u]Help & Usage", justify="center", highlight=True)
+            console.print("SoCX", justify="center", highlight=True)
+            console.print("[b][u]Help & Usage", justify="center")
             console.line()
         return header.get()
 
@@ -38,7 +38,9 @@ class RichHelp:
         path_text = "->".join(ctx.command_path.split())
         with console.capture() as footer:
             console.line(2)
-            console.print(f"[bright_black](help: {path_text})", justify="center", highlight=True)
+            console.print(
+                f"[bright_black](help: {path_text})", justify="center"
+            )
             console.rule(characters="=")
         return footer.get()
 
@@ -158,9 +160,7 @@ class CmdLine(RichGroup, click.Group):
 
 @tui()
 @click.group("socx", cls=CmdLine)
-@click.help_option(
-    "?", "-h", "--help"
-)
+@click.help_option("?", "-h", "--help")
 @click.option(
     "--configure/--no-configure",
     default=True,
