@@ -1,32 +1,94 @@
 from __future__ import annotations
 
+import time
+import sched
+import psutil as ps
+import subprocess as subps
+from enum import auto
+from enum import IntEnum
 from typing import TextIO
+from typing import Sequence
 from pathlib import Path
 from subprocess import Popen
+from dataclasses import field
+from collections.abc import Iterator
+from collections.abc import Iterable
 from dataclasses import dataclass
 
 from dynaconf.utils.boxing import DynaBox
 
-# from .. import visitor
-from ..config import settings
 from .test import Test
+from ..visitor import Node
+from ..visitor import Visitor
+from ..visitor import Structure
+from ..core import UIDMixin 
+from ..core import TypedPtrMixin
+from ..config import settings
 
 
 __all__ = ("Status", "Regression")
 
 
-from .test import Status as Status
+class RegressionStatus(IntEnum):
+    """
+    Status representation of a test process as an `IntEnum`.
+
+    Members
+    -------
+    Idle: IntEnum
+        Regression is idle.
+
+    Preparing: IntEnum
+        Regression is preparing for a run.
+
+    Running: IntEnum
+        Regression session is running.
+
+    Paused: IntEnum
+        Regression has been paused and is ready to be continued.
+
+    Stopped: IntEnum
+        Regression has been stopped, it cannot be continued and needs to be
+        reran, however, its state, logs, and outputs are kept and can be
+        inspected at any time (even during/after a rerun).
+
+    Passed: IntEnum
+        Regression has passed.
+
+    Failed: IntEnum
+        One of the regression phases had failed to complete or returned with
+        an error.
+
+    Killed: IntEnum
+        Regression was intentionally killed by a signal.
+
+    TimedOut: IntEnum
+        Regression was running for longer then the specified timeout and was
+        intentionally killed.
+    """
+
+    Idle = auto(0)
+    Preparing = auto()
+    Running = auto()
+    Stopped = auto()
+    Paused = auto()
+    Passed = auto()
+    Failed = auto()
+    Killed = auto()
+    TimedOut = auto()
 
 
-@dataclass(init=False)
-class Regression:
-    uid: int
+@dataclass
+class Regression(Structure[Test]):
     name: str
-    log: Path
-    tests: list[Test]
-    status: list[Status]
+    status: list[RegressionStatus]
     options: DynaBox
-    test_logs: list[Path]
+
+    def accept(self, visitor: Visitor[Test]):
+        visitor.visit(test)
+
+    def __iter__(self) -> Iterator:
+        return iter(self.tests)
 
     def start(self) -> None:
         """Start a test in a subprocess."""
