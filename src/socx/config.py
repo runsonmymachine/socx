@@ -72,10 +72,19 @@ which will attempt to find and read the value of the attribute from any of the
 """
 
 
-def reconfigure(path: Path) -> Dynaconf:
+def reconfigure(
+    path: Path,
+    preload: list[Path | str] | None = None,
+    includes: list[Path | str] | None = None,
+) -> Dynaconf:
     """Reconfigure the current settings with configurations from path."""
     from ._config import _load_settings
-    _load_settings(path)
+
+    if isinstance(preload, Path):
+        preload = str(preload)
+    if isinstance(includes, Path):
+        includes = str(includes)
+    _load_settings(path, preload, includes)
 
 
 def settings_tree(

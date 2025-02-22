@@ -205,7 +205,7 @@ def _init_module() -> None:
     logger.debug("initializing module.")
     _init_logger()
     _init_converters()
-    _load_settings()
+    _load_settings(_default_settings_path)
     _validate_settings()
     _init_done = True
     logger.debug("module initialized.")
@@ -257,7 +257,6 @@ def _load_settings(
     includes: Iterable[str] | None = None,
 ) -> Dynaconf:
     global _default_settings
-    logger.debug(f"loading settings from {path}.")
 
     if preload is None:
         preload = []
@@ -270,16 +269,21 @@ def _load_settings(
     elif isinstance(path, str):
         path = Path(path)
 
-    _default_settings = Dynaconf(
+    logger.debug(f"loading settings from {path}.")
+    settings = Dynaconf(
         preload=preload,
-        root_path=path.parent,
-        settings_files=[str(path)],
+        root_path=path if path.is_dir() else path.parent,
+        settings_files=[path.name if path.is_file() else "*"],
         includes=includes,
         **_settings_kwargs,
-        **_default_settings.as_dict()
-        if isinstance(_default_settings, Dynaconf)
-        else _default_settings,
+        **_default_settings
+        if isinstance(_default_settings, dict)
+        else _default_settings.as_dict()
     )
+    if isinstance(_default_settings, Dynaconf):
+        _default_settings.update(settings)
+    else:
+        _default_settings = settings
     logger.debug("settings loaded.")
     return _default_settings
 
