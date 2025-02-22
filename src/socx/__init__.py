@@ -40,6 +40,8 @@ __all__ = (
     "DEFAULT_TIME_FORMAT",
     # CLI
     "cli",
+    "RichGroup",
+    "RichCommand",
     # Test
     "Test",
     "TestStatus",
@@ -98,6 +100,8 @@ __all__ = (
 )
 
 from .cli import cli as cli
+from .cli import RichGroup as RichGroup
+from .cli import RichCommand as RichCommand
 from .log import Level as Level
 from .log import log as log
 from .log import info as info
