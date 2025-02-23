@@ -62,7 +62,7 @@ from ._config import USER_CONFIG_DIR as USER_CONFIG_DIR
 from ._config import USER_RUNTIME_DIR as USER_RUNTIME_DIR
 
 
-settings = _get_settings()
+settings: Dynaconf = _get_settings()
 """
 Global settings instance.
 
