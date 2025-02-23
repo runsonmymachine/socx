@@ -4,14 +4,12 @@ import abc
 import shlex
 import asyncio as aio
 import time
-import signal
 import psutil as ps
 from enum import auto
 from enum import IntEnum
 from typing import TextIO
 from typing import override
 from contextlib import suppress
-from subprocess import Popen
 from subprocess import PIPE
 from dataclasses import field
 from dataclasses import dataclass
@@ -43,11 +41,13 @@ class TestCommand(UIDMixin):
     line: str
     name: str = field(init=False)
     args: tuple[str] = field(init=False)
+    escaped: str = field(init=False)
 
     def __post_init__(self) -> None:
         self.line = self.line.strip()
         self.args = tuple(arg.strip() for arg in self.line.split())
         self.name = self.args[0] if self.args else ""
+        self.escaped = shlex.quote(self.line)
 
     def extract_argv(self, arg: str) -> str:
         with suppress(ValueError):
@@ -131,11 +131,13 @@ class TestBase:
     start_time: time.time
     elapsed_time: time.time
 
-    def __init__(self, command: str | TestCommand, *args, **kwargs) -> None:
-        if isinstance(command, str):
+    def __init__(self, command: str | TestCommand | None = None, *args, **kwargs) -> None:
+        if command is None:
+            command = TestCommand("")
+        elif isinstance(command, str):
             command = TestCommand(command)
         try:
-            self._name = command.test
+            self._name = command.name
         except AttributeError:
             raise
         self._result = TestResult.NA
@@ -222,7 +224,15 @@ class Test(TestBase, UIDMixin):
     seed: int
 
     def __init__(self, command: str | TestCommand, *args, **kwargs) -> None:
+        if command is None:
+            command = TestCommand("")
+        elif isinstance(command, str):
+            command = TestCommand(command)
         super().__init__(command, *args, **kwargs)
+        try:
+            self._name = command.test
+        except AttributeError:
+            raise
         if "/" in self._name:
             self._name = self._name.partition("/")[-1]
         self._flow = None
