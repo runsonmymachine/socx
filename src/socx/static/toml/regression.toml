@@ -4,6 +4,7 @@
 
 [regression]
 path = "@path @format /space/users/ci_wiliot/vw_e0_nightly_regression/regressions"
+max_parallel_runs = 10
 
 # -----------------------------------------------------------------------------
 # Logs
