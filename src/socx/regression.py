@@ -1,191 +1,370 @@
 from __future__ import annotations
 
 import time
-import sched
-import psutil as ps
-import subprocess as subps
+import asyncio as aio
 from enum import auto
 from enum import IntEnum
-from typing import TextIO
-from typing import Sequence
-from pathlib import Path
-from subprocess import Popen
-from dataclasses import field
+from typing import override
+from dataclasses import dataclass
+from collections import deque
 from collections.abc import Iterator
 from collections.abc import Iterable
-from dataclasses import dataclass
 
-from dynaconf.utils.boxing import DynaBox
+from rich.progress_bar import ProgressBar
 
+from .log import logger
 from .test import Test
-from .mixins import UIDMixin 
-from .mixins import PtrMixin
+from .test import TestBase
 from .config import settings
+from .console import console
 from .visitor import Node
 from .visitor import Visitor
-from .visitor import Structure
 
 
-__all__ = ("Status", "Regression")
+__all__ = ("Regression", "RegressionStatus", "RegressionResult")
+
+
+class RegressionResult(IntEnum):
+    """
+    Represents the result of a regression that had finished and exited
+    normally.
+
+    Members
+    -------
+    NA: RegressionResult
+        Regression has not yet finished running and therefore result is
+        non-applicable.
+
+    Passed: RegressionResult
+        Regression had finished and terminated normally with no errors and a 0
+        exit code.
+
+    Failed: RegressionResult
+        Regression had finished either normally or abnormally with a non-zero
+        exit code.
+    """
+
+    NA = auto()
+    Passed = auto()
+    Failed = auto()
 
 
 class RegressionStatus(IntEnum):
     """
-    Status representation of a test process as an `IntEnum`.
+    Regression process status enum representation.
 
     Members
     -------
     Idle: IntEnum
-        Regression is idle.
-
-    Preparing: IntEnum
-        Regression is preparing for a run.
+        Idle, waiting to be started.
 
     Running: IntEnum
-        Regression session is running.
-
-    Paused: IntEnum
-        Regression has been paused and is ready to be continued.
+        Test is running.
 
     Stopped: IntEnum
-        Regression has been stopped, it cannot be continued and needs to be
-        reran, however, its state, logs, and outputs are kept and can be
-        inspected at any time (even during/after a rerun).
+        Test has been stopped intentionaly.
 
-    Passed: IntEnum
-        Regression has passed.
+    Finished: IntEnum
+        Test had finished running normally with an exit code 0.
 
-    Failed: IntEnum
-        One of the regression phases had failed to complete or returned with
-        an error.
-
-    Killed: IntEnum
-        Regression was intentionally killed by a signal.
-
-    TimedOut: IntEnum
-        Regression was running for longer then the specified timeout and was
-        intentionally killed.
+    Terminated: IntEnum
+        Test was intentionally terminated by a signal.
     """
 
     Idle = auto(0)
-    Preparing = auto()
     Running = auto()
     Stopped = auto()
-    Paused = auto()
-    Passed = auto()
-    Failed = auto()
-    Killed = auto()
-    TimedOut = auto()
+    Finished = auto()
+    Terminated = auto()
 
 
-@dataclass
-class Regression(Structure[Test]):
-    name: str
-    status: list[RegressionStatus]
-    options: DynaBox
+@dataclass(init=False)
+class Regression(TestBase):
+    lock: aio.Lock
+    tests: list[Test]
+    pending: aio.Queue
+    running: aio.Queue[Test]
+    done: aio.Queue[Test]
 
-    def accept(self, visitor: Visitor[Test]):
-        visitor.visit(test)
+    @classmethod
+    def from_lines(cls, name: str, lines: Iterable[str]) -> Regression:
+        tests = deque(Test(line) for line in lines)
+        return Regression(name, tests)
 
-    def __iter__(self) -> Iterator:
-        return iter(self.tests)
+    def __init__(self, name: str, tests: Iterable[Test], *args, **kwargs):
+        if tests is None:
+            tests = []
+        TestBase.__init__(self, name, *args, **kwargs)
+        self._name: str = name
+        self._lock: aio.Lock = aio.Lock()
+        self._tests: list[Test] = list(tests)
+        self._result: RegressionResult = RegressionResult.NA
+        self._status: RegressionStatus = RegressionStatus.Idle
+        self._progress: ProgressBar = ProgressBar(width=50, total=len(tests))
+        self.pending: aio.Queue = aio.Queue(len(tests))
+        self.running: aio.Queue = aio.Queue(self.run_limit)
+        self.done: aio.Queue = aio.Queue(len(tests))
 
-    def start(self) -> None:
-        """Start a test in a subprocess."""
-        pass
+    def accept(self, visitor: Visitor[Node]) -> None:
+        """Accept a visit from a visitor."""
+        visitor.visit(self)
 
-    def stop(self) -> None:
-        """Send a keyboard interrupt (SIGINT) to stop a running test."""
-        pass
+    def __iter__(self) -> Iterator[Test]:
+        """Iterate over tests defined in a regression."""
+        return iter(self.tests())
 
-    def pause(self) -> None:
-        """Pause the process if it is running."""
-        pass
+    def __len__(self) -> int:
+        return len(self.tests())
 
-    def resume(self) -> None:
-        """Resume the process if it is paused."""
-        pass
+    def __contains__(self, test: Test) -> bool:
+        return test is not None and test in self.tests()
 
-    def wait(self, timeout: float | None = None) -> None:
-        """Wait for a test to terminate if it is running."""
-        pass
+    def __getitem__(self, index: int | slice) -> Test | Iterable[Test]:
+        return self.tests().__getitem__(index)
 
-    def kill(self) -> None:
-        """See `subprocess.Popen.kill`."""
-        pass
-
-    def export(self, fmt: str = "csv") -> None:
-        """Export regression sessions to the specified format `fmt`."""
-        pass
-
-    def terminate(self) -> None:
-        """See `subprocess.Popen.terminate`."""
-        pass
-
-    @property
-    def log(self) -> Path:
-        pass
+    async def __aiter__(self) -> Iterator[Test]:
+        """Iterate over tests defined in a regression."""
+        return await aiter(self.tests())
 
     @property
-    def options(self) -> DynaBox:
-        return settings.regression
+    def lock(self) -> aio.Lock:
+        """An asyncronous lock object."""
+        return self._lock
 
     @property
-    def process(self) -> Popen | None:
-        """The active process of the running test or None if not running."""
-        pass
+    def tests(self) -> Iterable[Test]:
+        """An iterable of all tests defined in the regression."""
+        return self._tests
 
     @property
-    def stdin(self) -> TextIO | None:
-        """The standard input of the test's process or None if not running."""
-        pass
+    async def tests_async(self) -> Iterable[Test]:
+        """An iterable of all tests defined in the regression."""
+        for test in self.tests:
+            yield test
 
     @property
-    def stdout(self) -> TextIO | None:
-        """The standard output of the test's process or None if not running."""
-        pass
+    def progress(self) -> ProgressBar:
+        """A progress bar to represent the regression's current progress."""
+        return self._progress
 
     @property
-    def stderr(self) -> TextIO | None:
-        """The standard error of the test's process or None if not running."""
-        pass
+    def run_limit(self):
+        """The run_limit property."""
+        try:
+            rv = int(settings.regression.max_runs_in_parallel)
+        except AttributeError:
+            rv = 10
+        return rv
 
-    @property
-    def status(self) -> Status:
-        """A `TestStatus` representing the state/status of the test."""
-        pass
+    @override
+    async def start(self) -> None:
+        """Start the execution of an idle test."""
+        tasks = [
+            aio.create_task(self.schedule_tests(self._tests)),
+            aio.create_task(self.on_test_scheduled()),
+            aio.create_task(self.collect_results()),
+            aio.create_task(self.update_progress()),
+        ]
+        try:
+            done, pending = await aio.wait(tasks)
+        except Exception as exc:
+            for task in tasks:
+                task.cancel(f"Cancelled due to exception: {exc}")
+            err = f"Encountered {type(exc)} exception during 'start' method"
+            logger.exception(err, exc_info=exc)
+            raise exc
+        for task in pending:
+            task.cancel()
+        for result in done:
+            logger.debug(result)
+            console.print(result)
 
-    @property
-    def test_logs(self) -> dict[str, Path]:
-        """Return a mapping between test names and their log paths."""
-        pass
+    async def schedule_tests(self, tests: set[Test]) -> None:
+        for test in tests:
+            try:
+                logger.debug(f"Scheduling {test.name} for execution...")
+                await self.schedule_test(test)
+            except Exception as exc:
+                err = (
+                    f"Failed to schedule test {test.name} due to "
+                    f"{type(exc)} exception."
+                )
+                logger.exception(err, exc_info=exc)
+                raise exc
+            else:
+                logger.debug(
+                    f"Succesfuly scheduled test {test.name} for execution."
+                )
 
-    @property
-    def idle(self) -> bool:
-        """True if test has no active process and has not yet started."""
-        pass
+    async def schedule_test(self, test) -> None:
+        task = aio.create_task(test.start(), name=test.name)
+        try:
+            await self.pending.put(task)
+        except Exception as e:
+            err = f"A {type(e)} exception was raised during scheduling."
+            task.cancel(err)
+            logger.exception(err, exc_info=e)
+            raise
 
-    @property
-    def passed(self) -> bool:
-        """True if test has finished running and no errors occured."""
-        pass
+    async def on_test_scheduled(self) -> None:
+        workers = []
+        while not self.done.full():
+            if self.running.full():
+                await aio.sleep(0)
+                continue
+            n = self.pending.qsize() - len(workers)
+            if n > 0:
+                logger.debug(f"creating {n} new runners...")
+                workers = [
+                    aio.create_task(self.run_next_in_sched(), name="runner")
+                    for _ in range(n)
+                ] + list(workers)
+                logger.debug(f"created {n} new runners.")
+            elif n < 0:
+                logger.debug(f"canceling {abs(n)} runners...")
+                for _ in range(n):
+                    workers.pop().cancel()
+                logger.debug(f"canceled {abs(n)} runners.")
+            if not workers:
+                await aio.sleep(0)
+                continue
+            done, workers = await aio.wait(
+                workers, timeout=5, return_when=aio.ALL_COMPLETED
+            )
+            logger.debug(f"{len(done)} runners were awaited.")
+            logger.debug(f"{len(workers)} runners are still pending.")
+        while workers:
+            worker = workers.pop()
+            if not worker.cancelled():
+                worker.cancel()
 
-    @property
-    def failed(self) -> bool:
-        """True if test finished running and at least one error occured."""
-        pass
+    async def run_next_in_sched(self):
+        exc = None
+        task = await self.pending.get()
+        try:
+            await self.running.put(task)
+        except Exception as e:
+            task.cancel()
+            exc = e
+            err = f"Runner task was canceled due to {type(exc)} exception."
+            logger.exception(err, exc_info=exc)
+        finally:
+            self.pending.task_done()
+            if exc:
+                raise exc
 
-    @property
-    def running(self) -> bool:
-        """True if test is currently running in a dedicated process."""
-        pass
+    async def collect_results(self) -> None:
+        workers = []
+        while not self.done.full():
+            if self.running.empty():
+                await aio.sleep(0)
+                continue
+            n = self.run_limit - len(workers)
+            if n > 0:
+                logger.debug(f"creating {n} new collectors...")
+                workers = [
+                    aio.create_task(self.collect_one(), name="collector")
+                    for _ in range(n)
+                ] + list(workers)
+                logger.debug(f"created {n} new collectors.")
+            elif n < 0:
+                logger.debug(f"canceling {abs(n)} collectors...")
+                for _ in range(n):
+                    worker: aio.Future = workers.pop()
+                    worker.cancel()
+                logger.debug(f"canceled {abs(n)} collectors.")
+            if not workers:
+                await aio.sleep(0)
+                continue
+            done, workers = await aio.wait(
+                workers, timeout=5, return_when=aio.ALL_COMPLETED
+            )
+            logger.debug(f"{len(done)} collectors were awaited.")
+            logger.debug(f"{len(workers)} collectors are still pending.")
+        while workers:
+            logger.debug("All results were succesfuly collected.")
+            logger.debug("canceling exranous leftover collectors...")
+            worker = workers.pop()
+            if not worker.cancelled():
+                logger.debug(f"canceling collector {worker.name}...")
+                worker.cancel()
+                logger.debug(f"cancel worker {worker.name} done.")
 
-    @property
-    def finished(self) -> bool:
-        """True if test finished running without normally interruption."""
-        pass
+    async def collect_one(self) -> None:
+        exc = None
+        task = await self.running.get()
+        try:
+            if not task.done():
+                await task
+            await self.done.put(task)
+        except Exception as e:
+            task.cancel()
+            exc = e
+            err = f"Collector task cancelled due to {type(exc)} exception."
+            logger.exception(err, exc_info=exc)
+        finally:
+            self.running.task_done()
+            if exc:
+                raise exc
 
-    @property
-    def returncode(self) -> int | None:
-        """The return code from the test process or None if running or idle."""
-        pass
+    async def update_progress(self) -> None:
+        total = len(self.tests)
+        current = 0
+        self.progress.update(current, total)
+        while current < total:
+            current = self.done.qsize()
+            self.progress.update(current)
+            try:
+                coro = aio.create_task(self.draw_progress())
+            except Exception as e:
+                err = (
+                    f"Encountered {type(e)} exception during progress update."
+                )
+                logger.exception(err, exc_info=e)
+                coro.cancel()
+                raise e
+            else:
+                await coro
+
+    async def draw_progress(self) -> None:
+        await aio.sleep(0.25)
+        console.show_cursor(False)
+        with console.capture() as cap:
+            total = self.progress.total
+            completed = self.progress.completed
+            console.print("", end="\r")
+            console.print(self.progress, end=" ")
+            console.print(f"([blue]{completed}[/]/[green]{total}[/])")
+        console.file.write(cap.get().strip() + "\r")
+        await aio.sleep(0.25)
+        console.show_cursor(True)
+
+    @override
+    def suspend(self) -> None:
+        """Suspend the execution of a running test."""
+        for test in self.tests:
+            test.suspend()
+
+    @override
+    async def resume(self) -> None:
+        """Resume the execution of a paused test."""
+        for test in self.tests:
+            test.resume()
+
+    @override
+    async def interrupt(self) -> None:
+        """Interrupt the execution of a running test with a SIGINT signal."""
+        for test in self.tests:
+            test.interrupt()
+
+    @override
+    async def terminate(self) -> None:
+        """Interrupt the execution of a running test with a SIGTERM signal."""
+        for test in self.tests:
+            test.terminate()
+
+    @override
+    async def kill(self) -> None:
+        """Interrupt the execution of a running test with a SIGKILL signal."""
+        for test in self.tests:
+            test.kill()

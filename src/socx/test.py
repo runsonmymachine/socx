@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import abc
 import shlex
 import asyncio as aio
@@ -10,7 +11,6 @@ from enum import IntEnum
 from typing import TextIO
 from typing import override
 from contextlib import suppress
-from subprocess import PIPE
 from dataclasses import field
 from dataclasses import dataclass
 
@@ -123,67 +123,47 @@ class TestResult(IntEnum):
 class TestBase:
     """Definition of basic properties common accross all test types."""
 
+    pid: int
     name: str
     status: TestStatus
     result: TestResult
     command: TestCommand
-    end_time: time.time
-    start_time: time.time
     elapsed_time: time.time
+    started_time: time.time
+    completed_time: time.time
 
-    def __init__(self, command: str | TestCommand | None = None, *args, **kwargs) -> None:
+    def __init__(
+        self, command: str | TestCommand | None = None, *args, **kwargs
+    ) -> None:
         if command is None:
             command = TestCommand("")
         elif isinstance(command, str):
             command = TestCommand(command)
-        try:
-            self._name = command.name
-        except AttributeError:
-            raise
+        self._name = command.name
         self._result = TestResult.NA
         self._status = TestStatus.Idle
         self._command = command
-        self._end_time = None
-        self._start_time = None
         self._elapsed_time = None
+        self._started_time = None
+        self._completed_time = None
 
     def accept(self, visitor: Visitor[Node]) -> None:
         visitor.visit(self)
 
-    @abc.abstractmethod
-    async def start(self) -> None:
-        """Start the execution of an idle test."""
-        ...
-
-    @abc.abstractmethod
-    def suspend(self) -> None:
-        """Suspend the execution of a running test."""
-        ...
-
-    @abc.abstractmethod
-    def resume(self) -> None:
-        """Resume the execution of a paused test."""
-        ...
-
-    @abc.abstractmethod
-    def interrupt(self) -> None:
-        """Interrupt the execution of a running test with a SIGINT signal."""
-        ...
-
-    @abc.abstractmethod
-    def kill(self) -> None:
-        """Interrupt the execution of a running test with a SIGKILL signal."""
-        ...
-
-    @abc.abstractmethod
-    def terminate(self) -> None:
-        """Interrupt the execution of a running test with a SIGTERM signal."""
-        ...
+    @property
+    def pid(self) -> str:
+        """Name of a test."""
+        return os.getpid()
 
     @property
     def name(self) -> str:
         """Name of a test."""
         return self._name
+
+    @property
+    def command(self) -> TestCommand:
+        """Test execution command representation as an object."""
+        return self._command
 
     @property
     def status(self) -> TestStatus:
@@ -196,24 +176,49 @@ class TestBase:
         return self._result
 
     @property
-    def command(self) -> TestCommand:
-        """Test execution command representation as an object."""
-        return self._command
-
-    @property
-    def end_time(self) -> time.time:
-        """Time measured at the end of a test."""
-        return self._end_time
-
-    @property
-    def start_time(self) -> time.time:
-        """Time measured at the begining of a test."""
-        return self._start_time
-
-    @property
     def elapsed_time(self) -> time.time:
         """Time spent idle between start and stop measurements."""
         return self._elapsed_time
+
+    @property
+    def started_time(self) -> time.time:
+        """Time measured at the begining of a test."""
+        return self._started_time
+
+    @property
+    def completed_time(self) -> time.time:
+        """Time measured at the end of a test."""
+        return self._completed_time
+
+    @abc.abstractmethod
+    async def start(self) -> None:
+        """Start the execution of an idle test."""
+        ...
+
+    @abc.abstractmethod
+    async def suspend(self) -> None:
+        """Suspend the execution of a running test."""
+        ...
+
+    @abc.abstractmethod
+    async def resume(self) -> None:
+        """Resume the execution of a paused test."""
+        ...
+
+    @abc.abstractmethod
+    async def interrupt(self) -> None:
+        """Interrupt the execution of a running test with a SIGINT signal."""
+        ...
+
+    @abc.abstractmethod
+    async def terminate(self) -> None:
+        """Interrupt the execution of a running test with a SIGTERM signal."""
+        ...
+
+    @abc.abstractmethod
+    async def kill(self) -> None:
+        """Interrupt the execution of a running test with a SIGKILL signal."""
+        ...
 
 
 @dataclass(init=False)
@@ -222,21 +227,21 @@ class Test(TestBase, UIDMixin):
 
     flow: str
     seed: int
+    build: int
 
     def __init__(self, command: str | TestCommand, *args, **kwargs) -> None:
-        if command is None:
-            command = TestCommand("")
-        elif isinstance(command, str):
-            command = TestCommand(command)
         super().__init__(command, *args, **kwargs)
         try:
-            self._name = command.test
+            name = self.command.test
         except AttributeError:
-            raise
-        if "/" in self._name:
-            self._name = self._name.partition("/")[-1]
-        self._flow = None
+            self._missing_test_name_err()
+        if "/" in name:
+            name = self._name.partition("/")[-1]
+        self._name = name
         self._seed = 0
+        self._proc = None
+        self._flow = None
+        self._build = None
 
     @property
     def flow(self):
@@ -247,6 +252,14 @@ class Test(TestBase, UIDMixin):
             raise
         else:
             return rv
+
+    @property
+    def build(self):
+        """Randomization build of a test's RNG."""
+        try:
+            return str(self.command.build)
+        except AttributeError:
+            return ""
 
     @property
     def seed(self):
@@ -308,7 +321,7 @@ class Test(TestBase, UIDMixin):
     @property
     def process(self) -> ps.Process:
         """The active process of the running test or None if not running."""
-        return ps.Process(self._proc.pid)
+        return ps.Process(self._proc.pid) if self._proc else None
 
     @property
     def returncode(self) -> int | None:
@@ -318,24 +331,36 @@ class Test(TestBase, UIDMixin):
     @override
     async def start(self) -> None:
         """Start a test in a subprocess."""
+        exc = None
         if not self.idle:
             msg = "Cannot start a test when it is already running."
             exc = OSError(msg)
             logger.exception(msg, exc_info=exc, stack_info=True)
             raise exc
 
-        self._proc = await aio.create_subprocess_shell(
-            cmd=self.command.line,
-            stdin=PIPE,
-            stdout=PIPE,
-            stderr=PIPE,
-            loop=aio.get_event_loop(),
-        )
-        self._result = (
-            TestResult.Passed
-            if await self._proc.wait() == 0
-            else TestResult.Failed
-        )
+        self._proc = await aio.create_subprocess_shell(self.command.line)
+        self._status = TestStatus.Running
+        try:
+            stdout, stderr = await self._proc.communicate()
+            code = await self._proc.wait()
+        except Exception as e:
+            if ps.pid_exists(self._proc.pid):
+                self._proc.terminate()
+                self._result = TestResult.Failed
+                self._status = TestStatus.Terminated
+                logger.exception(
+                    f"Test failed: an exception of type {type(e)} was raised "
+                    f"during the execution of '{self.name}'", exc_info=e
+                )
+                raise
+        else:
+            self._status = TestStatus.Finished
+            self._result = (
+                TestResult.Passed
+                if code == 0 and stderr == ""
+                else TestResult.Failed
+            )
+            logger.info(f"Test {self.result.name}: {self}")
 
     @override
     def suspend(self) -> None:
@@ -353,7 +378,7 @@ class Test(TestBase, UIDMixin):
     def wait(self, timeout: float | None = None) -> None:
         """Wait for a test to terminate if it is running."""
         if self.running:
-            self.process.wait(timeout=timeout)
+            self.process.wait()
 
     @override
     def terminate(self) -> None:
@@ -372,3 +397,11 @@ class Test(TestBase, UIDMixin):
         """
         if self.running:
             self.process.kill()
+
+    @classmethod
+    def _missing_test_name_err(cls) -> ValueError:
+        err = "No test was specified in the run command."
+        exc = ValueError(err)
+        logger.exception(err, exc_info=exc)
+        raise exc
+
