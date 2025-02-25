@@ -9,6 +9,7 @@
 !/src/*.py
 !/src/socx/**/*.py
 !/src/plugins/**/*.py
+!/src/socx_plugins/**/*.py
 !/src/socx/static/**/*
 !/src/socx/template/**/*
 !/tests/**/*.py

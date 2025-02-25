@@ -132,22 +132,3 @@ class LstParser(Parser):
 
     def __hash__(self) -> int:
         return hash(tuple(self.includes))
-
-
-@click.pass_context
-def parse(ctx: click.Context) -> SymbolTable:
-    src = ctx.source_dir if hasattr(ctx, "source_dir") else None
-    target = ctx.target_dir if hasattr(ctx, "target_dir") else None
-    parser = LstParser(src, target)
-    parser.parse()
-    table = parser.sym_table
-    rich.print(parser)
-    rich.print(table)
-    return table
-
-
-def write(ctx: click.Context) -> None:
-    for asm in ctx.mods:
-        output_file = ctx.output / asm.file.with_suffix(".sv")
-        output_file.write_text(asm.to_sv())
-        print(f"SystemVerilog output successfuly written to {output_file}")

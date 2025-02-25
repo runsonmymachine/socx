@@ -31,11 +31,11 @@ from platformdirs import user_cache_dir
 from platformdirs import user_config_dir
 from platformdirs import user_runtime_dir
 
-from ..log import logger
-from ..log import add_handler
-from ..log import DEFAULT_LEVEL
-from ..log import DEFAULT_TIME_FORMAT
-from ..validators import PathValidator
+from .log import logger
+from .log import add_handler
+from .log import DEFAULT_LEVEL
+from .log import DEFAULT_TIME_FORMAT
+from .validators import PathValidator
 
 
 __author__ = "Sagi Kimhi <sagi.kim5@gmail.com>"
@@ -171,19 +171,21 @@ USER_RUNTIME_DIR: Final[Path] = Path(
 
 _init_done: bool = False
 
-_settings: Dynaconf | dict = {
+_user_log_path: Path = USER_LOG_DIR / "run.log"
+
+_user_settings_path: Path = Path(USER_CONFIG_DIR) / "settings.toml"
+
+_default_settings_dir: Path = Path(PACKAGE_PATH) / "static" / "toml"
+
+_default_settings_file: Path = "settings.toml"
+
+_default_settings_path: Path = (
+    Path(_default_settings_dir) / _default_settings_file
+)
+
+_default_settings: Dynaconf | dict = {
     name: value for name, value in vars().items() if not name.startswith("_")
 }
-
-_user_log: Path = USER_LOG_DIR / "run.log"
-
-_static_dir: Path = Path(PACKAGE_PATH) / "static" / "toml"
-
-_static_file: Path = "settings.toml"
-
-_user_settings: Path = Path(USER_CONFIG_DIR) / "settings.toml"
-
-_static_settings: Path = Path(_static_dir) / _static_file
 
 _settings_kwargs = dict(
     encoding="utf-8",
@@ -191,7 +193,7 @@ _settings_kwargs = dict(
     envvar_prefix=APP_NAME.upper(),
     load_dotenv=True,
     environments=False,
-    dotenv_override=True,
+    dotenv_override=False,
     sysenv_fallback=True,
     validate_on_update="all",
     validators=[Validator(r"convert.*", ne=empty)],
@@ -203,7 +205,7 @@ def _init_module() -> None:
     logger.debug("initializing module.")
     _init_logger()
     _init_converters()
-    _load_settings()
+    _load_settings(_default_settings_path)
     _validate_settings()
     _init_done = True
     logger.debug("module initialized.")
@@ -217,7 +219,7 @@ def _init_logger() -> None:
             level=DEFAULT_LEVEL,
             console=Console(
                 file=open_file(
-                    filename=str(_user_log),
+                    filename=str(_user_log_path),
                     mode="w",
                     encoding="utf-8",
                     lazy=True,
@@ -239,7 +241,7 @@ def _init_logger() -> None:
         )
     )
     logger.info("logging initialized.")
-    logger.info(f"logging at path: {_user_log}")
+    logger.info(f"logging at path: {_user_log_path}")
 
 
 def _init_converters() -> None:
@@ -250,37 +252,50 @@ def _init_converters() -> None:
 
 
 def _load_settings(
-    path: Path | None = None,
+    path: str | Path | None = None,
     preload: Iterable[str] | None = None,
     includes: Iterable[str] | None = None,
 ) -> Dynaconf:
-    global _settings
-    path = path if path else _static_settings
-    preload = preload if preload else []
-    includes = includes if includes else []
+    global _default_settings
+
+    if preload is None:
+        preload = []
+
+    if includes is None:
+        includes = []
+
+    if path is None:
+        path = _default_settings_path
+    elif isinstance(path, str):
+        path = Path(path)
+
     logger.debug(f"loading settings from {path}.")
     settings = Dynaconf(
-        root_path=path.parent,
         preload=preload,
-        settings_files=[str(path)],
+        root_path=path if path.is_dir() else path.parent,
+        settings_files=[path.name if path.is_file() else "*"],
         includes=includes,
         **_settings_kwargs,
-        **_settings.as_dict() if isinstance(_settings, Dynaconf) else _settings,
+        **_default_settings
+        if isinstance(_default_settings, dict)
+        else _default_settings.as_dict()
     )
-    settings.update(_settings)
-    _settings = settings
+    if isinstance(_default_settings, Dynaconf):
+        _default_settings.update(settings)
+    else:
+        _default_settings = settings
     logger.debug("settings loaded.")
-    return _settings
+    return _default_settings
 
 
 def _validate_settings() -> None:
-    global _settings
+    global _default_settings
     logger.debug("Validating settings.")
-    for lang in _settings.convert:
-        _settings.validators.register(_get_convert_validators(lang))
+    for lang in _default_settings.convert:
+        _default_settings.validators.register(_get_convert_validators(lang))
     accumulative_errors = ""
     try:
-        _settings.validators.validate_all()
+        _default_settings.validators.validate_all()
     except ValidationError as e:
         accumulative_errors = e.details
         logger.debug("Settings validation failed.")
@@ -295,7 +310,7 @@ def _validate_settings() -> None:
 def _get_settings() -> Dynaconf:
     if not _init_done:
         _init_module()
-    return _settings
+    return _default_settings
 
 
 def _get_convert_validators(lang: str) -> list[Validator]:

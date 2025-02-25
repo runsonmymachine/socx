@@ -19,6 +19,7 @@ defined.
 For additional information regarding the internals of this module, reference
 dynaconf documentation on its official-site/github-repository.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -34,6 +35,7 @@ from ._config import _get_settings
 __all__ = (
     # API
     "settings",
+    "reconfigure",
     "settings_tree",
     # Metadata
     "APP_NAME",
@@ -60,7 +62,7 @@ from ._config import USER_CONFIG_DIR as USER_CONFIG_DIR
 from ._config import USER_RUNTIME_DIR as USER_RUNTIME_DIR
 
 
-settings = _get_settings()
+settings: Dynaconf = _get_settings()
 """
 Global settings instance.
 
@@ -69,10 +71,21 @@ which will attempt to find and read the value of the attribute from any of the
 .toml configuration files under the 'settings' directory.
 """
 
-def reconfigure(path: Path) -> Dynaconf:
+
+def reconfigure(
+    path: Path,
+    preload: list[Path | str] | None = None,
+    includes: list[Path | str] | None = None,
+) -> Dynaconf:
+    """Reconfigure the current settings with configurations from path."""
     from ._config import _load_settings
-    from ._config import _validate_settings
-    _load_settings(path)
+
+    if isinstance(preload, Path):
+        preload = str(preload)
+    if isinstance(includes, Path):
+        includes = str(includes)
+    _load_settings(path, preload, includes)
+
 
 def settings_tree(
     root: Dynaconf | DynaBox | dict,
