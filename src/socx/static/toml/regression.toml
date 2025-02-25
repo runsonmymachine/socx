@@ -20,8 +20,8 @@ description = ""
 
 [regression.rerun_failure_history.output]
 name = "failure_history_rerun"
-filename = "@format failure_history.rerun"
-directory = "@path @format {this.regression.logs.files.failure_history.directory}"
+filename = "failure_history.log"
+directory = "@path @format {this.regression.logs.rerun_failures}"
 description = ""
 
 # -----------------------------------------------------------------------------
@@ -32,7 +32,7 @@ description = ""
 path = "@path @format {this.regression.path}/logs"
 prev = "@path @format {this.regression.logs.path}/prev"
 latest = "@path @format {this.regression.logs.path}/latest"
-rerun_failures = "@path @format {this.regression.logs.path}/rerun_failures"
+rerun_failures = "@path @format {env[TOP_VERIF]}/scripts/socx/assets/rgr/rerun_failures"
 
 # -----------------------------------------------------------------------------
 # Logs - Files
