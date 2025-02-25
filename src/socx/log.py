@@ -5,9 +5,11 @@ import os
 import logging
 from weakref import proxy
 from typing import Final, NewType
+from pathlib import Path
 
 from rich.console import Console
 from rich.logging import RichHandler
+from click import open_file
 
 
 __all__ = (
@@ -70,7 +72,7 @@ Default logger message format.
 """
 
 DEFAULT_CHILD_FORMATTER: Final[str] = logging.Formatter(
-    DEFAULT_CHILD_FORMAT, DEFAULT_TIME_FORMAT
+    DEFAULT_FORMAT, DEFAULT_TIME_FORMAT
 )
 """
 Default logger message format.
@@ -96,6 +98,32 @@ DEFAULT_HANDLERS: Final[list[logging.Handler]] = [
 Default logging handlers of this module's default `logger`.
 """
 
+
+def _get_file_handler(path: str | Path) -> logging.Handler:
+    return RichHandler(
+        level=DEFAULT_LEVEL,
+        console=Console(
+            file=open_file(
+                filename=str(path),
+                mode="w",
+                encoding="utf-8",
+                lazy=True,
+            ),
+            tab_size=4,
+            width=110,
+        ),
+        markup=False,
+        show_time=True,
+        show_level=True,
+        rich_tracebacks=True,
+        locals_max_string=None,
+        locals_max_length=None,
+        tracebacks_theme="monokai",
+        omit_repeated_times=False,
+        tracebacks_word_wrap=False,
+        tracebacks_show_locals=True,
+        log_time_format=DEFAULT_TIME_FORMAT,
+    )
 
 def _get_logger() -> logging.Logger:
     logging.basicConfig(
@@ -129,9 +157,7 @@ def get_logger(name: str, filename: str | None = None) -> logging.Logger:
     """
     rv = _logger.getChild(name)
     if filename is not None:
-        handler = logging.FileHandler(
-            filename=filename, mode="w", encoding="utf-8"
-        )
+        handler = _get_file_handler(filename)
         handler.setFormatter(DEFAULT_CHILD_FORMATTER)
         rv.addHandler(handler)
     return rv

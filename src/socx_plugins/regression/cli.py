@@ -1,3 +1,4 @@
+import asyncio as aio
 from socx import cli as soc_cli
 from socx_plugins.regression.rgr import rerun_fail_hist
 
@@ -10,10 +11,10 @@ def cli():
 @cli.command()
 def rrfh():
     """Command alias of rerun-failure-history."""
-    rerun_fail_hist()
+    aio.run(rerun_fail_hist())
 
 
 @cli.command()
 def rerun_failure_history():
     """Rerun failed tests from all past regressions."""
-    rerun_fail_hist()
+    aio.run(rerun_fail_hist())
