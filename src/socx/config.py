@@ -42,6 +42,7 @@ __all__ = (
     "APP_AUTHOR",
     "APP_VERSION",
     # Directories
+    "PACKAGE_PATH",
     "USER_LOG_DIR",
     "USER_DATA_DIR",
     "USER_CACHE_DIR",
@@ -54,6 +55,7 @@ __all__ = (
 from ._config import APP_NAME as APP_NAME
 from ._config import APP_AUTHOR as APP_AUTHOR
 from ._config import APP_VERSION as APP_VERSION
+from ._config import PACKAGE_PATH as PACKAGE_PATH
 from ._config import USER_LOG_DIR as USER_LOG_DIR
 from ._config import USER_DATA_DIR as USER_DATA_DIR
 from ._config import USER_CACHE_DIR as USER_CACHE_DIR

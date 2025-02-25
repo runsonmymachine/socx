@@ -45,16 +45,17 @@ __all__ = (
     # Test
     "Test",
     "TestStatus",
+    "TestResult",
     "TestCommand",
     # Regression
     "Regression",
-    "RegressionStatus",
     # Config
     "settings",
     "settings_tree",
     "APP_NAME",
     "APP_AUTHOR",
     "APP_VERSION",
+    "PACKAGE_PATH",
     "USER_LOG_DIR",
     "USER_DATA_DIR",
     "USER_CACHE_DIR",
@@ -129,6 +130,7 @@ from .log import DEFAULT_FORMAT as DEFAULT_FORMAT
 from .log import DEFAULT_HANDLERS as DEFAULT_HANDLERS
 from .log import DEFAULT_TIME_FORMAT as DEFAULT_TIME_FORMAT
 from .test import Test as Test
+from .test import TestResult as TestResult
 from .test import TestStatus as TestStatus
 from .test import TestCommand as TestCommand
 from .mixins import UIDMixin as UIDMixin
@@ -138,6 +140,7 @@ from .config import settings_tree as settings_tree
 from .config import APP_NAME as APP_NAME
 from .config import APP_AUTHOR as APP_AUTHOR
 from .config import APP_VERSION as APP_VERSION
+from .config import PACKAGE_PATH as PACKAGE_PATH
 from .config import USER_LOG_DIR as USER_LOG_DIR
 from .config import USER_DATA_DIR as USER_DATA_DIR
 from .config import USER_CACHE_DIR as USER_CACHE_DIR
