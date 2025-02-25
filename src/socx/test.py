@@ -69,12 +69,10 @@ class TestCommand(UIDMixin):
             return rv
         else:
             err = f"No such argument: {attr}"
-            exc = AttributeError(err)
-            logger.exception(err, exc_info=exc)
-            raise exc
+            raise AttributeError(err)
 
     def __hash__(self) -> int:
-        return hash(set(self.args))
+        return hash(tuple(set(self.args)))
 
 
 @dataclass(init=False)
@@ -371,6 +369,9 @@ class Test(TestBase, UIDMixin):
         """
         if self.running:
             self.process.kill()
+
+    def __hash__(self) -> int:
+        return hash(self.command)
 
     @classmethod
     def _missing_test_name_err(cls, cmd) -> ValueError:

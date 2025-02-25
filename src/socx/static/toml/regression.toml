@@ -9,6 +9,22 @@ path = "@path @format /space/users/ci_wiliot/vw_e0_nightly_regression/regression
 max_runs_in_parallel = 10
 
 # -----------------------------------------------------------------------------
+# Rerun Failure History
+# -----------------------------------------------------------------------------
+
+[regression.rerun_failure_history.input]
+name = "@format {this.regression.logs.files.failure_history.name}"
+filename = "@format {this.regression.logs.files.failure_history.filename}"
+directory = "@path @format {this.regression.logs.files.failure_history.directory}"
+description = ""
+
+[regression.rerun_failure_history.output]
+name = "failure_history_rerun"
+filename = "@format failure_history.rerun"
+directory = "@path @format {this.regression.logs.files.failure_history.directory}"
+description = ""
+
+# -----------------------------------------------------------------------------
 # Logs
 # -----------------------------------------------------------------------------
 
@@ -16,17 +32,18 @@ max_runs_in_parallel = 10
 path = "@path @format {this.regression.path}/logs"
 prev = "@path @format {this.regression.logs.path}/prev"
 latest = "@path @format {this.regression.logs.path}/latest"
-
-# -----------------------------------------------------------------------------
-# Runtime
-# -----------------------------------------------------------------------------
-
-[regression.runtime]
-path = "@path @format {this.regression.path}/nightly"
+rerun_failures = "@path @format {this.regression.logs.path}/rerun_failures"
 
 # -----------------------------------------------------------------------------
 # Logs - Files
 # -----------------------------------------------------------------------------
+
+[regression.logs.files.failure_history]
+name = "failure_history"
+filename = "failed_tests_history.log"
+directory = "@path @format {this.regression.logs.latest}"
+description = ""
+
 
 [regression.logs.files.rerun_list]
 name = "rerun_list"
@@ -49,11 +66,12 @@ directory = "@path @format {this.regression.logs.latest}"
 description = ""
 
 
-[regression.logs.files.failure_history]
-name = "failure_history"
-filename = "failed_tests_history.log"
-directory = "@path @format {this.regression.logs.latest}"
-description = ""
+# -----------------------------------------------------------------------------
+# Runtime
+# -----------------------------------------------------------------------------
+
+[regression.runtime]
+path = "@path @format {this.regression.path}/nightly"
 
 # -----------------------------------------------------------------------------
 # Runtime - Files

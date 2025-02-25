@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import time
 import asyncio as aio
+import contextlib
 from functools import partial
 from enum import auto
 from enum import IntEnum
@@ -18,6 +19,7 @@ from .log import get_logger
 from .test import Test
 from .test import TestBase
 from .test import TestStatus
+from .test import TestResult
 from .config import settings
 from .console import console
 from .visitor import Node
@@ -88,9 +90,9 @@ class RegressionStatus(IntEnum):
 @dataclass(init=False)
 class Regression(TestBase):
     tests: dict[str, Test]
-    pending: aio.Queue
-    running: aio.Queue[Test]
+    lock: aio.Lock
     done: aio.Queue[Test]
+    pending: aio.Queue
 
     @classmethod
     def from_lines(cls, name: str, lines: Iterable[str]) -> Regression:
@@ -103,15 +105,11 @@ class Regression(TestBase):
             tests = []
         elif not isinstance(tests, list):
             tests = list(tests)
-        self._name: str = name
-        self._lock: aio.Lock = aio.Lock()
-        self._tests: dict[str, Test] = {test.name: test for test in tests}
-        self._result: RegressionResult = RegressionResult.NA
-        self._status: RegressionStatus = RegressionStatus.Idle
-        self._progress: ProgressBar = ProgressBar(width=50, total=len(tests))
-        self.pending: aio.Queue = aio.Queue(maxsize=len(tests))
-        self.running: aio.Queue = aio.Queue(maxsize=self.run_limit)
+        self.lock = aio.Lock()
         self.done: aio.Queue = aio.Queue(maxsize=len(tests))
+        self.pending: aio.Queue = aio.Queue(maxsize=len(tests))
+        self._tests: dict[str, Test] = {test.name: test for test in tests}
+        self._progress: ProgressBar = ProgressBar(width=50, total=len(tests))
 
     def accept(self, visitor: Visitor[Node]) -> None:
         """Accept a visit from a visitor."""
@@ -119,7 +117,12 @@ class Regression(TestBase):
 
     def __iter__(self) -> Iterator[Test]:
         """Iterate over tests defined in a regression."""
-        return iter(self.tests.items())
+        return iter(self.tests.values())
+
+    async def __aiter__(self) -> Iterator[Test]:
+        """Iterate over tests defined in a regression."""
+        for test in tuple(self.tests.values()):
+            yield test
 
     def __len__(self) -> int:
         return len(self.tests.values())
@@ -147,144 +150,106 @@ class Regression(TestBase):
     @property
     def run_limit(self):
         """The run_limit property."""
-        rv = int(self.cfg.max_runs_in_parallel)
-        return rv
+        return int(self.cfg.max_runs_in_parallel)
 
     @override
     async def start(self) -> None:
         """Start the execution of an idle test."""
-        tasks = [
-            aio.create_task(self.update_progress(), name="update_progress"),
+        self._status = TestStatus.Pending
+        tasks = {
             aio.create_task(self.schedule_tests(), name="schedule_tests"),
-            aio.create_task(
-                self.run_schedule(),
-                name="start_tests",
-            ),
-            aio.create_task(self.collect_runs(), name="collect_results"),
-        ]
-        done = await aio.gather(*tasks)
-        for result in done:
-            logger.debug(result)
+            aio.create_task(self.run_schedule(), name="start_tests"),
+            aio.create_task(self.fetch_results(), name="fetch_results"),
+        }
+        self._status = TestStatus.Running
+        results = await aio.gather(*tasks)
+        for result in results:
+            self.print(result)
+        self._status = TestStatus.Finished
+        self._result = (
+            TestResult.Passed
+            if all(test.result == TestResult.Passed for test in self)
+            else TestResult.Failed
+        )
+        return results
+
+    async def print(self, *args, **kwargs) -> None:
+        async with self.lock:
+            console.print(*args, **kwargs)
+
+    async def log(self, *args, **kwargs) -> None:
+        async with self.lock:
+            logger.info(*args, **kwargs)
 
     async def schedule_tests(self) -> None:
-        for test in list(self.tests.values()):
+        async for test in self:
             await self.schedule_test(test)
+        await self.pending.join()
 
     async def schedule_test(self, test) -> None:
-        logger.debug(f"Scheduling {test.name} for execution...")
-        try:
-            await self.pending.put(test)
-        except Exception as exc:
-            err = f"A {type(exc)} exception was raised during scheduling."
-            logger.exception(err, exc_info=exc)
-            raise exc
-        else:
-            test._status = TestStatus.Pending
-        logger.debug(f"Succesfuly scheduled test {test.name} for execution.")
+        await self.log(f"Scheduling {test.name} for execution...")
+        test._status = TestStatus.Pending
+        await self.pending.put(test)
+        await self.log(f"Succesfuly scheduled test {test.name} for execution.")
 
     async def run_schedule(self) -> None:
-        workers = []
-        while self.pending.qsize() or self.running.qsize():
-            n = self.run_limit - len(workers)
-            if n > 0:
-                logger.debug(f"creating {n} new runners...")
-                workers = [
-                    aio.create_task(self.run_next_in_sched(), name="runner")
-                    for _ in range(n)
-                ] + list(workers)
-                logger.debug(f"created {n} new runners.")
-            if workers:
-                done, workers = await aio.wait(workers)
-                logger.debug(f"{len(done)} runners were awaited.")
-                logger.debug(f"{len(workers)} runners are still pending.")
-        logger.debug("All scheduled tasks were started.")
-        for worker in workers:
-            if not worker.cancelled():
-                logger.debug(f"canceling irrelevant {worker.get_name()}...")
-                worker.cancel()
-                logger.debug(f"{worker.get_name()} cancelled.")
+        tasks = set()
+        for _ in range(self.run_limit):
+            task = aio.create_task(self.make_runner())
+            tasks.add(task)
+            task.add_done_callback(tasks.discard)
+        await self.pending.join()
+        await self.done.join()
+        _, pending = await aio.wait(tasks, timeout=1)
+        for runner in pending:
+            if not runner.cancelled():
+                runner.cancel()
 
-    async def run_next_in_sched(self):
-        exc = None
-        test = await self.pending.get()
-        try:
-            task = aio.create_task(test.start(), name=test.name)
-            logger.debug(f"Runner({task.get_name()}): running test...")
-            await self.running.put(task)
-            await task
-        except Exception as e:
-            exc = e
-            err = f"Runner task was canceled due to {type(exc)} exception."
-            logger.exception(err, exc_info=exc)
-        finally:
-            self.pending.task_done()
-        if exc:
-            raise exc
+    async def make_runner(self):
+        while True:
+            if self.pending.empty():
+                await self.done.join()
+                return
+            try:
+                test = await self.pending.get()
+                await self.log(f"Runner({test.name}): running test...")
+                await test.start()
+                await self.done.put(test)
+                await self.log(f"Runner({test.name}): test finished.")
+            finally:
+                self.pending.task_done()
 
-    async def collect_runs(self) -> None:
-        total = len(self.tests.values())
-        workers = []
-        while self.done.qsize() < total:
-            if self.running.empty():
-                await aio.sleep(0)
-                continue
-            n = self.run_limit - len(workers)
-            if n > 0:
-                logger.debug(f"creating {n} new collectors...")
-                workers = [
-                    aio.create_task(self.collect_one(), name="collector")
-                    for _ in range(n)
-                ] + list(workers)
-                logger.debug(f"created {n} new collectors.")
-            if workers:
-                done, workers = await aio.wait(workers)
-                logger.debug(f"{len(done)} collectors were awaited.")
-                logger.debug(f"{len(workers)} collectors are still pending.")
-        logger.debug("All results were succesfuly collected.")
-        for worker in workers:
-            if not worker.cancelled():
-                logger.debug(f"canceling irrelevant {worker.get_name()}...")
-                worker.cancel()
-                logger.debug(f"{worker.get_name()} cancelled.")
-
-    async def collect_one(self) -> None:
-        exc = None
-        task = await self.running.get()
-        try:
-            logger.debug(f"Collector: collected task {task.get_name()}")
-            if not task.done():
-                logger.debug(
-                    f"Collector: waiting for task '{task.get_name()}' to finish"
-                )
-                await task
-            await self.done.put(task)
-            logger.debug(f"Collector: task '{task.get_name()}' done.")
-        except Exception as e:
-            task.cancel()
-            err = f"Collector cancelled due to {type(e)} exception."
-            logger.exception(err, exc_info=e)
-            raise
-        finally:
-            self.running.task_done()
-
-    async def update_progress(self) -> None:
-        current = 0
-        total = len(self.tests.values())
-        self.progress.update(current, total)
-        while self.progress.completed < total:
-            self.progress.update(self.done.qsize())
-            await self.draw_progress()
+    async def fetch_results(self) -> set:
+        results = set()
+        cnt, total, bar = 0, len(self), self.progress
+        drawing = aio.create_task(self.draw_progress())
+        while cnt < total:
+            result = await self.done.get()
+            async with self.lock:
+                cnt += 1
+                results.add(result)
+                self.done.task_done()
+                bar.update(cnt)
+        await aio.wait({aio.ensure_future(drawing)}, timeout=3)
+        if not drawing.cancelled():
+            drawing.cancel()
+        return results
 
     async def draw_progress(self) -> None:
-        bar = self.progress
-        progress = f"({self.done.qsize()}/{len(self)})"
-        with console.capture() as cap:
-            console.show_cursor(False)
-            console.print(bar, end=" ")
-            console.print(progress)
-        console.file.write("\r" + cap.get().strip())
-        await aio.sleep(0.2)
-        console.show_cursor(True)
+        done = False
+        while not done:
+            await aio.sleep(0.1)
+            async with self.lock:
+                console.show_cursor(False)
+                with console.capture() as cap:
+                    bar = self.progress
+                    done = bool(bar.completed >= bar.total)
+                    progress = f"({bar.completed}/{bar.total})"
+                    console.print(bar, end=" ")
+                    console.print(progress)
+                console.file.write("\r" + cap.get().strip())
+                await aio.sleep(0.1)
+                console.show_cursor(True)
 
     @override
     def suspend(self) -> None:
