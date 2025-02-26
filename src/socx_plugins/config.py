@@ -2,17 +2,16 @@ from pathlib import Path
 from contextlib import suppress
 
 import rich
-import click
+import rich_click as click
 from rich.prompt import Prompt
 
-from socx import cli as soc_cli
 from socx import logger
 from socx import console
 from socx import settings
 from socx import settings_tree
 
 
-@soc_cli.group("config")
+@click.group("config")
 @click.pass_context
 def cli(ctx: click.Context):
     """Get, set, list, or modify settings configuration values."""

@@ -1,9 +1,11 @@
+import rich_click as click
 from rich.syntax import Syntax
 from rich.prompt import Confirm
 
-from socx import console, settings, cli as soc_cli
+from socx import console
+from socx import settings
 
-@soc_cli.command("example")
+@click.command("example")
 def cli():
     """Command-line-interface plugin example."""
     style = "[magenta on gray23][bold][underline]"
