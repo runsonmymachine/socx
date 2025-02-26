@@ -1,9 +1,12 @@
-from socx import LstConverter
-from socx import cli as soc_cli
+import rich_click as click
 
-@soc_cli.group("convert")
+from socx import LstConverter
+
+
+@click.group("convert")
 def cli():
     """Perform a conversion based on current configurations."""
+
 
 @cli.command()
 def lst():
