@@ -164,7 +164,7 @@ class Regression(TestBase):
         self._status = TestStatus.Running
         results = await aio.gather(*tasks)
         for result in results:
-            self.print(result)
+            await self.log(result)
         self._status = TestStatus.Finished
         self._result = (
             TestResult.Passed
