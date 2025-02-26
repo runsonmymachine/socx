@@ -30,6 +30,7 @@ dependencies = [
     "pyarrow>=19.0.0",
     "psutil>=7.0.0",
     "numpy>=2.2.3",
+    "rich-click>=1.8.6",
 ]
 license-files = ["LICENSE"]
 requires-python = ">=3.12"
@@ -52,6 +53,7 @@ dev = [
     "flake8-bugbear",
     "flake8-simplify",
     "debugpy>=1.8.12",
+    "pre-commit>=4.1.0",
     "textual-dev>=1.7.0",
     "textual[dev]>=2.0.4",
     "textual-terminal>=0.3.0",
@@ -76,6 +78,4 @@ warn_unreachable = true
 
 [dependency-groups]
 dev = [
-    "pre-commit>=4.1.0",
 ]
-
