@@ -8,6 +8,7 @@ input_opt: click.Option = partial(
     "-i",
     "--input",
     nargs=1,
+    metavar="FILE",
     required=False,
     help="Input file of failed commands to rerun",
 )
@@ -17,6 +18,7 @@ output_opt: click.Option = partial(
     "-o",
     "--output",
     nargs=1,
+    metavar="DIRECTORY",
     required=False,
     help="Output directory for writing passed/failed run commands.",
 )
