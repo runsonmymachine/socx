@@ -5,18 +5,20 @@
 # Unexclude relevant files/directories
 
 !*/
+
 !/bin/*
+
 !/src/*.py
 !/src/socx/**/*.py
 !/src/plugins/**/*.py
 !/src/socx_plugins/**/*.py
 !/src/socx/static/**/*
 !/src/socx/template/**/*
+
 !/tests/**/*.py
+
 !/assets/**/inputs/**/*
 !/assets/**/reference/**/*
-!/plugins/**/*.py
-!/settings/**/*.toml
 
 # Unexclude common files
 
