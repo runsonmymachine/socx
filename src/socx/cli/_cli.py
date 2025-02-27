@@ -1,14 +1,10 @@
-from __future__ import annotations
+import rich_click as click
 
 from types import CodeType
 
-import click
-from trogon import tui
-
-from .log import logger
-from .console import console
-from .config import settings
-from .config import USER_CONFIG_DIR
+from ..log import logger
+from ..config import settings
+from ._rich import RichGroup
 
 
 _CONTEXT_SETTINGS = dict(
@@ -18,45 +14,6 @@ _CONTEXT_SETTINGS = dict(
         "--help",
     ],
 )
-
-
-class RichHelp:
-    def get_help(self, ctx: click.Context) -> str:
-        return self._header(ctx) + super().get_help(ctx) + self._footer(ctx)
-
-    def _header(self, ctx: click.Context) -> str:
-        with console.capture() as header:
-            console.line()
-            console.rule(characters="=")
-            console.line()
-            console.print("SoCX", justify="center", highlight=True)
-            console.print("[b][u]Help & Usage", justify="center")
-            console.line()
-        return header.get()
-
-    def _footer(self, ctx: click.Context) -> str:
-        path_text = "->".join(ctx.command_path.split())
-        with console.capture() as footer:
-            console.line(2)
-            console.print(
-                f"[bright_black](help: {path_text})", justify="center"
-            )
-            console.rule(characters="=")
-        return footer.get()
-
-
-class RichGroup(RichHelp, click.Group):
-    def group(self, *args, **kwargs) -> click.RichGroup:
-        kwargs["cls"] = RichGroup
-        return super().group(*args, **kwargs)
-
-    def command(self, *args, **kwargs) -> click.RichCommand:
-        kwargs["cls"] = RichCommand
-        return super().command(*args, **kwargs)
-
-
-class RichCommand(RichHelp, click.Command):
-    pass
 
 
 class CmdLine(RichGroup, click.Group):
@@ -156,20 +113,3 @@ class CmdLine(RichGroup, click.Group):
         exc = ValueError(err)
         logger.exception(err, exc_info=exc)
         logger.debug(f"'{name}' (plugin) unloaded", exc_info=exc)
-
-
-@tui()
-@click.group("socx", cls=CmdLine)
-@click.help_option("?", "-h", "--help")
-@click.option(
-    "--configure/--no-configure",
-    default=True,
-    show_default=True,
-    help="whether or not user configurations should be read.",
-)
-def cli(configure: bool) -> None:
-    """SoC team tool executer and plugin manager."""
-    console.print(f"Configure/NoConfigure: {configure=}")
-    if configure:
-        from .config import reconfigure
-        reconfigure(USER_CONFIG_DIR/"*.toml", [], ["*.toml"])
