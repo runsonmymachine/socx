@@ -48,7 +48,7 @@ Level: NewType = NewType("Level", int | str)
 Union type definition of `int | str` for annotating level arguments.
 """
 
-DEFAULT_LEVEL: Final[Level] = os.environ.get("SOCX_VERBOSITY", logging.WARN)
+DEFAULT_LEVEL: Final[Level] = os.environ.get("SOCX_VERBOSITY", logging.INFO)
 """
 Default logger level, a.k.a verbosity.
 """
