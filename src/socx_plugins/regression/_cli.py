@@ -1,4 +1,3 @@
-# import sqlite3 as sql
 import time
 import asyncio as aio
 from pathlib import Path
@@ -6,23 +5,9 @@ from pathlib import Path
 import click
 from dynaconf.utils.boxing import DynaBox
 
-# from socx import APP_NAME
-# from socx import PACKAGE_PATH
-# from socx import USER_DATA_DIR
-from socx import TestResult
 from socx import Regression
 from socx import settings
 from socx import logger
-
-
-# def update_db():
-#     db_fp = Path(USER_DATA_DIR/f"{APP_NAME}.db").resolve()
-#     db_code = Path(
-#       PACKAGE_PATH/"templates"/"sql"/f"{APP_NAME}.sql"
-#     ).resolve()
-#     con = sql.connect(db_fp)
-#     cur = con.cursor()
-#     cur.executescript(db_code.read_text(encoding="utf-8"))
 
 
 def _correct_path_in(input_path: str | Path | None = None) -> Path:
@@ -54,12 +39,7 @@ def _correct_paths_out(
     return pass_out, fail_out
 
 
-def _parse_regression(filepath: Path) -> Regression:
-    with click.open_file(filepath, mode="r", encoding="utf-8") as file:
-        return Regression.from_lines("rgr", tuple(line for line in file))
-
-
-def _write_result_files(
+def _write_results(
     fail_out: str | Path,
     pass_out: str | Path,
     regression: Regression,
@@ -76,14 +56,19 @@ def _write_result_files(
     logger.debug(f"regression done: {regression}")
 
 
+def _populate_regression(filepath: Path) -> Regression:
+    with click.open_file(filepath, mode="r", encoding="utf-8") as file:
+        return Regression.from_lines("rgr", tuple(line for line in file))
+
+
 async def _run_from_file(
     input: str | Path | None = None,  # noqa: A002
     output: str | Path | None = None,
 ) -> None:
     path_in = _correct_path_in(input)
-    regression = _parse_regression(path_in)
+    regression = _populate_regression(path_in)
     pass_out, fail_out = _correct_paths_out(output)
     try:
         await regression.start()
     finally:
-        _write_result_files(pass_out, fail_out, regression)
+        _write_results(pass_out, fail_out, regression)
