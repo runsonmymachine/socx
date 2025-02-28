@@ -6,6 +6,12 @@
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/socx", "src/patches", "src/socx_plugins"]
+
 # -----------------------------------------------------------------------------
 # Project Configurations
 # -----------------------------------------------------------------------------
@@ -59,6 +65,24 @@ dev = [
     "textual-terminal>=0.3.0",
 ]
 
+[dependency-groups]
+dev = [
+    "mypy",
+    "ruff",
+    "pytest",
+    "pytest-cov",
+    "pyupgrade",
+    "pydocstyle",
+    "pycodestyle",
+    "flake8-bugbear",
+    "flake8-simplify",
+    "debugpy>=1.8.12",
+    "pre-commit>=4.1.0",
+    "textual-dev>=1.7.0",
+    "textual[dev]>=2.0.4",
+    "textual-terminal>=0.3.0",
+]
+
 [project.urls]
 Homepage = "https://github.com/MomsPancakes/socx"
 Issues = "https://github.com/MomsPancakes/socx/issues"
@@ -75,7 +99,3 @@ strict = true
 color_output = true
 show_error_codes = true
 warn_unreachable = true
-
-[dependency-groups]
-dev = [
-]

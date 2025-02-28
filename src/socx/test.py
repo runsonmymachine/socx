@@ -1,26 +1,28 @@
 from __future__ import annotations
 
-import os
 import time
-import signal
 import abc
 import shlex
 import asyncio as aio
-import time
 import psutil as ps
+from pathlib import Path
 from subprocess import PIPE
 from enum import auto
 from enum import IntEnum
 from typing import TextIO
 from typing import override
-from contextlib import suppress
 from dataclasses import field
 from dataclasses import dataclass
 
 from .log import logger
+from .config import settings
 from .mixins import UIDMixin
 from .visitor import Node
 from .visitor import Visitor
+
+# TODO: Patch - socrun should be modified to return non-zero value on
+# test failure in the future
+from patches import post_process_sim_log as pp_simlog
 
 
 @dataclass
@@ -56,11 +58,11 @@ class TestCommand(UIDMixin):
         for i, attr in enumerate(self.args):
             if attr.startswith("--") or attr.startswith("-"):
                 if attr == arg and i + 1 < len(self.args):
-                    return self.args[i+1]
+                    return self.args[i + 1]
                 if attr.removeprefix("-") == arg and i + 1 < len(self.args):
-                    return self.args[i+1]
+                    return self.args[i + 1]
                 if attr.removeprefix("--") == arg and i + 1 < len(self.args):
-                    return self.args[i+1]
+                    return self.args[i + 1]
         return None
 
     def __getattr__(self, attr: str) -> str:
@@ -236,9 +238,7 @@ class Test(TestBase, UIDMixin):
     @property
     def suspended(self) -> bool:
         """True if test was started via a prior call to method `start`."""
-        return (
-            self.started and self.process.status() == ps.STATUS_STOPPED
-        )
+        return self.started and self.process.status() == ps.STATUS_STOPPED
 
     @property
     def running(self) -> bool:
@@ -273,12 +273,18 @@ class Test(TestBase, UIDMixin):
     @property
     def stdout(self) -> TextIO | None:
         """The standard output of the test's process or None if not running."""
-        return self._proc.stdout.decode() if self.running or self.finished else None
+        if self.finished:
+            return self._stdout
+        else:
+            return None
 
     @property
     def stderr(self) -> TextIO | None:
         """The standard error of the test's process or None if not running."""
-        return self._proc.stderr.decode() if self.running or self.finished else None
+        if self.finished:
+            return self._stderr
+        else:
+            return None
 
     @property
     def process(self) -> ps.Process:
@@ -295,10 +301,30 @@ class Test(TestBase, UIDMixin):
             return None
         return self._proc.returncode
 
+    @property
+    def rtp(self) -> Path:
+        """
+        Get the simulation's runtime path.
+
+        The runtime referes to the path where compilation database and run logs
+        are dumped by default by the simulator.
+        """
+        return settings.regression.runtime.path / self.dirname
+
+    @property
+    def dirname(self):
+        """The simulation's runtime directory name."""
+        return Path(self.command.test).with_suffix("")
+
     @override
     async def start(self) -> None:
         """Start a test in a subprocess."""
-        exc = None
+
+        def is_done():
+            return self.returncode is not None
+
+        done = aio.Condition()
+
         if not self.idle:
             msg = "Cannot start a test when it is already running."
             exc = OSError(msg)
@@ -313,8 +339,11 @@ class Test(TestBase, UIDMixin):
             stdout, stderr = await self._proc.communicate()
             self._status = TestStatus.Running
             self._started_time = time.time()
-            while self._proc.returncode is None:
-                await aio.sleep(0)
+            done.wait_for(is_done)
+            self._finished_time = time.time()
+            self._stdout = stdout.decode()
+            self._stderr = stderr.decode()
+            await self._proc.wait()
         except Exception as e:
             if ps.pid_exists(self._proc.pid):
                 self._proc.terminate()
@@ -326,13 +355,8 @@ class Test(TestBase, UIDMixin):
                     exc_info=e,
                 )
             raise e
-        await self._proc.wait()
-        self._finished_time = time.time()
+        self._result = self._parse_result()
         self._status = TestStatus.Finished
-        self._result = (
-            TestResult.Passed if self.passed else TestResult.Failed
-        )
-        logger.info(f"Test {self.result.name}: {self}")
 
     @override
     def suspend(self) -> None:
@@ -370,6 +394,14 @@ class Test(TestBase, UIDMixin):
         if self.running:
             self.process.kill()
 
+    def _parse_result(self) -> TestResult:
+        logger.debug(f"parsing result from {self.rtp}")
+        result_hack = pp_simlog.TestResults()
+        result_hack.resetLog(self.rtp)
+        result_hack.parseLog()
+        logger.debug(f"parsed result: {self.result}")
+        return TestResult.from_temporary_hack(result_hack)
+
     def __hash__(self) -> int:
         return hash(self.command)
 
@@ -403,6 +435,15 @@ class TestResult(IntEnum):
     NA = auto()
     Passed = auto()
     Failed = auto()
+
+    def from_temporary_hack(self, hack: pp_simlog.TestResults) -> TestResult:
+        match hack.result:
+            case "NA":
+                return TestResult.NA
+            case "PASS":
+                return TestResult.Passed
+            case "FAIL":
+                return TestResult.Failed
 
 
 class TestStatus(IntEnum):
