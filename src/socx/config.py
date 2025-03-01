@@ -29,8 +29,10 @@ from rich.table import Table
 from dynaconf import Dynaconf
 from dynaconf.utils.boxing import DynaBox
 
+from .decorators import log_it
 from ._config import _to_tree
 from ._config import _get_settings
+
 
 __all__ = (
     # API
@@ -41,27 +43,36 @@ __all__ = (
     "APP_NAME",
     "APP_AUTHOR",
     "APP_VERSION",
-    # Directories
-    "PACKAGE_PATH",
+    # Application Paths
+    "APP_SETTINGS_DIR",
+    "APP_USER_SETTINGS_DIR",
+    "APP_SETTINGS_FILE_NAME",
+    "APP_SETTINGS_FILE_PATH",
+    # Local User Paths
     "USER_LOG_DIR",
     "USER_DATA_DIR",
     "USER_CACHE_DIR",
     "USER_STATE_DIR",
     "USER_CONFIG_DIR",
     "USER_RUNTIME_DIR",
+    "USER_LOG_FILE_PATH",
 )
 
 
 from ._config import APP_NAME as APP_NAME
 from ._config import APP_AUTHOR as APP_AUTHOR
 from ._config import APP_VERSION as APP_VERSION
-from ._config import PACKAGE_PATH as PACKAGE_PATH
+from ._config import APP_SETTINGS_DIR as APP_SETTINGS_DIR
+from ._config import APP_USER_SETTINGS_DIR as APP_USER_SETTINGS_DIR
+from ._config import APP_SETTINGS_FILE_NAME as APP_SETTINGS_FILE_NAME
+from ._config import APP_SETTINGS_FILE_PATH as APP_SETTINGS_FILE_PATH
 from ._config import USER_LOG_DIR as USER_LOG_DIR
 from ._config import USER_DATA_DIR as USER_DATA_DIR
 from ._config import USER_CACHE_DIR as USER_CACHE_DIR
 from ._config import USER_STATE_DIR as USER_STATE_DIR
 from ._config import USER_CONFIG_DIR as USER_CONFIG_DIR
 from ._config import USER_RUNTIME_DIR as USER_RUNTIME_DIR
+from ._config import USER_LOG_FILE_PATH as USER_LOG_FILE_PATH
 
 
 settings: Dynaconf = _get_settings()
@@ -74,6 +85,7 @@ which will attempt to find and read the value of the attribute from any of the
 """
 
 
+@log_it
 def reconfigure(
     path: Path,
     preload: list[Path | str] | None = None,

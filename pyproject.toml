@@ -10,7 +10,7 @@ build-backend = "hatchling.build"
 allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/socx", "src/patches", "src/socx_plugins"]
+packages = ["src/socx", "src/socx_patches", "src/socx_plugins"]
 
 # -----------------------------------------------------------------------------
 # Project Configurations

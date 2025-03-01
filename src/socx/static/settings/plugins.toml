@@ -1,0 +1,19 @@
+[plugins.regression]
+name = "rgr"
+path = "@path @format src/socx_plugins/regression/cli.py"
+commands = ["run", "rrfh", "rerun-failure-history"]
+
+[plugins.config]
+name = "config"
+path = "@path @format src/socx_plugins/config.py"
+commands = ["get", "set", "edit", "list", "tree", "inspect"]
+
+[plugins.example]
+name = "example"
+path = "@path @format src/socx_plugins/example.py"
+commands = []
+
+[plugins.convert]
+name = "convert"
+path = "@path @format src/socx_plugins/convert/lst.py"
+commands = ["lst"]

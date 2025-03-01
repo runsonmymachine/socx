@@ -1,5 +1,0 @@
-[plugins]
-rgr = "@path @format src/socx_plugins/regression/cli.py"
-config = "@path @format src/socx_plugins/config.py"
-example = "@path @format src/socx_plugins/example.py"
-convert = "@path @format src/socx_plugins/convert/lst.py"

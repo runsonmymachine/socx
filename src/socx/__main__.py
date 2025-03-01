@@ -1,10 +1,9 @@
 import sys
-from socx import cli as cli
+from . import cli as cli
 
 
 def main():
-    cli(obj={})
-    return 0
+    return cli(obj={})
 
 
 if __name__ == "__main__":

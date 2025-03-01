@@ -22,7 +22,7 @@ from .visitor import Visitor
 
 # TODO: Patch - socrun should be modified to return non-zero value on
 # test failure in the future
-from patches import post_process_sim_log as pp_simlog
+from socx_patches import post_process_sim_log as pp_simlog
 
 
 @dataclass
@@ -319,18 +319,16 @@ class Test(TestBase, UIDMixin):
     @override
     async def start(self) -> None:
         """Start a test in a subprocess."""
-
-        def is_done():
-            return self.returncode is not None
-
-        done = aio.Condition()
-
         if not self.idle:
             msg = "Cannot start a test when it is already running."
             exc = OSError(msg)
             logger.exception(msg, exc_info=exc, stack_info=True)
             raise exc
 
+        def is_done():
+            return self.returncode is not None
+
+        cond = aio.Condition()
         self._status = TestStatus.Pending
         self._proc = await aio.create_subprocess_shell(
             cmd=self.command.line, stdin=None, stdout=PIPE, stderr=PIPE
@@ -339,24 +337,23 @@ class Test(TestBase, UIDMixin):
             stdout, stderr = await self._proc.communicate()
             self._status = TestStatus.Running
             self._started_time = time.time()
-            done.wait_for(is_done)
+            await cond.wait_for(is_done)
             self._finished_time = time.time()
             self._stdout = stdout.decode()
             self._stderr = stderr.decode()
+        except Exception:
+            self.terminate()
+            self._status = TestStatus.Terminated
+            self._result = TestResult.Failed
+            logger.exception(
+                f"""Test failed: an exception was raised during execution \
+                of '{self.name}'""".strip(),
+                exc_info=True,
+            )
+        else:
             await self._proc.wait()
-        except Exception as e:
-            if ps.pid_exists(self._proc.pid):
-                self._proc.terminate()
-                self._result = TestResult.Failed
-                self._status = TestStatus.Terminated
-                logger.exception(
-                    f"Test failed: an exception of type {type(e)} was raised "
-                    f"during the execution of '{self.name}'",
-                    exc_info=e,
-                )
-            raise e
-        self._result = self._parse_result()
-        self._status = TestStatus.Finished
+            self._status = TestStatus.Finished
+            self._result = self._parse_result()
 
     @override
     def suspend(self) -> None:
@@ -397,10 +394,13 @@ class Test(TestBase, UIDMixin):
     def _parse_result(self) -> TestResult:
         logger.debug(f"parsing result from {self.rtp}")
         result_hack = pp_simlog.TestResults()
-        result_hack.resetLog(self.rtp)
-        result_hack.parseLog()
-        logger.debug(f"parsed result: {self.result}")
-        return TestResult.from_temporary_hack(result_hack)
+        result_hack.reset_log(self.rtp)
+        try:
+            result_hack.parse_log()
+        except ValueError:
+            return TestResult.Failed
+        else:
+            return TestResult.from_temporary_hack(result_hack)
 
     def __hash__(self) -> int:
         return hash(self.command)
