@@ -2,7 +2,7 @@ import rich_click as click
 
 from ..console import console
 
-class RichHelp:
+class RichHelp(click.RichHelpConfiguration):
     def get_help(self, ctx: click.Context) -> str:
         return self._header(ctx) + super().get_help(ctx) + self._footer(ctx)
 

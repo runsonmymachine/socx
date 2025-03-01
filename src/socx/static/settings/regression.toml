@@ -8,6 +8,9 @@ dynaconf_merge = true
 path = "@path @format /space/users/ci_wiliot/vw_e0_nightly_regression/regressions"
 max_runs_in_parallel = 10
 
+[regression.report] 
+path = "@path @format {env[RAREA]}/socx/regression/reports"
+
 # -----------------------------------------------------------------------------
 # Rerun Failure History
 # -----------------------------------------------------------------------------

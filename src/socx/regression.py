@@ -1,24 +1,36 @@
 from __future__ import annotations
 
 import asyncio as aio
+from time import strftime
 from enum import auto
 from enum import IntEnum
+from pathlib import Path
 from typing import override
 from dataclasses import dataclass
 from collections import deque
 from collections.abc import Iterator
 from collections.abc import Iterable
 
-from rich.progress_bar import ProgressBar
+from click import open_file
+from rich.panel import Panel
+from rich.progress import Progress
+from rich.progress import TextColumn
+from rich.progress import BarColumn
+from rich.progress import TaskProgressColumn
+from rich.progress import TimeRemainingColumn
+from rich.progress import SpinnerColumn
+from rich.progress import TimeElapsedColumn
+from rich.progress import MofNCompleteColumn
 from dynaconf.utils.boxing import DynaBox
 
+from .console import console
+from .config import USER_LOG_DIR
 from .log import get_logger
 from .test import Test
 from .test import TestBase
 from .test import TestStatus
 from .test import TestResult
 from .config import settings
-from .console import console
 from .visitor import Node
 from .visitor import Visitor
 from .config import USER_LOG_DIR
@@ -103,10 +115,22 @@ class Regression(TestBase):
         elif not isinstance(tests, list):
             tests = list(tests)
         self.lock = aio.Lock()
-        self.done: aio.Queue = aio.Queue(maxsize=len(tests))
         self.pending: aio.Queue = aio.Queue(maxsize=len(tests))
+        self.messages: aio.Queue[str] = aio.Queue()
+        self.done: aio.Queue = aio.Queue(maxsize=len(tests))
         self._tests: dict[str, Test] = {test.name: test for test in tests}
-        self._progress: ProgressBar = ProgressBar(width=50, total=len(tests))
+        self._progress: Progress = Progress(
+            SpinnerColumn(),
+            MofNCompleteColumn(),
+            *Progress.get_default_columns(),
+            "Elapsed:\n",
+            TimeElapsedColumn(),
+            transient=False,
+            expand=False,
+        )
+        self._total_tid = None
+        self._scheduling_tid = None
+        self._running_tid = None
 
     def accept(self, visitor: Visitor[Node]) -> None:
         """Accept a visit from a visitor."""
@@ -140,11 +164,6 @@ class Regression(TestBase):
         return self._tests
 
     @property
-    def progress(self) -> ProgressBar:
-        """A progress bar to represent the regression's current progress."""
-        return self._progress
-
-    @property
     def run_limit(self):
         """The run_limit property."""
         return int(self.cfg.max_runs_in_parallel)
@@ -152,101 +171,102 @@ class Regression(TestBase):
     @override
     async def start(self) -> None:
         """Start the execution of an idle test."""
-        self._status = TestStatus.Pending
-        tasks = {
-            aio.create_task(self.schedule_tests(), name="schedule_tests"),
-            aio.create_task(self.run_schedule(), name="start_tests"),
-            aio.create_task(self.fetch_results(), name="fetch_results"),
-        }
-        self._status = TestStatus.Running
-        results = await aio.gather(*tasks)
-        for result in results:
-            await self.log(result)
-        self._status = TestStatus.Finished
-        self._result = (
-            TestResult.Passed
-            if all(test.result == TestResult.Passed for test in self)
-            else TestResult.Failed
+        now = strftime("%H-%M")
+        today = strftime("%d-%m-%Y")
+        passed_file = open_file(
+            str(Path(self.cfg.report.path) / today / f"{now}_passed.log"),
+            mode="w",
+            encoding="utf-8",
+            lazy=True,
         )
-        return results
-
-    async def print(self, *args, **kwargs) -> None:
-        async with self.lock:
-            console.print(*args, **kwargs)
-
-    async def log(self, *args, **kwargs) -> None:
-        async with self.lock:
-            logger.info(*args, **kwargs)
+        failed_file = open_file(
+            str(Path(self.cfg.report.path) / today / f"{now}_failed.log"),
+            mode="w",
+            encoding="utf-8",
+            lazy=True,
+        )
+        self._status = TestStatus.Pending
+        try:
+            async with aio.TaskGroup() as tg:
+                tg.create_task(self._animate_progress())
+                tg.create_task(self.schedule_tests())
+                tg.create_task(self.run_tests())
+                self._status = TestStatus.Running
+        except Exception:
+            self._status = TestStatus.Terminated
+            self._result = TestResult.Failed
+        else:
+            self._status = TestStatus.Finished
+            self._result = (
+                TestResult.Passed
+                if all(test.result == TestResult.Passed for test in self)
+                else TestResult.Failed
+            )
+        finally:
+            tests = set(iter(self))
+            passed = {test for test in tests if test.passed}
+            failed = tests.difference(passed)
+            passed_file.write("\n".join(test.command.line for test in passed))
+            failed_file.write("\n".join(test.command.line for test in failed))
 
     async def schedule_tests(self) -> None:
-        async for test in self:
-            await self.schedule_test(test)
-        await self.pending.join()
+        self._progress.start_task(self._scheduling_tid)
+        await self.messages.put("Scheduling tests...")
+        async with aio.TaskGroup() as tg:
+            async for test in self:  # removed async cause it was 2 fast
+                tg.create_task(self.scheduler(test))
+        await self.messages.put("All tests scheduled.")
+        self._progress.stop_task(self._scheduling_tid)
 
-    async def schedule_test(self, test) -> None:
-        await self.log(f"Scheduling {test.name} for execution...")
-        test._status = TestStatus.Pending
-        await self.pending.put(test)
-        await self.log(f"Succesfuly scheduled test {test.name} for execution.")
+    async def scheduler(self, test) -> None:
+        self._progress.start_task(self._running_tid)
+        await self.messages.put(f"Scheduler({test.name}): scheduling test...")
+        try:
+            test._status = TestStatus.Pending
+            await self.pending.put(test)
+        except Exception:
+            logger.exception(
+                f"Scheduler({test.name}): An exception occured while "
+                "scheduling."
+            )
+        else:
+            await self.messages.put(f"Scheduler({test.name}): test scheduled.")
+            self._scheduler_done()
+        finally:
+            await self.pending.join()
 
-    async def run_schedule(self) -> None:
-        tasks = set()
-        for _ in range(self.run_limit):
-            task = aio.create_task(self.make_runner())
-            tasks.add(task)
-            task.add_done_callback(tasks.discard)
-        await self.pending.join()
-        await self.done.join()
-        _, pending = await aio.wait(tasks, timeout=1)
-        for runner in pending:
-            if not runner.cancelled():
-                runner.cancel()
+    async def run_tests(self) -> None:
+        ready = not self.pending.empty()
+        while not ready:
+            await aio.sleep(0)
+            ready = not self.pending.empty()
+        await self.messages.put("starting runners...")
+        self._progress.start_task(self._running_tid)
+        async with aio.TaskGroup() as tg:
+            for _ in range(self.run_limit):
+                tg.create_task(self.runner())
+        await self.messages.put("all runners completed.")
+        self._progress.stop_task(self._running_tid)
 
-    async def make_runner(self):
-        while True:
-            if self.pending.empty():
-                await self.done.join()
-                return
+    async def runner(self):
+        while self.pending.qsize():
+            test = await self.pending.get()
+            name = test.name
+            task = aio.create_task(test.start())
             try:
-                test = await self.pending.get()
-                await self.log(f"Runner({test.name}): running test...")
-                await test.start()
-                await self.done.put(test)
-                await self.log(f"Runner({test.name}): test finished.")
+                await self.messages.put(f"Runner({test.name}): test starting.")
+                await task
+            except Exception:
+                logger.exception(
+                    f"Runner({test.name}): test terminated due to exception."
+                )
+            else:
+                await self.messages.put(
+                    f"Runner({test.name}): test completed."
+                )
             finally:
                 self.pending.task_done()
-
-    async def fetch_results(self) -> set:
-        results = set()
-        cnt, total, bar = 0, len(self), self.progress
-        drawing = aio.create_task(self.draw_progress())
-        while cnt < total:
-            result = await self.done.get()
-            async with self.lock:
-                cnt += 1
-                results.add(result)
-                self.done.task_done()
-                bar.update(cnt)
-        await aio.wait({aio.ensure_future(drawing)}, timeout=3)
-        if not drawing.cancelled():
-            drawing.cancel()
-        return results
-
-    async def draw_progress(self) -> None:
-        done = False
-        while not done:
-            await aio.sleep(0.1)
-            async with self.lock:
-                console.show_cursor(False)
-                with console.capture() as cap:
-                    bar = self.progress
-                    done = bool(bar.completed >= bar.total)
-                    progress = f"({bar.completed}/{bar.total})"
-                    console.print(bar, end=" ")
-                    console.print(progress)
-                console.file.write("\r" + cap.get().strip())
-                await aio.sleep(0.1)
-                console.show_cursor(True)
+                self._runner_done(name)
 
     @override
     def suspend(self) -> None:
@@ -277,3 +297,55 @@ class Regression(TestBase):
         """Interrupt the execution of a running test with a SIGKILL signal."""
         for test in self.tests.values():
             test.kill()
+
+    async def _animate_progress(self):
+        try:
+            with self._progress:
+                self._scheduling_tid = self._progress.add_task(
+                    "[yellow]Scheduler: Running...", total=len(self), start=False
+                )
+                self._running_tid = self._progress.add_task(
+                    "[yellow]Runners: Running...", total=len(self), start=False
+                )
+                self._total_tid = self._progress.add_task(
+                    "[yellow]Regression: Running...", total=None
+                )
+                while not self._progress.tasks[self._running_tid].finished:
+                    msgs = []
+                    while not self.messages.empty():
+                        try:
+                            msg = await self.messages.get()
+                            msgs.append(msg)
+                        finally:
+                            self.messages.task_done()
+                    if msgs:
+                        self._progress.log("\n".join(msgs))
+                    await aio.sleep(0)
+        except Exception:
+            logger.exception(console.export_text())
+
+    def _scheduler_done(self, *args, **kwargs) -> None:
+        task = self._progress.tasks[self._scheduling_tid]
+        if task.completed + 1 >= task.total:
+            self._progress.update(self._scheduling_tid, description="[light_green]Scheduling: Done.", advance=1)
+        else:
+            self._progress.update(self._scheduling_tid, advance=1)
+        self._progress.update(self._total_tid, advance=1)
+
+    def _runner_done(self, name: str) -> None:
+        running = self._progress.tasks[self._running_tid]
+        total = self._progress.tasks[self._total_tid]
+        if running.completed + 1 >= running.total:
+            self._progress.update(
+                self._running_tid,
+                advance=1,
+                description="[light_green]Running: Done.",
+            )
+            self._progress.update(
+                self._total_tid,
+                description="[light_green]Regression: Done.",
+                total=total.completed + 1,
+            )
+        else:
+            self._progress.update(self._running_tid, advance=1)
+        self._progress.update(self._total_tid, advance=1)

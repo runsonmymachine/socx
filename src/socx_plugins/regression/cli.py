@@ -44,6 +44,3 @@ def rerun_failure_history(input, output):  # noqa: A002
     loop = asyncio.new_event_loop()
     loop.run_until_complete(_run_from_file(input, output))
 
-#
-# for command in cli.commands:
-#     socx_cli.add_command(cli.commands[command], command)

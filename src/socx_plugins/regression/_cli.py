@@ -1,5 +1,4 @@
 import time
-import asyncio as aio
 from pathlib import Path
 
 import click
@@ -71,4 +70,4 @@ async def _run_from_file(
     try:
         await regression.start()
     finally:
-        _write_results(pass_out, fail_out, regression)
+        _write_results(fail_out, pass_out, regression)

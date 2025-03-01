@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+import inspect
 from typing import Any
 from typing import Final
 from pathlib import Path
@@ -44,7 +45,6 @@ __version__ = version(__package__.partition(".")[0])
 
 __metadata__ = metadata(__package__.partition(".")[0])
 
-
 PACKAGE_NAME: Final[str] = __package__.partition(".")[0]
 """Package name."""
 
@@ -69,45 +69,24 @@ APP_AUTHOR: Final[str] = PACKAGE_METADATA
 APP_VERSION: Final[str] = PACKAGE_VERSION
 """Application version."""
 
-SITE_DATA_DIR: Final[Path] = Path(
-    site_data_dir(
-        appname=APP_NAME,
-        version=APP_VERSION,
-        appauthor=APP_AUTHOR,
-        ensure_exists=False,
-    )
-).resolve()
-"""Absolute path to platform's native application data directory."""
+APP_SETTINGS_DIR: Path = Path(PACKAGE_PATH) / "static" / "settings"
+"""Application builtin settings directory path."""
 
-SITE_CACHE_DIR: Final[Path] = Path(
-    site_cache_dir(
-        appname=APP_NAME,
-        version=APP_VERSION,
-        appauthor=APP_AUTHOR,
-        ensure_exists=False,
-    )
-).resolve()
-"""Absolute path to platform's native application cache directory."""
+APP_USER_SETTINGS_DIR: Path = Path(PACKAGE_PATH) / "templates" / "settings"
+"""Application builtin user_settings directory path."""
 
-SITE_CONFIG_DIR: Final[Path] = Path(
-    site_config_dir(
-        appname=APP_NAME,
-        version=APP_VERSION,
-        appauthor=APP_AUTHOR,
-        ensure_exists=False,
-    )
-).resolve()
-"""Absolute path to platform's native application config directory."""
+APP_SETTINGS_FILE_NAME: Path = "settings.toml"
+"""File name of application's main settings file."""
 
-SITE_RUNTIME_DIR: Final[Path] = Path(
-    site_runtime_dir(
-        appname=APP_NAME,
-        version=APP_VERSION,
-        appauthor=APP_AUTHOR,
-        ensure_exists=False,
-    )
+APP_SETTINGS_FILE_PATH: Path = (
+    Path(APP_SETTINGS_DIR) / APP_SETTINGS_FILE_NAME
 ).resolve()
-"""Absolute path to platform's native application runtime directory."""
+"""File path to application's main settings file."""
+
+APP_SETTINGS_FILE_PATH: Path = (
+    Path(APP_SETTINGS_DIR) / APP_SETTINGS_FILE_NAME
+).resolve()
+"""File path to application's main settings file."""
 
 USER_LOG_DIR: Final[Path] = Path(
     user_log_dir(
@@ -169,22 +148,15 @@ USER_RUNTIME_DIR: Final[Path] = Path(
 ).resolve()
 """Absolute path to platform's native application runtime directory."""
 
+USER_LOG_FILE_PATH: Path = USER_LOG_DIR / "socx.log"
+"""Absolute path to application's main log for the current local user."""
+
 _init_done: bool = False
 
-_user_log_path: Path = USER_LOG_DIR / "run.log"
-
-_user_settings_path: Path = Path(USER_CONFIG_DIR) / "settings.toml"
-
-_default_settings_dir: Path = Path(PACKAGE_PATH) / "static" / "toml"
-
-_default_settings_file: Path = "settings.toml"
-
-_default_settings_path: Path = (
-    Path(_default_settings_dir) / _default_settings_file
-)
-
 _default_settings: Dynaconf | dict = {
-    name: value for name, value in vars().items() if not name.startswith("_")
+    name: value
+    for name, value in locals().items()
+    if name[0] != "_"
 }
 
 _settings_kwargs = dict(
@@ -205,7 +177,7 @@ def _init_module() -> None:
     logger.debug("initializing module.")
     _init_logger()
     _init_converters()
-    _load_settings(_default_settings_path)
+    _load_settings(APP_SETTINGS_FILE_PATH)
     _validate_settings()
     _init_done = True
     logger.debug("module initialized.")
@@ -219,7 +191,7 @@ def _init_logger() -> None:
             level=DEFAULT_LEVEL,
             console=Console(
                 file=open_file(
-                    filename=str(_user_log_path),
+                    filename=str(USER_LOG_FILE_PATH),
                     mode="w",
                     encoding="utf-8",
                     lazy=True,
@@ -231,17 +203,14 @@ def _init_logger() -> None:
             show_time=True,
             show_level=True,
             rich_tracebacks=True,
-            locals_max_string=None,
-            locals_max_length=None,
-            tracebacks_theme="monokai",
             omit_repeated_times=False,
             tracebacks_word_wrap=False,
             tracebacks_show_locals=True,
             log_time_format=DEFAULT_TIME_FORMAT,
         )
     )
-    logger.info("logging initialized.")
-    logger.info(f"logging at path: {_user_log_path}")
+    logger.debug("logging initialized.")
+    logger.debug(f"logging at path: {USER_LOG_FILE_PATH}")
 
 
 def _init_converters() -> None:
@@ -265,7 +234,7 @@ def _load_settings(
         includes = []
 
     if path is None:
-        path = _default_settings_path
+        path = APP_SETTINGS_FILE_PATH
     elif isinstance(path, str):
         path = Path(path)
 
@@ -273,12 +242,12 @@ def _load_settings(
     settings = Dynaconf(
         preload=preload,
         root_path=path if path.is_dir() else path.parent,
-        settings_files=[path.name if path.is_file() else "*"],
+        settings_files=["*" if path.is_dir() else path.name],
         includes=includes,
         **_settings_kwargs,
         **_default_settings
         if isinstance(_default_settings, dict)
-        else _default_settings.as_dict()
+        else _default_settings.as_dict(),
     )
     if isinstance(_default_settings, Dynaconf):
         _default_settings.update(settings)

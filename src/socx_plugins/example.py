@@ -27,7 +27,7 @@ def cli():
         word_wrap=False,
         line_numbers=True,
         indent_guides=True,
-        path=settings.plugins.example
+        path=settings.plugins.example.path
     )
 
     console.clear()
