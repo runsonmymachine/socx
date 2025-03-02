@@ -15,7 +15,7 @@ type = "LstParser"
 # be searched.
 #
 source = """
-@path @format {env[WAREA]}/Pixie_ROM_FW/PixieROMApp/TapeOutRelease/PIXIE_E4/PxieParserOut
+@path @format {env[WAREA]}/Pixie_ROM_FW/PixieROMApp/TapeOutRelease/PIXIE_E4/PixieParserOut/outputs
 """
 
 # Argument: target
