@@ -2,9 +2,6 @@ from typing import Literal
 import rich
 import rich_click.rich_click as rich_cfg
 
-from ..config import settings
-from ..config import APP_NAME
-
 __all__ = ("cli",)
 
 from .cli import cli as cli
@@ -149,7 +146,7 @@ rich_cfg.OPTION_GROUPS: dict[str, list[rich_cfg.OptionGroupDict]] = {}
 
 rich_cfg.ERRORS_EPILOGUE = """[bright_black]\
 For more info, usage guides, examples, and API documentation,
-visit:[/] [link]https://github.com/runsonmymachine/socx[/]
+visit:[/] [link]https://pypi.org/project/socx-cli[/]
 """.strip()
 
 rich_cfg.ERRORS_SUGGESTION: str | rich.text.Text | None = """\
