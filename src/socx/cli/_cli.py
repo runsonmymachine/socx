@@ -1,59 +1,82 @@
-import rich_click as click
-
 from types import CodeType
 
-from ..log import logger
+import rich_click as click
+from dynaconf.utils.boxing import DynaBox
+
 from ..config import settings
-from ._rich import RichGroup
+from ..decorators import log_it
 
 
 _CONTEXT_SETTINGS = dict(
-    help_option_names=[
-        "?",
-        "-h",
-        "--help",
-    ],
+    help_option_names=["-h", "--help"],
 )
 
 
-class CmdLine(RichGroup, click.Group):
+class CmdLine(click.RichMultiCommand, click.Group):
+    @log_it
     def __init__(self, *args, **kwargs):
-        kwargs["context_settings"] = _CONTEXT_SETTINGS
-        super().__init__(*args, **kwargs)
-        self._plugins = None
+        kwargs.setdefault("context_settings", _CONTEXT_SETTINGS)
+        click.RichMultiCommand.__init__(self, *args, **kwargs)
+        click.Group.__init__(self, *args, **kwargs)
+        self._plugins = {}
 
     @property
-    def plugins(self) -> list[click.Command]:
-        if self._plugins is None:
+    @log_it
+    def plugins(self):
+        """The plugins property."""
+        if not self._plugins:
             self._load_plugins()
         return self._plugins
 
     @property
+    @log_it
     def plugin_names(self) -> list[str]:
-        return [cmd.name for cmd in self.plugins.values()]
+        return [plugin.name for plugin in self.plugins]
 
-    def get_command(self, ctx: click.Context, name: str) -> CodeType:
-        logger.debug(f"get_command({ctx=}, {name=}) was called...")
-        if name in self.plugins and self.plugins[name] is not None:
-            rv = self.plugins[name]
-            logger.debug(
-                f"get_command({ctx=}, {name=}) returning plugin {rv=}."
-            )
-            return rv
-        rv = super().get_command(ctx, name)
-        logger.debug(f"get_command({ctx=}, {name=}) returning command {rv=}.")
-        return rv
-
+    @log_it
     def list_commands(self, ctx) -> list[str]:
-        logger.debug(f"list_commands({ctx=}) was called...")
         rv = list(self.plugins.values())
         rv += super().list_commands(ctx)
-        logger.debug(f"list_commands({ctx=}) returning {rv=}.")
+        rv = list(filter(lambda x: isinstance(x, str), rv))
+        rv.sort(reverse=True)
         return rv
 
+    @log_it
+    def get_command(self, ctx: click.Context, name: str) -> CodeType:
+        if name in self.plugins:
+            rv = self.plugins[name]
+        else:
+            rv = super().get_command(ctx, name)
+        return rv
+
+    @log_it
+    def _load_plugins(self) -> None:
+        plugins = settings.plugins
+        for name in settings.plugins:
+            plugin = plugins[name]
+            self._load_plugin(plugin)
+
+    @log_it
+    def _load_plugin(self, plugin: DynaBox) -> click.Command:
+        for name in settings.plugins:
+            plugin = settings.plugins[name]
+            cmd = plugin.entry.cli
+            self._plugins[plugin.name] = cmd
+            self.add_command(cmd, plugin.name)
+
     @classmethod
+    @log_it
+    def _unique(cls, args: str | list | tuple | set) -> list:
+        lookup = set()
+        args = cls._listify(args)
+        args = [
+            x for x in args if args not in lookup and lookup.add(x) is None
+        ]
+        return args
+
+    @classmethod
+    @log_it
     def _listify(cls, args: str | list | tuple | set | dict) -> list:
-        logger.debug(f"{cls.__name__}._listify called with {args=}")
         if isinstance(args, list):
             rv = args
         elif isinstance(args, dict):
@@ -62,54 +85,22 @@ class CmdLine(RichGroup, click.Group):
             rv = list(args)
         else:
             rv = [args]
-        logger.debug(f"{cls.__name__}._listify returning value '{rv=}'")
         return rv
 
     @classmethod
-    def _unique(cls, args: str | list | tuple | set) -> list:
-        logger.debug(f"{cls.__name__}._unique called with {args=}")
-        lookup = set()
-        args = cls._listify(args)
-        args = [
-            x for x in args if args not in lookup and lookup.add(x) is None
-        ]
-        logger.debug(f"{cls.__name__}._unique returning {args=}")
-
-    @classmethod
     def _compile(cls, file, name):
-        logger.debug(f"{cls.__name__}._compile called with {file=}, {name=}")
-        ns = {}
-        logger.debug(f"compiling '{name}' (plugin: {file})...")
         code = compile(file.read_text(), name, "exec")
-        logger.debug(f"'{name}' compiled.")
-        eval(code, ns, ns)
-        logger.debug(f"'{name}' evaluated.")
-        plugin = ns.get("cli")
-        if plugin:
-            logger.debug(f"'{name}' loaded.")
-            logger.debug(f"{cls.__name__}._compile returning {plugin=}")
-            return plugin
-        cls._missing_cli_err(name)
-        return None
-
-    def _load_plugins(self) -> None:
-        if self._plugins is None:
-            self._plugins = {}
-        else:
-            self._plugins.clear()
-        for name, path in settings.plugins.items():
-            cmd = self._compile(path, name)
-            self._plugins[name] = cmd
-        for name, cmd in self._plugins.items():
-            self.add_command(cmd, name)
+        return code
 
     @classmethod
-    def _missing_cli_err(cls, name) -> None:
-        err = (
-            f"failed to load '{name}' (plugin).\n"
-            "please make ensure that function 'cli' is defined and has "
-            "either @group or @command decorator applied."
-        )
+    @log_it
+    def _plugin_error(cls, name) -> None:
+        err = f"""
+        failed to load plugin '{name}'
+        please ensure the correctness of the plugin's path configuration
+        and that 'cli' function is properly defined (usual definition is done
+        by applying the @click.group() or @click.command() decorator to the
+        function.
+        """
         exc = ValueError(err)
-        logger.exception(err, exc_info=exc)
-        logger.debug(f"'{name}' (plugin) unloaded", exc_info=exc)
+        raise exc

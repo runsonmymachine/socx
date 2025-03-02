@@ -1,20 +1,85 @@
-from pathlib import Path
+from __future__ import annotations
+
 from contextlib import suppress
+from functools import partial
+from pathlib import Path
 
 import rich
 import rich_click as click
 from rich.prompt import Prompt
 
-from socx import logger
 from socx import console
 from socx import settings
+from socx import get_logger
 from socx import settings_tree
 
 
+logger = get_logger(__name__)
+
+get_help = f"""
+    \n\b
+    Print a tree of configurations defined under the field name NAME.
+    \n\b
+    Possible field names are:
+    \b\n{"".join(f"  - {name}\n\b\n" for name in settings.as_dict())}
+"""
+
+get_cmd = lambda: partial(  # noqa: E731
+    cli.command,
+    help=get_help,
+    short_help="Print a tree of configurations defined under NAME.",
+    no_args_is_help=True,
+)()
+
+
 @click.group("config")
-@click.pass_context
-def cli(ctx: click.Context):
+def cli():
     """Get, set, list, or modify settings configuration values."""
+
+
+@cli.command()
+def edit():
+    """Edit settings with nano/vim/nvim/gvim."""
+    import os
+    from socx import APP_SETTINGS_DIR
+    from socx import USER_CONFIG_DIR
+
+    files = {Path(name).stem: Path(name) for name in settings.dynaconf_include}
+    for file in files.values():
+        if not ((path := Path(settings.path_for(file.name))).exists()):
+            path = APP_SETTINGS_DIR / file.name
+        files[file.stem] = path
+
+    file = files.get(
+        Prompt.ask(
+            console=console,
+            prompt="Which configuration would you like to edit?",
+            choices=[Path(file).stem for file in files],
+            show_choices=True,
+            case_sensitive=True,
+        )
+    )
+    editor = Prompt.ask(
+        console=console,
+        prompt="Which editor would you like to use?\n\b\n",
+        default="vim",
+        choices=["nano", "vim", "nvim", "gvim", "neovim", "emacs"],
+        show_choices=True,
+        show_default=True,
+        case_sensitive=False,
+    )
+    user_file = USER_CONFIG_DIR/file.name
+    if (editor := editor.lower()) == "neovim":
+        editor = "nvim"
+    if text := click.edit(
+        env=os.environ,
+        text=file.read_text(),
+        editor=editor,
+        extension=file.suffix,
+        require_save=True,
+    ):
+        user_file.write_text(text, encoding="utf-8")
+        logger.info(f"File saved to: {user_file}")
 
 
 @cli.command()
@@ -37,10 +102,9 @@ def tree_():
     console.print(tree)
 
 
-@cli.command()
-@click.argument("name", required=True, type=str)
+@get_cmd()
+@click.argument("name", required=True, type=click.STRING)
 def get(name: str):
-    """Print a tree/table/value representation of the settings field."""
     tree = None
     with suppress(KeyError, AttributeError):
         field = settings[name]
@@ -49,43 +113,3 @@ def get(name: str):
     if not tree:
         console.print(f"No such field: {name}")
         console.print(click.get_current_context().get_help())
-
-
-@cli.command("set")
-@click.argument("name", required=True, type=str)
-@click.argument("value", required=True, type=str)
-def set_(name: str, value: str):
-    """Print a tree/table/value representation of the settings field."""
-    logger.debug(f"settings update: '{name}={value}'")
-    settings.update({name: value}, validate_on_update=True)
-
-
-@cli.command()
-def edit():
-    """Edit settings from console using nano/vim/nvim/gvim (interactive)."""
-    help_text = """[magenta on gray23]
-
-    You may hit [u]<Ctrl-C>[/u] at any time to abort.
-
-    When inside an editor, [u]close it without saving to abort[/u].[/magenta
-    on gray23]
-    """
-    console.clear()
-    console.line(2)
-    console.rule("Edit")
-    console.line(1)
-    console.print(help_text, justify="center")
-    console.line(1)
-    file = Prompt.ask(
-        console=console,
-        prompt="Which configuration would you like to edit?",
-        choices=[Path(file).name for file in settings.settings_file],
-    )
-    editor = Prompt.ask(
-        console=console,
-        prompt="Which editor would you like to use?",
-        choices=["nano", "vim", "nvim", "gvim"],
-        default="vim",
-    )
-    file = Path(settings.path_for(file))
-    click.edit(filename=str(file), editor=editor, require_save=True)

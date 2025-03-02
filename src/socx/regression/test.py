@@ -14,15 +14,15 @@ from typing import override
 from dataclasses import field
 from dataclasses import dataclass
 
-from .log import logger
-from .config import settings
-from .mixins import UIDMixin
-from .visitor import Node
-from .visitor import Visitor
+from ..log import logger
+from ..config import settings
+from ..mixins import UIDMixin
+from ..visitor import Node
+from ..visitor import Visitor
 
 # TODO: Patch - socrun should be modified to return non-zero value on
 # test failure in the future
-from patches import post_process_sim_log as pp_simlog
+from socx_patches import post_process_sim_log as pp_simlog
 
 
 @dataclass
@@ -185,6 +185,7 @@ class Test(TestBase, UIDMixin):
             name = self.command.test
         except AttributeError:
             self._missing_test_name_err(command)
+            raise
         if "/" in name:
             name = name.partition("/")[-1]
         self._name = name
@@ -302,14 +303,24 @@ class Test(TestBase, UIDMixin):
         return self._proc.returncode
 
     @property
-    def rtp(self) -> Path:
+    def runtime_cfg(self):
+        """Get the simulation's runtime settings object."""
+        return settings.regression.runtime
+
+    @property
+    def runtime_path(self) -> Path:
         """
         Get the simulation's runtime path.
 
         The runtime referes to the path where compilation database and run logs
         are dumped by default by the simulator.
         """
-        return settings.regression.runtime.path / self.dirname
+        return self.runtime_cfg.path / self.dirname
+
+    @property
+    def runtime_logs(self):
+        """Get the simulation's configured runtime path for ouput logs."""
+        return self.runtime_path/self.runtime_cfg.logs.directory
 
     @property
     def dirname(self):
@@ -319,12 +330,6 @@ class Test(TestBase, UIDMixin):
     @override
     async def start(self) -> None:
         """Start a test in a subprocess."""
-
-        def is_done():
-            return self.returncode is not None
-
-        done = aio.Condition()
-
         if not self.idle:
             msg = "Cannot start a test when it is already running."
             exc = OSError(msg)
@@ -339,24 +344,24 @@ class Test(TestBase, UIDMixin):
             stdout, stderr = await self._proc.communicate()
             self._status = TestStatus.Running
             self._started_time = time.time()
-            done.wait_for(is_done)
+            while self.returncode is None:
+                await aio.sleep(0)
             self._finished_time = time.time()
             self._stdout = stdout.decode()
             self._stderr = stderr.decode()
             await self._proc.wait()
-        except Exception as e:
-            if ps.pid_exists(self._proc.pid):
-                self._proc.terminate()
-                self._result = TestResult.Failed
-                self._status = TestStatus.Terminated
-                logger.exception(
-                    f"Test failed: an exception of type {type(e)} was raised "
-                    f"during the execution of '{self.name}'",
-                    exc_info=e,
-                )
-            raise e
-        self._result = self._parse_result()
-        self._status = TestStatus.Finished
+            self._status = TestStatus.Finished
+            self._result = self._parse_result()
+        except Exception:
+            self.terminate()
+            self._status = TestStatus.Terminated
+            self._result = TestResult.Failed
+            logger.exception(
+                f"""Test failed: an exception was raised during execution \
+                of '{self.name}'""".strip(),
+                exc_info=True,
+            )
+            raise
 
     @override
     def suspend(self) -> None:
@@ -395,12 +400,15 @@ class Test(TestBase, UIDMixin):
             self.process.kill()
 
     def _parse_result(self) -> TestResult:
-        logger.debug(f"parsing result from {self.rtp}")
+        logger.debug(f"parsing result from {self.runtime_path}")
         result_hack = pp_simlog.TestResults()
-        result_hack.resetLog(self.rtp)
-        result_hack.parseLog()
-        logger.debug(f"parsed result: {self.result}")
-        return TestResult.from_temporary_hack(result_hack)
+        result_hack.reset_log(self.runtime_logs/"run.log")
+        try:
+            result_hack.parse_log()
+        except ValueError:
+            return TestResult.Failed
+        else:
+            return TestResult.from_temporary_hack(result_hack)
 
     def __hash__(self) -> int:
         return hash(self.command)
@@ -436,7 +444,8 @@ class TestResult(IntEnum):
     Passed = auto()
     Failed = auto()
 
-    def from_temporary_hack(self, hack: pp_simlog.TestResults) -> TestResult:
+    @classmethod
+    def from_temporary_hack(cls, hack: pp_simlog.TestResults) -> TestResult:
         match hack.result:
             case "NA":
                 return TestResult.NA

@@ -1,0 +1,19 @@
+[plugins.regression]
+name = "rgr"
+entry = "@entrypoint @format socx_plugins.regression.cli"
+commands = ["run", "rrfh", "rerun-failure-history"]
+
+[plugins.config]
+name = "config"
+entry = "@entrypoint @format socx_plugins.config"
+commands = ["get", "set", "edit", "list", "tree", "inspect"]
+
+[plugins.example]
+name = "example"
+entry = "@entrypoint @format socx_plugins.example"
+commands = []
+
+[plugins.convert]
+name = "convert"
+entry = "@entrypoint @format socx_plugins.convert.lst"
+commands = ["lst"]

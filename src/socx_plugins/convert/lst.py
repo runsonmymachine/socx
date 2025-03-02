@@ -3,7 +3,7 @@ import rich_click as click
 from socx import LstConverter
 
 
-@click.group("convert")
+@click.group("lst")
 def cli():
     """Perform a conversion based on current configurations."""
 

@@ -1,7 +1,6 @@
 __all__ = (
     # Modules
     "log",
-    "test",
     "memory",
     "config",
     "parser",
@@ -12,7 +11,6 @@ __all__ = (
     "formatter",
     "converter",
     # Log
-    "logger",
     "log",
     "info",
     "warn",
@@ -22,6 +20,8 @@ __all__ = (
     "warning",
     "exception",
     "critical",
+    "logger",
+    "log_it",
     "get_level",
     "set_level",
     "get_logger",
@@ -40,14 +40,12 @@ __all__ = (
     "DEFAULT_TIME_FORMAT",
     # CLI
     "cli",
-    "RichGroup",
-    "RichCommand",
-    # Test
+    # Regression
     "Test",
     "TestStatus",
     "TestResult",
     "TestCommand",
-    # Regression
+    "Regression",
     "Regression",
     # Config
     "settings",
@@ -55,13 +53,17 @@ __all__ = (
     "APP_NAME",
     "APP_AUTHOR",
     "APP_VERSION",
-    "PACKAGE_PATH",
+    "APP_SETTINGS_DIR",
+    "APP_USER_SETTINGS_DIR",
+    "APP_SETTINGS_FILE_NAME",
+    "APP_SETTINGS_FILE_PATH",
     "USER_LOG_DIR",
     "USER_DATA_DIR",
     "USER_CACHE_DIR",
     "USER_STATE_DIR",
     "USER_CONFIG_DIR",
     "USER_RUNTIME_DIR",
+    "USER_LOG_FILE_PATH",
     # Console
     "console",
     # Memory
@@ -104,7 +106,6 @@ from .cli import cli as cli
 from .log import Level as Level
 from .log import log as log
 from .log import info as info
-from .log import warn as warn
 from .log import error as error
 from .log import fatal as fatal
 from .log import debug as debug
@@ -127,10 +128,6 @@ from .log import DEFAULT_LEVEL as DEFAULT_LEVEL
 from .log import DEFAULT_FORMAT as DEFAULT_FORMAT
 from .log import DEFAULT_HANDLERS as DEFAULT_HANDLERS
 from .log import DEFAULT_TIME_FORMAT as DEFAULT_TIME_FORMAT
-from .test import Test as Test
-from .test import TestResult as TestResult
-from .test import TestStatus as TestStatus
-from .test import TestCommand as TestCommand
 from .mixins import UIDMixin as UIDMixin
 from .mixins import PtrMixin as PtrMixin
 from .config import settings as settings
@@ -138,13 +135,17 @@ from .config import settings_tree as settings_tree
 from .config import APP_NAME as APP_NAME
 from .config import APP_AUTHOR as APP_AUTHOR
 from .config import APP_VERSION as APP_VERSION
-from .config import PACKAGE_PATH as PACKAGE_PATH
+from .config import APP_SETTINGS_DIR as APP_SETTINGS_DIR
+from .config import APP_USER_SETTINGS_DIR as APP_USER_SETTINGS_DIR
+from .config import APP_SETTINGS_FILE_NAME as APP_SETTINGS_FILE_NAME
+from .config import APP_SETTINGS_FILE_PATH as APP_SETTINGS_FILE_PATH
 from .config import USER_LOG_DIR as USER_LOG_DIR
 from .config import USER_DATA_DIR as USER_DATA_DIR
 from .config import USER_CACHE_DIR as USER_CACHE_DIR
 from .config import USER_STATE_DIR as USER_STATE_DIR
 from .config import USER_CONFIG_DIR as USER_CONFIG_DIR
 from .config import USER_RUNTIME_DIR as USER_RUNTIME_DIR
+from ._config import USER_LOG_FILE_PATH as USER_LOG_FILE_PATH
 from .memory import SymbolTable as SymbolTable
 from .memory import RichSymTable as RichSymTable
 from .memory import MemorySegment as MemorySegment
@@ -170,6 +171,10 @@ from .formatter import Formatter as Formatter
 from .formatter import SystemVerilogFormatter as SystemVerilogFormatter
 from .converter import Converter as Converter
 from .converter import LstConverter as LstConverter
+from .decorators import log_it as log_it
 from .validators import PathValidator as PathValidator
+from .regression import Test as Test
+from .regression import TestStatus as TestStatus
+from .regression import TestResult as TestResult
+from .regression import TestCommand as TestCommand
 from .regression import Regression as Regression
-from .regression import RegressionStatus as RegressionStatus
