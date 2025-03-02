@@ -13,6 +13,7 @@ _CONTEXT_SETTINGS = dict(
 
 
 class CmdLine(click.RichMultiCommand, click.Group):
+    @log_it
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("context_settings", _CONTEXT_SETTINGS)
         click.RichMultiCommand.__init__(self, *args, **kwargs)
@@ -57,14 +58,11 @@ class CmdLine(click.RichMultiCommand, click.Group):
 
     @log_it
     def _load_plugin(self, plugin: DynaBox) -> click.Command:
-        ns = {}
-        code = self._compile(plugin.path, plugin.name)
-        eval(code, ns, ns)
-        cmd = ns.get("cli")
-        if cmd is None:
-            self._plugin_error(plugin.name)
-        self._plugins[plugin.name] = cmd
-        self.add_command(cmd, plugin.name)
+        for name in settings.plugins:
+            plugin = settings.plugins[name]
+            cmd = plugin.entry.cli
+            self._plugins[plugin.name] = cmd
+            self.add_command(cmd, plugin.name)
 
     @classmethod
     @log_it

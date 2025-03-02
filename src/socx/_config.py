@@ -1,13 +1,10 @@
 from __future__ import annotations
 
 import sys
-import inspect
 from typing import Any
 from typing import Final
 from pathlib import Path
 from importlib.metadata import version
-from importlib.metadata import metadata
-from importlib.metadata import PackageMetadata
 from collections.abc import Iterable
 
 from click import open_file
@@ -21,10 +18,6 @@ from dynaconf import ValidationError
 from dynaconf import add_converter
 from dynaconf.validator import empty
 from dynaconf.validator import Validator
-from platformdirs import site_data_dir
-from platformdirs import site_cache_dir
-from platformdirs import site_config_dir
-from platformdirs import site_runtime_dir
 from platformdirs import user_log_dir
 from platformdirs import user_data_dir
 from platformdirs import user_state_dir
@@ -39,16 +32,16 @@ from .log import DEFAULT_TIME_FORMAT
 from .validators import PathValidator
 
 
-__author__ = "Sagi Kimhi <sagi.kim5@gmail.com>"
-
-__version__ = version(__package__.partition(".")[0])
-
-__metadata__ = metadata(__package__.partition(".")[0])
-
-PACKAGE_NAME: Final[str] = __package__.partition(".")[0]
+PACKAGE_NAME: Final[str] = "socx-cli"
 """Package name."""
 
-PACKAGE_PATH: Final[Path] = Path(sys.modules[PACKAGE_NAME].__file__).parent
+__author__ = "Sagi Kimhi <sagi.kim5@gmail.com>"
+
+__version__ = version(PACKAGE_NAME)
+
+PACKAGE_PATH: Final[Path] = Path(
+    sys.modules[__package__.partition(".")[0]].__file__
+).parent
 """Absolute path to package."""
 
 PACKAGE_AUTHOR: Final[str] = __author__
@@ -57,13 +50,10 @@ PACKAGE_AUTHOR: Final[str] = __author__
 PACKAGE_VERSION: Final[str] = __version__
 """Package version."""
 
-PACKAGE_METADATA: Final[PackageMetadata] = __metadata__
-"""Package metadata."""
-
-APP_NAME: Final[str] = PACKAGE_NAME
+APP_NAME: Final[str] = "socx"
 """Application name."""
 
-APP_AUTHOR: Final[str] = PACKAGE_METADATA
+APP_AUTHOR: Final[str] = PACKAGE_AUTHOR
 """Application author"""
 
 APP_VERSION: Final[str] = PACKAGE_VERSION
@@ -154,9 +144,7 @@ USER_LOG_FILE_PATH: Path = USER_LOG_DIR / "socx.log"
 _init_done: bool = False
 
 _default_settings: Dynaconf | dict = {
-    name: value
-    for name, value in locals().items()
-    if name[0] != "_"
+    name: value for name, value in locals().items() if name[0] != "_"
 }
 
 _settings_kwargs = dict(
@@ -213,10 +201,16 @@ def _init_logger() -> None:
     logger.debug(f"logging at path: {USER_LOG_FILE_PATH}")
 
 
+def import_entrypoint(entrypoint: str):
+    import importlib
+    return importlib.import_module(entrypoint)
+
+
 def _init_converters() -> None:
     logger.debug("initializing settings converters.")
     add_converter("path", lambda x: Path(str(x)).resolve())
     add_converter("glob", lambda x: next(Path().glob(x)).resolve())
+    add_converter("entrypoint", import_entrypoint)
     logger.debug("settings converters initialized.")
 
 

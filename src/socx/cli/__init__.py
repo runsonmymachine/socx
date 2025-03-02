@@ -42,8 +42,8 @@ rich_cfg.STYLE_REQUIRED_LONG: rich.style.StyleType = "red"
 rich_cfg.STYLE_REQUIRED_SHORT: rich.style.StyleType = "red"
 
 rich_cfg.STYLE_METAVAR: rich.style.StyleType = "yellow"
-rich_cfg.STYLE_METAVAR_APPEND: rich.style.StyleType = "dim yellow"
-rich_cfg.STYLE_METAVAR_SEPARATOR: rich.style.StyleType = "dim"
+rich_cfg.STYLE_METAVAR_APPEND: rich.style.StyleType = "yellow"
+rich_cfg.STYLE_METAVAR_SEPARATOR: rich.style.StyleType = ""
 
 rich_cfg.STYLE_OPTION_HELP: rich.style.StyleType = ""
 rich_cfg.STYLE_OPTION_ENVVAR: rich.style.StyleType = "dim yellow"
@@ -54,11 +54,14 @@ rich_cfg.STYLE_OPTIONS_PANEL_BOX: str | rich.box.Box | None = "ROUNDED"
 rich_cfg.STYLE_OPTIONS_PANEL_BORDER: rich.style.StyleType = "bright_black"
 
 rich_cfg.STYLE_OPTIONS_TABLE_BOX: str | rich.box.Box | None = "HORIZONTAL"
-rich_cfg.STYLE_OPTIONS_TABLE_LEADING: int = 0
-rich_cfg.STYLE_OPTIONS_TABLE_PADDING: rich.padding.PaddingDimensions = (1, 1)
-rich_cfg.STYLE_OPTIONS_TABLE_PAD_EDGE: bool = False
+rich_cfg.STYLE_OPTIONS_TABLE_LEADING: int = 1
+rich_cfg.STYLE_OPTIONS_TABLE_PADDING: rich.padding.PaddingDimensions = (0, 1)
+rich_cfg.STYLE_OPTIONS_TABLE_PAD_EDGE: bool = True
 rich_cfg.STYLE_OPTIONS_TABLE_SHOW_LINES: bool = True
 rich_cfg.STYLE_OPTIONS_TABLE_BORDER_STYLE: rich.style.StyleType | None = None
+rich_cfg.STYLE_OPTIONS_TABLE_COLUMN_WIDTH_RATIO: tuple[int, int] = (
+        1, 3
+)
 rich_cfg.STYLE_OPTIONS_TABLE_ROW_STYLES: list[rich.style.StyleType] | None = (
     None
 )
@@ -77,8 +80,7 @@ rich_cfg.STYLE_COMMANDS_TABLE_ROW_STYLES: list[rich.style.StyleType] | None = (
     None
 )
 rich_cfg.STYLE_COMMANDS_TABLE_COLUMN_WIDTH_RATIO: tuple[int, int] = (
-    None,
-    None,
+        1, 3
 )
 
 rich_cfg.ALIGN_ERRORS_PANEL: rich.align.AlignMethod = "left"
@@ -106,7 +108,7 @@ rich_cfg.USE_RICH_MARKUP: bool = True
 rich_cfg.USE_MARKDOWN_EMOJI: bool = True
 """Parse emoji codes in markdown :smile:"""
 
-rich_cfg.OPTION_ENVVAR_FIRST: bool = False
+rich_cfg.OPTION_ENVVAR_FIRST: bool = True
 """Show env vars before option help text instead of avert"""
 
 rich_cfg.APPEND_METAVARS_HELP: bool = False
@@ -115,7 +117,7 @@ rich_cfg.APPEND_METAVARS_HELP: bool = False
 rich_cfg.USE_CLICK_SHORT_HELP: bool = False
 """Use click's default function to truncate help text"""
 
-rich_cfg.SHOW_METAVARS_COLUMN: bool = False
+rich_cfg.SHOW_METAVARS_COLUMN: bool = True
 """Show a column with the option metavar (eg. INTEGER)"""
 
 rich_cfg.GROUP_ARGUMENTS_OPTIONS: bool = False

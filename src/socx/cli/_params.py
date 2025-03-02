@@ -14,14 +14,31 @@ socx = partial(
 
 help_ = partial(click.help_option, "--help", "-h")
 
+debug = partial(
+    click.option,
+    "--debug",
+    "-d",
+    type=click.BOOL,
+    default=False,
+    is_flag=True,
+    envvar="SOCX_DEBUG",
+    show_envvar=True,
+    show_default=True,
+    expose_value=True,
+    help="Run in debug mode.",
+)
+
 configure = partial(
     click.option,
     "--configure/--no-configure",
     type=click.BOOL,
     default=True,
     is_flag=True,
+    envvar="SOCX_VERBOSITY",
+    show_envvar=True,
     show_default=True,
-    help="whether or not user configurations should be read.",
+    expose_value=True,
+    help="Load/Don't-Load local user configuration overrides.",
 )
 
 verbosity = partial(
@@ -30,8 +47,6 @@ verbosity = partial(
     "--verbosity",
     nargs=1,
     default="INFO",
-    show_choices=True,
-    show_default=True,
     type=click.Choice(
         (
             "CRITICAL",
@@ -44,5 +59,7 @@ verbosity = partial(
         ),
         case_sensitive=False,
     ),
-    help="Logging verbosity level.",
+    help="Run with custom logging verbosity level.",
+    show_choices=True,
+    show_default=True,
 )

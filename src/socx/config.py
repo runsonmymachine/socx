@@ -39,6 +39,7 @@ __all__ = (
     "settings",
     "reconfigure",
     "settings_tree",
+    "import_entrypoint",
     # Metadata
     "APP_NAME",
     "APP_AUTHOR",
@@ -73,6 +74,7 @@ from ._config import USER_STATE_DIR as USER_STATE_DIR
 from ._config import USER_CONFIG_DIR as USER_CONFIG_DIR
 from ._config import USER_RUNTIME_DIR as USER_RUNTIME_DIR
 from ._config import USER_LOG_FILE_PATH as USER_LOG_FILE_PATH
+from ._config import import_entrypoint as import_entrypoint
 
 
 settings: Dynaconf = _get_settings()

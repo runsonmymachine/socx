@@ -33,7 +33,7 @@ select = [
 ignore = [
     "C408",
     "D100", "D101", "D102", "D103", "D104", "D105", "D205",
-    "RUF022", "UP031",
+    "RUF022", "UP031", "ASYNC110"
 ]
 
 [lint.pydocstyle]

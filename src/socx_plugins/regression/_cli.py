@@ -1,4 +1,5 @@
 import time
+import asyncio as aio
 from pathlib import Path
 
 import click
@@ -67,7 +68,4 @@ async def _run_from_file(
     path_in = _correct_path_in(input)
     regression = _populate_regression(path_in)
     pass_out, fail_out = _correct_paths_out(output)
-    try:
-        await regression.start()
-    finally:
-        _write_results(fail_out, pass_out, regression)
+    await regression.start()

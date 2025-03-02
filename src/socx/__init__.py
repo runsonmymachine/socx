@@ -1,7 +1,6 @@
 __all__ = (
     # Modules
     "log",
-    "test",
     "memory",
     "config",
     "parser",
@@ -41,12 +40,12 @@ __all__ = (
     "DEFAULT_TIME_FORMAT",
     # CLI
     "cli",
-    # Test
+    # Regression
     "Test",
     "TestStatus",
     "TestResult",
     "TestCommand",
-    # Regression
+    "Regression",
     "Regression",
     # Config
     "settings",
@@ -129,10 +128,6 @@ from .log import DEFAULT_LEVEL as DEFAULT_LEVEL
 from .log import DEFAULT_FORMAT as DEFAULT_FORMAT
 from .log import DEFAULT_HANDLERS as DEFAULT_HANDLERS
 from .log import DEFAULT_TIME_FORMAT as DEFAULT_TIME_FORMAT
-from .test import Test as Test
-from .test import TestResult as TestResult
-from .test import TestStatus as TestStatus
-from .test import TestCommand as TestCommand
 from .mixins import UIDMixin as UIDMixin
 from .mixins import PtrMixin as PtrMixin
 from .config import settings as settings
@@ -178,5 +173,8 @@ from .converter import Converter as Converter
 from .converter import LstConverter as LstConverter
 from .decorators import log_it as log_it
 from .validators import PathValidator as PathValidator
+from .regression import Test as Test
+from .regression import TestStatus as TestStatus
+from .regression import TestResult as TestResult
+from .regression import TestCommand as TestCommand
 from .regression import Regression as Regression
-from .regression import RegressionStatus as RegressionStatus
