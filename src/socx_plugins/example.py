@@ -1,45 +1,36 @@
+import rich
 import rich_click as click
-from rich.syntax import Syntax
-from rich.prompt import Confirm
+from socx import console, settings
 
-from socx import console
-from socx import settings
+HELP_TEXT = """
+ [magenta underline]
+:wave: Hello from plugin example! :wave:
+
+The code for this example can be found under plugins/example.py
+
+To highlight how simple it is to write a plugin, as complex as it may seem,
+the code for this example can even print itself as its own example!
+
+👇👇👇 See code below 👇👇👇
+[/]
+"""
 
 @click.command("example")
 def cli():
     """Command-line-interface plugin example."""
-    style = "[magenta on gray23][bold][underline]"
-
-    text = """
-    :wave: Hello from plugin example! :wave:
-
-    The code for this example can be found under plugins/example.py
-
-    To highlight how simple it is to write a plugin, as complex as it may seem,
-    the code for this example can even print itself as its own example!
-
-    👇👇👇 See code below 👇👇👇
-    """
-
-    code = Syntax.from_path(
+    code = rich.syntax.Syntax.from_path(
+        theme="monokai",
         tab_size=4,
-        theme="nord",
         word_wrap=False,
         line_numbers=True,
-        indent_guides=True,
-        path=settings.plugins.example.path
+        path=settings.plugins.example.entry.__file__
     )
 
-    console.clear()
-    console.line(3)
-    console.print(f"{style}{text}", justify="center")
-    console.line(3)
+    console.line(2)
+    console.print(f"{HELP_TEXT}", justify="center")
+    console.line(2)
 
-    if Confirm.ask(
-        console=console, prompt="Display the code for this example?"
-    ):
-        console.rule(f"{style}Plugin Code:")
-        console.line(3)
+    if rich.prompt.Confirm.ask("Display the code of this example plugin?"):
         console.print(code)
     else:
         console.print("Goodbye :)")
