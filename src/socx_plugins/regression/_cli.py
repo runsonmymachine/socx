@@ -50,15 +50,18 @@ def _write_results(
         click.open_file(fail_out, mode="w", encoding="utf-8") as ff,
         click.open_file(pass_out, mode="w", encoding="utf-8") as pf,
     ):
+        logger.info(f"writing regression results to path {fail_out.parent}")
         for test in regression:
             if test.passed:
                 pf.write(f"{test.command.line}\n")
             else:
                 ff.write(f"{test.command.line}\n")
-    logger.debug(f"regression done: {regression}")
+        logger.info(f"passed commands were written to path: {pass_out}")
+        logger.info(f"failed commands were written to path: {fail_out}")
 
 
 def _populate_regression(filepath: Path) -> Regression:
+    logger.info(f"reading input from file path: {filepath}")
     with click.open_file(filepath, mode="r", encoding="utf-8") as file:
         return Regression.from_lines("rgr", tuple(line for line in file))
 
@@ -71,6 +74,8 @@ async def _run_from_file(
     regression = _populate_regression(path_in)
     pass_out, fail_out = _correct_paths_out(output)
     try:
+        logger.info(f"starting regression: {regression}")
         await regression.start()
+        logger.info(f"regression finished: {regression}")
     finally:
         _write_results(pass_out, fail_out, regression)
