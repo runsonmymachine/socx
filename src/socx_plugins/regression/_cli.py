@@ -29,7 +29,7 @@ def _correct_paths_out(
     now = time.strftime("%H-%M")
     today = time.strftime("%d-%m-%Y")
     if output_path is None:
-        output_path: DynaBox = settings.regression.rerun_failure_history.output
+        output_path: DynaBox = settings.regression.report.path
         dir_out: Path = Path(output_path.directory) / today
         fail_out: Path = Path(dir_out) / f"{now}_failed.log"
         pass_out: Path = Path(dir_out) / f"{now}_passed.log"
