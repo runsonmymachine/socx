@@ -6,7 +6,8 @@ import rich_click as click
 from trogon import tui
 
 from . import _params
-from ..log import Level
+from ..log import set_level
+from ..config import settings
 from ..config import reconfigure
 from ..config import USER_CONFIG_DIR
 
@@ -16,16 +17,13 @@ from ..config import USER_CONFIG_DIR
 @_params.debug()
 @_params.verbosity()
 @_params.configure()
-def cli(verbosity: Level, configure: bool, debug: bool) -> None:
+def cli(**options) -> None:
     """System on chip verification and tooling infrastructure."""
-    ctx = click.get_current_context()
-    ctx.debug = debug
-    ctx.verbosity = verbosity
-    mapping = logging.getLevelNamesMapping()
-    level = mapping[verbosity.upper()]
-    logging.disable(level-(logging.DEBUG-logging.NOTSET))
-    if configure:
+    settings.update({"cli": options})
+    set_level(logging.DEBUG if settings.cli.debug else settings.cli.verbosity)
+    if settings.cli.configure:
         reconfigure(USER_CONFIG_DIR / "*.toml", [], ["*.toml"])
+    ctx = click.get_current_context()
     if ctx.invoked_subcommand is None:
         formatter = ctx.make_formatter()
         cli.format_help(ctx, formatter)
