@@ -224,17 +224,17 @@ class Test(TestBase, UIDMixin):
     @property
     def idle(self) -> bool:
         """True if test has no active process and has not yet started."""
-        return self._proc is None
+        return self._proc is None and self.status is TestStatus.Idle
 
     @property
     def pending(self):
         """The test is scheduled to be started soon but has not yet started."""
-        return self._status == TestStatus.Pending
+        return self._proc is None and self.status == TestStatus.Pending
 
     @property
     def started(self) -> bool:
         """True if test was started via a prior call to method `start`."""
-        return self._proc is not None
+        return self._proc is not None and self.status is TestStatus.Running
 
     @property
     def suspended(self) -> bool:
@@ -249,27 +249,33 @@ class Test(TestBase, UIDMixin):
     @property
     def finished(self) -> bool:
         """True if test finished running without normally interruption."""
-        return self.started and self.returncode is not None
+        return (
+            self.started
+            and self.returncode is not None
+            and self.status is TestStatus.Finished
+        )
 
     @property
     def terminated(self) -> bool:
         """True if test started but was intentionaly terminated."""
-        return self.finished and self.returncode < 0
+        return self.started and self.status is TestStatus.Terminated
 
     @property
     def passed(self) -> bool:
         """True if test has finished running and no errors occured."""
-        return self.finished and self.returncode == 0
+        # change back to finished and return_code == 0 once patch is removed
+        return self.finished and self.result is TestResult.Passed
 
     @property
     def failed(self) -> bool:
         """True if test finished running and at least one error occured."""
-        return self.finished and self.returncode > 0
+        # change back to finished and return_code != 0 once patch is removed
+        return self.finished and self.result is TestResult.Failed
 
     @property
     def stdin(self) -> TextIO | None:
         """The standard input of the test's process or None if not running."""
-        return self._proc.stdin.decode() if self.running else None
+        return None # not currently needed, can be overriden by subclass
 
     @property
     def stdout(self) -> TextIO | None:
@@ -320,7 +326,7 @@ class Test(TestBase, UIDMixin):
     @property
     def runtime_logs(self):
         """Get the simulation's configured runtime path for ouput logs."""
-        return self.runtime_path/self.runtime_cfg.logs.directory
+        return self.runtime_path / self.runtime_cfg.logs.directory
 
     @property
     def dirname(self):
@@ -330,7 +336,7 @@ class Test(TestBase, UIDMixin):
     @override
     async def start(self) -> None:
         """Start a test in a subprocess."""
-        if not self.idle:
+        if self.status not in (TestStatus.Idle, TestStatus.Pending):
             msg = "Cannot start a test when it is already running."
             exc = OSError(msg)
             logger.exception(msg, exc_info=exc, stack_info=True)
@@ -402,7 +408,7 @@ class Test(TestBase, UIDMixin):
     def _parse_result(self) -> TestResult:
         logger.debug(f"parsing result from {self.runtime_path}")
         result_hack = pp_simlog.TestResults()
-        result_hack.reset_log(self.runtime_logs/"run.log")
+        result_hack.reset_log(self.runtime_logs / "run.log")
         try:
             result_hack.parse_log()
         except ValueError:

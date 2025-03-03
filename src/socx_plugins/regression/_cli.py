@@ -1,5 +1,4 @@
 import time
-import asyncio as aio
 from pathlib import Path
 
 import click
@@ -7,7 +6,10 @@ from dynaconf.utils.boxing import DynaBox
 
 from socx import Regression
 from socx import settings
-from socx import logger
+from socx import get_logger
+
+
+logger = get_logger(__name__)
 
 
 def _correct_path_in(input_path: str | Path | None = None) -> Path:
@@ -29,24 +31,24 @@ def _correct_paths_out(
     if output_path is None:
         output_path: DynaBox = settings.regression.rerun_failure_history.output
         dir_out: Path = Path(output_path.directory) / today
-        fail_out: Path = Path(dir_out / f"{now}_failed.log")
-        pass_out: Path = Path(dir_out / f"{now}_passed.log")
+        fail_out: Path = Path(dir_out) / f"{now}_failed.log"
+        pass_out: Path = Path(dir_out) / f"{now}_passed.log"
     else:
-        fail_out: Path = Path(output_path / f"{now}_failed.log")
-        pass_out: Path = Path(output_path / f"{now}_passed.log")
+        fail_out: Path = Path(output_path) / f"{now}_failed.log"
+        pass_out: Path = Path(output_path) / f"{now}_passed.log"
     fail_out.parent.mkdir(parents=True, exist_ok=True)
     pass_out.parent.mkdir(parents=True, exist_ok=True)
     return pass_out, fail_out
 
 
 def _write_results(
-    fail_out: str | Path,
     pass_out: str | Path,
+    fail_out: str | Path,
     regression: Regression,
 ) -> None:
     with (
-        open(fail_out, mode="w", encoding="utf-8") as ff,
-        open(pass_out, mode="w", encoding="utf-8") as pf,
+        click.open_file(fail_out, mode="w", encoding="utf-8") as ff,
+        click.open_file(pass_out, mode="w", encoding="utf-8") as pf,
     ):
         for test in regression:
             if test.passed:
@@ -68,4 +70,7 @@ async def _run_from_file(
     path_in = _correct_path_in(input)
     regression = _populate_regression(path_in)
     pass_out, fail_out = _correct_paths_out(output)
-    await regression.start()
+    try:
+        await regression.start()
+    finally:
+        _write_results(pass_out, fail_out, regression)

@@ -136,19 +136,6 @@ class Regression(TestBase):
     async def start(self) -> None:
         """Start the regression."""
         self._status = TestStatus.Pending
-        now = strftime("%H-%M")
-        today = strftime("%d-%m-%Y")
-        tests = set(iter(self))
-        report_dir = Path(self.cfg.report.path) / today
-        report_dir.mkdir(parents=True, exist_ok=True)
-        passed_filepath = report_dir / f"{now}_passed.log"
-        failed_filepath = report_dir / f"{now}_failed.log"
-        passed_file = open_file(
-            str(passed_filepath), mode="w", encoding="utf-8", lazy=True
-        )
-        failed_file = open_file(
-            str(failed_filepath), mode="w", encoding="utf-8", lazy=True
-        )
         try:
             async with aio.TaskGroup() as tg:
                 tg.create_task(self._animate_progress())
@@ -158,18 +145,13 @@ class Regression(TestBase):
             self._status = TestStatus.Finished
             self._result = (
                 TestResult.Passed
-                if all(test.result == TestResult.Passed for test in self)
+                if all(test.passed for test in self)
                 else TestResult.Failed
             )
         except Exception:
             self._status = TestStatus.Terminated
             self._result = TestResult.Failed
             raise
-        finally:
-            passed = {test for test in tests if test.passed}
-            failed = tests.difference(passed)
-            passed_file.write("\n".join(test.command.line for test in passed))
-            failed_file.write("\n".join(test.command.line for test in failed))
 
     @override
     def suspend(self) -> None:
@@ -245,7 +227,7 @@ class Regression(TestBase):
                 try:
                     test = await self.pending.get()
                     await self.messages.put(f"Runner({test.name}): running...")
-                    await aio.create_task(test.start())
+                    await test.start()
                     await self.messages.put(f"Runner({test.name}): done.")
                     self._runner_advance()
                 finally:
@@ -276,6 +258,7 @@ class Regression(TestBase):
         while not self.messages.empty():
             try:
                 msgs += await self.messages.get()
+                msgs += "\n"
             finally:
                 self.messages.task_done()
         return msgs
