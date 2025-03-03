@@ -15,7 +15,7 @@ packages = ["src/socx", "src/socx_plugins", "src/socx_patches"]
 #
 [project]
 name = "socx-cli"
-version = "0.2.9"
+version = "0.2.11"
 readme = "README.md"
 license = "Apache-2.0 OR MIT"
 authors = [ { name = "Sagi Kimhi", email = "sagi.kim5@gmail.com" } ]
